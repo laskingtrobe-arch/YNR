@@ -20,9 +20,21 @@ async function api(method, path, body) {
   let json = null;
   try { json = await res.json(); } catch (e) { /* server returned a non-JSON page */ }
 
+  /* A non-JSON response means we reached something that is not the API: on a
+     deployed site that is usually the host's own 404 page, because the API
+     has not been pointed at yet. Shoppers get a plain message; whoever is
+     deploying gets a specific one in the console. */
+  if (!json && !res.ok) {
+    console.error(
+      `[YnR] ${method} ${API_BASE + path} returned ${res.status} and no JSON. ` +
+      `The API does not appear to be running at ${API_BASE}. ` +
+      `Set window.YNR_API in index.html to the address of the back end.`
+    );
+  }
+
   if (!res.ok) {
-    const err = new Error((json && json.error) || 'Something went wrong. Please try again.');
-    err.code = json && json.code;   // e.g. held_by_other, already_sold
+    const err = new Error((json && json.error) || "The shop is unavailable right now. Please try again shortly.");
+    err.code = (json && json.code) || 'unreachable';   // e.g. held_by_other, already_sold
     throw err;
   }
   return json;

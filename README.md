@@ -72,6 +72,48 @@ The storefront finds the API automatically on localhost. In production both
 are served from the same origin, so it uses `/api`. Override with
 `window.YNR_API` if you need something else.
 
+## Deploying
+
+The two halves deploy differently, and this trips people up.
+
+### The storefront (Vercel)
+
+`vercel.json` tells Vercel the site lives in `storefront/`. Without it Vercel
+serves the repository root, finds no `index.html`, and returns 404 on every
+request.
+
+If the project was created before that file existed, either redeploy so the
+config is picked up, or set **Root Directory** to `storefront` in the Vercel
+project settings. Either works; the file is preferable because it is version
+controlled.
+
+### The back end (not Vercel)
+
+`server/` will not run on Vercel as it stands, for two reasons:
+
+1. It is a long-running Express server. Vercel runs serverless functions.
+2. It stores data in a SQLite file and saves uploads to disk. Vercel's
+   filesystem is read-only apart from `/tmp`, which is wiped between
+   invocations, so the database and every product photo would vanish.
+
+Host it somewhere with a persistent disk and a long-running process. Render,
+Railway and Fly.io all do this and all have free or cheap tiers. Then point
+the storefront at it by uncommenting the `window.YNR_API` line in
+`storefront/index.html`.
+
+Alternatively, once the API has a public address, add a rewrite to
+`vercel.json` so the shop can keep calling `/api` on its own origin, which
+avoids CORS entirely:
+
+```json
+"rewrites": [
+  { "source": "/api/:path*", "destination": "https://your-api-host/api/:path*" }
+]
+```
+
+Remember to set `SITE_URL` on the API to the deployed storefront URL, or CORS
+will block the browser.
+
 ## Tests
 
 ```bash
