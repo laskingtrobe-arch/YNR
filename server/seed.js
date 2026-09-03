@@ -7,7 +7,7 @@ const { db, now } = require('./src/db');
 const config = require('./src/config');
 const { id, toKobo } = require('./src/lib/util');
 
-const SRC_IMAGES = path.join(config.paths.root, '..', 'files', 'products');
+const SRC_IMAGES = path.join(config.paths.root, '..', 'storefront', 'assets', 'products');
 
 const CATEGORIES = [
   { slug: 'hoodies', name: 'Hoodies', sort: 1 },

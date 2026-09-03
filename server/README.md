@@ -130,5 +130,4 @@ Deliberately left out, in rough priority order:
 - Refunds through the API. Refund in the Paystack dashboard, then set the
   order's payment status in admin.
 - Per-size stock, if a piece ever becomes several physical garments.
-- The storefront still needs wiring to this API. It currently reads a
-  hardcoded `PRODUCTS` object in `files/ynr-store.html`.
+- Server-side image resizing, noted above, is the main gap for mobile data.

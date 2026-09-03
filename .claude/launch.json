@@ -4,7 +4,7 @@
     {
       "name": "ynr-store",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "3020", "--directory", "files"],
+      "runtimeArgs": ["-m", "http.server", "3020", "--directory", "storefront"],
       "port": 3020
     }
   ]

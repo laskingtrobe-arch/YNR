@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YnR — Young &amp; Reckless | Hand-Painted Streetwear, Abuja</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800;900&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Fraunces:ital,opsz,wght@1,9..144,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/store.css">
+</head>
+<body>
+
+<div class="grain" aria-hidden="true"></div>
+
+<header class="site-nav">
+  <div class="ticker" aria-hidden="true">
+    <div class="ticker-track">
+      <span>HAND-PAINTED IN ABUJA</span><span>EVERY PIECE IS ONE-OF-ONE</span><span>4 YEARS OF YnR</span><span>WORLDWIDE DELIVERY</span>
+      <span>HAND-PAINTED IN ABUJA</span><span>EVERY PIECE IS ONE-OF-ONE</span><span>4 YEARS OF YnR</span><span>WORLDWIDE DELIVERY</span>
+    </div>
+  </div>
+  <div class="nav-inner">
+    <a href="#" class="wordmark" data-view="home">Yn<span>R</span></a>
+    <nav class="nav-links" id="navLinks">
+      <button data-view="home" data-scroll="shop" aria-current="true">Shop</button>
+      <button data-view="home" data-scroll="story">Our Story</button>
+      <button data-view="home" data-scroll="visit">Visit Us</button>
+      <button data-view="contact">Contact</button>
+    </nav>
+    <div class="nav-actions">
+      <button class="icon-btn" aria-label="Open bag" onclick="toggleCart(true)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+        <span class="bag-count" id="bagCount">0</span>
+      </button>
+      <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ============ HOME ============ -->
+<main id="view-home" class="view active">
+
+  <section class="hero" style="padding:0;">
+    <div class="hero-halftone" aria-hidden="true"></div>
+    <div class="hero-photo"><img src="assets/products/product-6-young-reckless-jeans.jpg" alt=""></div>
+    <div class="hero-inner">
+      <div class="eyebrow">Hand-Painted in Mpape, Abuja</div>
+      <h1 class="display">ONE PIECE.<br><span class="accent">ONE OF ONE.</span></h1>
+      <div class="hero-scan" aria-hidden="true"></div>
+      <p class="hero-sub">YnR is streetwear that's actually made, not printed by the thousand. Every hoodie, tee and pair of jeans is hand-painted piece by piece — worn by someone who'd rather stand out than fit in.</p>
+      <div class="hero-cta-row">
+        <button class="btn-primary" onclick="scrollToId('shop')">
+          Shop The Pieces
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </button>
+        <button class="btn-outline" onclick="scrollToId('story')">Our Story</button>
+      </div>
+    </div>
+    <div class="scroll-cue"><span class="line"></span> Scroll</div>
+  </section>
+
+  <!-- SHOP -->
+  <section id="shop">
+    <div class="wrap">
+      <div class="section-head">
+        <div><div class="eyebrow">The Current Pieces</div><h2 class="display">Shop</h2></div>
+        <p class="smoke-text">Every piece is hand-painted and one-of-one. When one sells, it stays on the site — message us to have it repainted for you.</p>
+      </div>
+      <div class="product-grid" id="shopGrid"></div>
+    </div>
+  </section>
+
+  <!-- WHY YnR -->
+  <section class="trust-strip">
+    <div class="wrap">
+      <div class="trust-grid">
+        <div class="trust-block">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          <div><h5>Never Mass-Produced</h5><p>Every piece is painted by hand, one at a time. No factory run behind it — what you buy is what exists.</p></div>
+        </div>
+        <div class="trust-block">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 11l18-5v12L3 14v-3Z"/><path d="M11.6 16.8 9 20l-3-2"/></svg>
+          <div><h5>Message To Order</h5><p>No confusing checkout. Pick your piece, message us on WhatsApp, and we confirm your size and delivery directly.</p></div>
+        </div>
+        <div class="trust-block">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m3 11 8-8 8 8"/><path d="M5 10v10h14V10"/></svg>
+          <div><h5>Four Years Running</h5><p>YnR has been hand-painting streetwear out of Abuja since day one — this isn't a new shop testing the waters.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STORY -->
+  <section id="story">
+    <div class="wrap">
+      <div class="story">
+        <div class="story-visual">
+          <img src="assets/products/product-1-out-of-this-world-tee.jpg" alt="Hand-painted YnR piece">
+        </div>
+        <div class="story-copy">
+          <div class="eyebrow">Four Years In Abuja</div>
+          <blockquote>We don't fit in.<br>We're not trying to.</blockquote>
+          <p>YnR started in Mpape, Abuja, with a brush, a blank tee, and no interest in looking like everything else on the rack. Four years later, that hasn't changed — every hoodie, tee, long sleeve and pair of jeans that leaves our hands is still painted piece by piece, not printed by the thousand.</p>
+          <p>We make for the people who'd rather own the one shirt nobody else has than the popular one everybody does. If you buy from YnR, you're not buying a design — you're buying the actual piece, painted once.</p>
+          <div class="story-stats">
+            <div><b>4</b><span>Years Running</span></div>
+            <div><b>1/1</b><span>Every Piece</span></div>
+            <div><b>100%</b><span>Hand-Painted</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DELIVERY -->
+  <section class="on-bone" id="delivery">
+    <div class="wrap">
+      <div class="section-head">
+        <div><div class="eyebrow">Straight, No Surprises</div><h2 class="display">Delivery</h2></div>
+        <p class="smoke-text">We ship anywhere — within Abuja, across Nigeria, and worldwide by courier.</p>
+      </div>
+      <table class="delivery-table">
+        <thead><tr><th>Area</th><th>Fee</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Within Abuja</td><td>₦2,000</td><td>Flat rate, delivered directly</td></tr>
+          <tr><td>Outside Abuja (within Nigeria)</td><td>Depends on location</td><td>Confirmed with you on WhatsApp before you pay</td></tr>
+          <tr><td>International</td><td>Courier rate</td><td>Shipped via courier partner — cost and delivery time confirmed on WhatsApp</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- SIGNUP -->
+  <section class="signup" id="signup">
+    <div class="wrap">
+      <div class="eyebrow" style="justify-content:center;">Stay In The Loop</div>
+      <h2 class="display" style="margin-top:16px;">Know When A New<br>One-Of-One Drops</h2>
+      <p>Leave your email and we'll let you know the moment a new hand-painted piece goes up — before it's gone.</p>
+      <form class="signup-form" id="signupForm" onsubmit="return handleSignup(event)">
+        <label for="signupEmail" class="visually-hidden">Email address</label>
+        <input id="signupEmail" type="email" required placeholder="your@email.com">
+        <button type="submit">Sign Up</button>
+      </form>
+      <div class="form-success" id="signupSuccess">You're on the list — we'll message when the next piece drops.</div>
+      <div class="signup-note">No spam. Just new pieces, as they're painted.</div>
+    </div>
+  </section>
+
+  <!-- VISIT -->
+  <section id="visit">
+    <div class="wrap">
+      <div class="section-head">
+        <div><div class="eyebrow">Come Through</div><h2 class="display">Visit The Shop</h2></div>
+      </div>
+      <div class="visit">
+        <div class="visit-info">
+          <div class="eyebrow">Store Location</div>
+          <h3>Suite 302, Aula Plaza</h3>
+          <div class="visit-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.4"/></svg>
+            <div><b>Address</b><span>Suite 302, Aula Plaza, Mpape, Abuja, Nigeria</span></div>
+          </div>
+          <div class="visit-row">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.87.5 3.63 1.44 5.15L2 22l5.1-1.53a9.87 9.87 0 0 0 4.94 1.32h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2Z"/></svg>
+            <div><b>WhatsApp</b><span>0902 694 7815</span></div>
+          </div>
+          <div class="visit-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+            <div><b>Hours</b><span>Message us on WhatsApp anytime — we'll confirm if the shop's open before you head over</span></div>
+          </div>
+          <a href="https://www.google.com/maps/search/?api=1&query=Aula+Plaza+Mpape+Abuja" target="_blank" rel="noopener" class="btn-outline" style="margin-top:16px; display:inline-flex;">Open in Google Maps</a>
+        </div>
+        <div class="visit-map">
+          <iframe title="YnR store location map" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+            src="https://www.google.com/maps?q=Aula+Plaza,+Mpape,+Abuja,+Nigeria&output=embed"></iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============ CONTACT VIEW ============ -->
+<main id="view-contact" class="view">
+  <section class="contact-hero">
+    <div class="wrap">
+      <div class="eyebrow">We're Listening</div>
+      <h1 class="display">Get In<br>Touch</h1>
+      <p>Questions about a piece, sizing, or an order — reach us directly. WhatsApp is the fastest way to get a reply.</p>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <div class="contact-grid">
+      <div>
+        <div class="eyebrow" style="margin-bottom:22px;">Send A Message</div>
+        <form id="contactForm" onsubmit="return handleContact(event)">
+          <div class="field"><label for="cName">Name</label><input id="cName" type="text" required placeholder="Your full name"></div>
+          <div class="field"><label for="cEmail">Email</label><input id="cEmail" type="email" required placeholder="your@email.com"></div>
+          <div class="field"><label for="cSubject">Subject</label><input id="cSubject" type="text" required placeholder="Order, sizing, custom piece..."></div>
+          <div class="field"><label for="cMessage">Message</label><textarea id="cMessage" rows="5" required placeholder="Tell us what's up"></textarea></div>
+          <button type="submit" class="btn-oxblood">
+            Send Message
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </button>
+          <div class="form-success" id="contactSuccess">Message sent — we'll be in touch soon. For a faster reply, use WhatsApp.</div>
+        </form>
+      </div>
+
+      <div>
+        <div class="eyebrow" style="margin-bottom:22px;">Direct Channels</div>
+        <div class="contact-channels">
+          <a class="channel-card wa" href="https://wa.me/2349026947815" target="_blank" rel="noopener">
+            <div class="cic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.87.5 3.63 1.44 5.15L2 22l5.1-1.53a9.87 9.87 0 0 0 4.94 1.32h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2Z"/></svg></div>
+            <div><h5>WhatsApp</h5><p>0902 694 7815</p></div>
+          </a>
+          <a class="channel-card" href="#">
+            <div class="cic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 21s-7-6.1-7-11.5A7 7 0 0 1 19 9.5C19 14.9 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.4"/></svg></div>
+            <div><h5>Store</h5><p>Suite 302, Aula Plaza, Mpape, Abuja</p></div>
+          </a>
+          <a class="channel-card" href="#" onclick="showView('home'); setTimeout(()=>scrollToId('visit'),50); return false;">
+            <div class="cic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M8 3v3M16 3v3M3 9h18"/></svg></div>
+            <div><h5>Map &amp; Directions</h5><p>View on Google Maps</p></div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ============ PRODUCT VIEW ============ -->
+<main id="view-product" class="view">
+  <div class="wrap">
+    <div class="breadcrumb">
+      <a href="#" data-view="home">Shop</a> / <a href="#" id="pdpCategory">Tees</a> / <span id="pdpCrumbName" style="color:var(--bone-dim);">Product</span>
+    </div>
+
+    <div class="pdp">
+      <div class="pdp-shot">
+        <div class="one-tag" id="pdpOneTag">One Of One</div>
+        <img id="pdpMainImg" src="" alt="">
+      </div>
+
+      <div class="pdp-info">
+        <div class="eyebrow" id="pdpEyebrow">Hand-Painted</div>
+        <h1 class="display" id="pdpName">Product Name</h1>
+        <div class="pdp-price-row"><span class="pdp-price" id="pdpPrice">₦0</span></div>
+        <p class="pdp-desc" id="pdpDesc"></p>
+
+        <div class="option-block">
+          <div class="option-label" style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+            <span>Size</span>
+            <button type="button" class="size-guide-link" onclick="toggleSizeGuide(true)">Size guide</button>
+          </div>
+          <div class="size-row" id="sizeRow"></div>
+        </div>
+
+        <div class="pdp-actions">
+          <button class="btn-oxblood" onclick="addToBag()">
+            Add To Bag
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+          </button>
+          <button class="btn-outline" onclick="orderThisNow()">Order On WhatsApp</button>
+        </div>
+
+        <div class="trust-row">
+          <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="10" width="16" height="10" rx="1"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Confirmed On WhatsApp</div>
+          <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m3 11 8-8 8 8"/><path d="M5 10v10h14V10"/></svg>₦2,000 Abuja Delivery</div>
+          <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>Ships Worldwide</div>
+        </div>
+
+        <div class="accordion" id="pdpAccordion">
+          <div class="accordion-item">
+            <button class="accordion-trigger" onclick="toggleAcc(this)">Fit &amp; Fabric<span class="plus">+</span></button>
+            <div class="accordion-panel"><p>Heavyweight cotton, cut oversized. Hand-painted design — expect small, natural variations in the brushwork since it's painted, not printed.</p></div>
+          </div>
+          <div class="accordion-item">
+            <button class="accordion-trigger" onclick="toggleAcc(this)">Care<span class="plus">+</span></button>
+            <div class="accordion-panel"><p>Hand wash cold or gentle machine wash inside-out. Do not iron or tumble dry directly on the painted design.</p></div>
+          </div>
+          <div class="accordion-item">
+            <button class="accordion-trigger" onclick="toggleAcc(this)">Delivery &amp; Ordering<span class="plus">+</span></button>
+            <div class="accordion-panel"><p>Pick a size and add to bag, or message us directly on WhatsApp. We confirm availability, delivery cost, and payment with you there before anything ships.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="related-head">
+      <div class="eyebrow">More From The Shop</div>
+      <h2 class="display" style="font-size:clamp(24px,3.6vw,36px); margin-top:12px;">You May Also Like</h2>
+    </div>
+    <div class="product-grid" id="relatedGrid" style="margin-bottom:110px;"></div>
+  </div>
+</main>
+
+<!-- ============ CHECKOUT VIEW ============ -->
+<main id="view-checkout" class="view">
+  <div class="wrap">
+    <div class="breadcrumb"><a href="#" data-view="home">Shop</a> / <span style="color:var(--bone-dim);">Checkout</span></div>
+    <div class="checkout-wrap">
+      <div>
+        <div class="eyebrow">Almost Yours</div>
+        <h1 class="display" style="font-size:clamp(34px,5vw,54px); margin:14px 0 10px;">Checkout</h1>
+        <p class="smoke-text" style="margin-bottom:36px;">Tell us where it's going. Nothing is charged until you choose how to pay.</p>
+
+        <div id="checkoutError" class="notice err" style="display:none;"></div>
+
+        <form id="checkoutForm" novalidate>
+          <input type="text" name="website" tabindex="-1" autocomplete="off" class="visually-hidden" aria-hidden="true">
+
+          <div class="field-row">
+            <div class="field"><label for="coName">Full name</label><input id="coName" required autocomplete="name" placeholder="Your full name"></div>
+            <div class="field"><label for="coPhone">Phone (WhatsApp)</label><input id="coPhone" required autocomplete="tel" inputmode="tel" placeholder="0803 123 4567"></div>
+          </div>
+          <div class="field"><label for="coEmail">Email</label><input id="coEmail" type="email" required autocomplete="email" placeholder="your@email.com"></div>
+
+          <div class="field">
+            <label for="coZone">Delivery area</label>
+            <select id="coZone" required></select>
+            <div class="hint" id="zoneHint"></div>
+          </div>
+
+          <div class="field"><label for="coAddress">Delivery address</label><input id="coAddress" autocomplete="street-address" placeholder="Street, house number, landmark"></div>
+          <div class="field-row">
+            <div class="field"><label for="coCity">City</label><input id="coCity" autocomplete="address-level2" placeholder="Abuja"></div>
+            <div class="field"><label for="coState">State</label><input id="coState" autocomplete="address-level1" placeholder="FCT"></div>
+          </div>
+          <div class="field"><label for="coNotes">Anything we should know? (optional)</label><textarea id="coNotes" rows="3" placeholder="Sizing worries, a deadline, how you want it painted..."></textarea></div>
+        </form>
+      </div>
+
+      <aside class="summary">
+        <h4>Your Order</h4>
+        <div id="coSummary"></div>
+        <div class="sum-total"><span>Total</span><span id="coTotal">₦0</span></div>
+
+        <div class="pay-choice">
+          <button class="btn-oxblood" id="payCardBtn" type="button">
+            Pay Now With Paystack
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+          </button>
+          <button class="btn-outline" id="payWaBtn" type="button">Confirm On WhatsApp Instead</button>
+        </div>
+
+        <div class="secure-note" style="margin-top:20px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="10" width="16" height="10" rx="1"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          Card payments are handled by Paystack. We never see your card details.
+        </div>
+      </aside>
+    </div>
+  </div>
+</main>
+
+<!-- ============ ORDER CONFIRMATION VIEW ============ -->
+<main id="view-order" class="view">
+  <div class="wrap">
+    <div class="ord-box">
+      <div class="eyebrow" style="justify-content:center;">Order Placed</div>
+      <h1 class="display" style="font-size:clamp(34px,5vw,52px); margin:16px 0 0;">We've Got It</h1>
+      <div class="ord-ref" id="ordRef">YNR-000000</div>
+      <p class="smoke-text" id="ordMsg">Keep this reference. We've sent it to your email too.</p>
+      <div class="ord-items" id="ordItems"></div>
+      <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap;">
+        <a class="btn-oxblood" id="ordWa" target="_blank" rel="noopener" href="#">Message Us On WhatsApp</a>
+        <button class="btn-outline" onclick="showView('home')">Back To The Shop</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="wrap">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="wordmark">Yn<span>R</span></div>
+        <p>Hand-painted, one-of-one streetwear out of Mpape, Abuja. Four years of making pieces that don't come off a factory line.</p>
+        <div class="foot-social">
+          <a href="https://wa.me/2349026947815" target="_blank" rel="noopener" aria-label="WhatsApp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.87.5 3.63 1.44 5.15L2 22l5.1-1.53a9.87 9.87 0 0 0 4.94 1.32h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2Z"/></svg></a>
+          <a href="https://instagram.com" target="_blank" rel="noopener" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg></a>
+        </div>
+      </div>
+      <div class="foot-col">
+        <h5>Shop</h5>
+        <a href="#" onclick="showView('home'); scrollToId('shop'); return false;">All Pieces</a>
+        <a href="#" onclick="toggleCart(true); return false;">Your Bag</a>
+        <a href="#" onclick="showView('home'); scrollToId('delivery'); return false;">Delivery</a>
+      </div>
+      <div class="foot-col">
+        <h5>Visit</h5>
+        <p>Suite 302, Aula Plaza,<br>Mpape, Abuja, Nigeria</p>
+        <a href="https://wa.me/2349026947815" target="_blank" rel="noopener">WhatsApp: 0902 694 7815</a>
+        <a href="#" onclick="showView('contact'); return false;">Contact Page</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <small>© 2026 YnR — Young &amp; Reckless. Hand-painted in Abuja.</small>
+    </div>
+  </div>
+</footer>
+
+<a class="wa-float" href="https://wa.me/2349026947815" target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp">
+  <svg viewBox="0 0 24 24"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.87.5 3.63 1.44 5.15L2 22l5.1-1.53a9.87 9.87 0 0 0 4.94 1.32h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2Zm5.8 14.1c-.24.68-1.4 1.3-1.94 1.38-.5.08-1.12.11-1.8-.11-.42-.13-.95-.31-1.64-.6-2.9-1.25-4.79-4.16-4.94-4.35-.14-.2-1.18-1.57-1.18-3 0-1.42.75-2.12 1.02-2.41.26-.28.58-.36.77-.36.2 0 .39 0 .56.01.18.01.42-.07.65.5.24.58.82 2 .9 2.15.07.14.12.31.02.5-.09.19-.14.31-.28.48-.14.17-.29.37-.42.5-.14.14-.28.29-.12.56.16.28.71 1.17 1.53 1.9 1.05.94 1.94 1.23 2.21 1.37.28.14.44.12.6-.07.17-.19.71-.83.9-1.11.19-.28.38-.24.63-.14.26.09 1.65.78 1.93.92.28.14.47.21.53.33.07.12.07.68-.17 1.35Z"/></svg>
+</a>
+
+<!-- size guide modal -->
+<div class="modal-overlay" id="sizeModal">
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="sizeModalTitle">
+    <div class="modal-head"><h3 id="sizeModalTitle">Size Guide</h3><button class="modal-close" onclick="toggleSizeGuide(false)" aria-label="Close">✕</button></div>
+    <table class="size-table">
+      <thead><tr><th>Size</th><th>Chest (in)</th><th>Chest (cm)</th><th>Length (in)</th><th>Length (cm)</th></tr></thead>
+      <tbody>
+        <tr><td>S</td><td>37–39</td><td>94–99</td><td>27.5</td><td>70</td></tr>
+        <tr><td>M</td><td>40–42</td><td>102–107</td><td>28.5</td><td>72</td></tr>
+        <tr><td>L</td><td>43–45</td><td>109–114</td><td>29.5</td><td>75</td></tr>
+        <tr><td>XL</td><td>46–48</td><td>117–122</td><td>30.5</td><td>77</td></tr>
+        <tr><td>XXL</td><td>49–51</td><td>124–130</td><td>31.5</td><td>80</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Measurements are garment measurements, laid flat. Pieces are cut oversized. Still unsure of your size? Message us on WhatsApp and we'll help you pick.</p>
+  </div>
+</div>
+
+<!-- cart / whatsapp checkout drawer -->
+<div class="cart-overlay" id="cartOverlay" onclick="toggleCart(false)"></div>
+<aside class="cart-drawer" id="cartDrawer" aria-hidden="true">
+  <div class="cart-head"><h3 id="cartHeadTitle">Your Bag (0)</h3><button class="modal-close" onclick="toggleCart(false)" aria-label="Close bag">✕</button></div>
+  <div class="cart-items" id="cartItems"><div class="cart-empty">Your bag is empty. Add a piece to get started.</div></div>
+  <div class="cart-foot">
+    <div class="cart-subtotal"><span>Subtotal</span><span id="cartSubtotal">₦0</span></div>
+    <button class="btn-oxblood" onclick="goToCheckout()">
+      Checkout
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </button>
+    <div class="secure-note">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="10" width="16" height="10" rx="1"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      Pay by card, or confirm on WhatsApp — your choice at the next step
+    </div>
+  </div>
+</aside>
+
+<script src="js/config.js"></script>
+<script src="js/util.js"></script>
+<script src="js/api.js"></script>
+<script src="js/catalogue.js"></script>
+<script src="js/bag.js"></script>
+<script src="js/checkout.js"></script>
+<script src="js/forms.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>

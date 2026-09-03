@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Secrets and local config
+.env
+.env.local
+.claude/settings.local.json
+
+# Runtime data: never commit the shop's database or customer uploads
+server/data/
+server/uploads/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.log
