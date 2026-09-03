@@ -1,0 +1,22 @@
+{
+  "name": "ynr-server",
+  "version": "1.0.0",
+  "description": "YnR back end: catalogue, one-of-one holds, orders, Paystack checkout, admin",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node --no-warnings src/index.js",
+    "dev": "node --no-warnings --watch src/index.js",
+    "seed": "node --no-warnings seed.js",
+    "create-admin": "node --no-warnings create-admin.js",
+    "test": "node --no-warnings test/smoke.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^4.22.2",
+    "multer": "^2.3.0"
+  },
+  "private": true
+}

@@ -288,6 +288,35 @@
   .wa-float svg{width:28px; height:28px; fill:#fff;}
   .view{display:none;} .view.active{display:block;}
   .visually-hidden{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap;}
+
+  /* ---------- checkout ---------- */
+  .field select{width:100%; background:var(--void-2); border:none; border-bottom:1px solid var(--hairline-strong); color:var(--bone); font-family:var(--f-body); font-size:15px; padding:12px 2px;}
+  .field select:focus{border-color:var(--oxblood-bright);}
+  .field .hint{font-family:var(--f-mono); font-size:10.5px; color:var(--smoke-dark); margin-top:8px; letter-spacing:.04em;}
+  .checkout-wrap{display:grid; grid-template-columns:1.15fr .85fr; gap:70px; padding:40px 0 110px; align-items:start;}
+  @media(max-width:900px){ .checkout-wrap{grid-template-columns:1fr; gap:44px;} }
+  .field-row{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+  @media(max-width:560px){ .field-row{grid-template-columns:1fr; gap:0;} }
+  .summary{border:1px solid var(--hairline-strong); padding:30px; position:sticky; top:110px; background:var(--void-2);}
+  .summary h4{font-family:var(--f-display); font-size:22px; text-transform:uppercase; margin:0 0 22px; font-weight:800;}
+  .sum-line{display:flex; justify-content:space-between; gap:14px; padding:11px 0; font-size:13.5px; border-bottom:1px solid var(--hairline);}
+  .sum-line span:last-child{font-family:var(--f-mono); white-space:nowrap;}
+  .sum-total{display:flex; justify-content:space-between; padding:20px 0 0; font-family:var(--f-display); font-size:26px; font-weight:800; text-transform:uppercase;}
+  .pay-choice{display:flex; flex-direction:column; gap:12px; margin-top:26px;}
+  .pay-choice button{width:100%; justify-content:center;}
+  .notice{font-family:var(--f-mono); font-size:11.5px; line-height:1.7; padding:14px 16px; margin:18px 0; border-left:2px solid var(--oxblood-bright); background:rgba(168,24,29,.09); color:var(--bone-dim);}
+  .notice.err{border-color:var(--oxblood-bright); color:#ffb3b6;}
+  .notice.ok{border-color:#25D366; background:rgba(37,211,102,.09);}
+  .sold-badge{background:var(--void); color:var(--bone); border:1px solid var(--hairline-strong);}
+  .product-card.is-sold .product-media img{filter:grayscale(1) brightness(.55);}
+  .size-guide-link{background:none; border:none; font-family:var(--f-mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--oxblood-bright); text-decoration:underline; text-underline-offset:3px; padding:0;}
+  .skeleton{border:1px solid var(--hairline); background:linear-gradient(90deg,var(--ink) 25%,var(--void-2) 50%,var(--ink) 75%); background-size:200% 100%; animation:sk 1.3s infinite; aspect-ratio:4/5;}
+  @keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  @media (prefers-reduced-motion:reduce){ .skeleton{animation:none;} }
+  .load-msg{grid-column:1/-1; text-align:center; color:var(--smoke); font-family:var(--f-mono); font-size:12px; padding:40px 0;}
+  .ord-box{max-width:620px; margin:0 auto; padding:90px 0 120px; text-align:center;}
+  .ord-ref{font-family:var(--f-mono); font-size:23px; letter-spacing:.14em; color:var(--oxblood-bright); margin:22px 0;}
+  .ord-items{text-align:left; border:1px solid var(--hairline-strong); padding:24px; margin:30px 0;}
 </style>
 </head>
 <body>
@@ -532,7 +561,10 @@
         <p class="pdp-desc" id="pdpDesc"></p>
 
         <div class="option-block">
-          <div class="option-label">Size</div>
+          <div class="option-label" style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+            <span>Size</span>
+            <button type="button" class="size-guide-link" onclick="toggleSizeGuide(true)">Size guide</button>
+          </div>
           <div class="size-row" id="sizeRow"></div>
         </div>
 
@@ -572,6 +604,81 @@
       <h2 class="display" style="font-size:clamp(24px,3.6vw,36px); margin-top:12px;">You May Also Like</h2>
     </div>
     <div class="product-grid" id="relatedGrid" style="margin-bottom:110px;"></div>
+  </div>
+</main>
+
+<!-- ============ CHECKOUT VIEW ============ -->
+<main id="view-checkout" class="view">
+  <div class="wrap">
+    <div class="breadcrumb"><a href="#" data-view="home">Shop</a> / <span style="color:var(--bone-dim);">Checkout</span></div>
+    <div class="checkout-wrap">
+      <div>
+        <div class="eyebrow">Almost Yours</div>
+        <h1 class="display" style="font-size:clamp(34px,5vw,54px); margin:14px 0 10px;">Checkout</h1>
+        <p class="smoke-text" style="margin-bottom:36px;">Tell us where it's going. Nothing is charged until you choose how to pay.</p>
+
+        <div id="checkoutError" class="notice err" style="display:none;"></div>
+
+        <form id="checkoutForm" novalidate>
+          <input type="text" name="website" tabindex="-1" autocomplete="off" class="visually-hidden" aria-hidden="true">
+
+          <div class="field-row">
+            <div class="field"><label for="coName">Full name</label><input id="coName" required autocomplete="name" placeholder="Your full name"></div>
+            <div class="field"><label for="coPhone">Phone (WhatsApp)</label><input id="coPhone" required autocomplete="tel" inputmode="tel" placeholder="0803 123 4567"></div>
+          </div>
+          <div class="field"><label for="coEmail">Email</label><input id="coEmail" type="email" required autocomplete="email" placeholder="your@email.com"></div>
+
+          <div class="field">
+            <label for="coZone">Delivery area</label>
+            <select id="coZone" required></select>
+            <div class="hint" id="zoneHint"></div>
+          </div>
+
+          <div class="field"><label for="coAddress">Delivery address</label><input id="coAddress" autocomplete="street-address" placeholder="Street, house number, landmark"></div>
+          <div class="field-row">
+            <div class="field"><label for="coCity">City</label><input id="coCity" autocomplete="address-level2" placeholder="Abuja"></div>
+            <div class="field"><label for="coState">State</label><input id="coState" autocomplete="address-level1" placeholder="FCT"></div>
+          </div>
+          <div class="field"><label for="coNotes">Anything we should know? (optional)</label><textarea id="coNotes" rows="3" placeholder="Sizing worries, a deadline, how you want it painted..."></textarea></div>
+        </form>
+      </div>
+
+      <aside class="summary">
+        <h4>Your Order</h4>
+        <div id="coSummary"></div>
+        <div class="sum-total"><span>Total</span><span id="coTotal">₦0</span></div>
+
+        <div class="pay-choice">
+          <button class="btn-oxblood" id="payCardBtn" type="button">
+            Pay Now With Paystack
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+          </button>
+          <button class="btn-outline" id="payWaBtn" type="button">Confirm On WhatsApp Instead</button>
+        </div>
+
+        <div class="secure-note" style="margin-top:20px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="10" width="16" height="10" rx="1"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          Card payments are handled by Paystack. We never see your card details.
+        </div>
+      </aside>
+    </div>
+  </div>
+</main>
+
+<!-- ============ ORDER CONFIRMATION VIEW ============ -->
+<main id="view-order" class="view">
+  <div class="wrap">
+    <div class="ord-box">
+      <div class="eyebrow" style="justify-content:center;">Order Placed</div>
+      <h1 class="display" style="font-size:clamp(34px,5vw,52px); margin:16px 0 0;">We've Got It</h1>
+      <div class="ord-ref" id="ordRef">YNR-000000</div>
+      <p class="smoke-text" id="ordMsg">Keep this reference. We've sent it to your email too.</p>
+      <div class="ord-items" id="ordItems"></div>
+      <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap;">
+        <a class="btn-oxblood" id="ordWa" target="_blank" rel="noopener" href="#">Message Us On WhatsApp</a>
+        <button class="btn-outline" onclick="showView('home')">Back To The Shop</button>
+      </div>
+    </div>
   </div>
 </main>
 
@@ -635,212 +742,531 @@
   <div class="cart-items" id="cartItems"><div class="cart-empty">Your bag is empty. Add a piece to get started.</div></div>
   <div class="cart-foot">
     <div class="cart-subtotal"><span>Subtotal</span><span id="cartSubtotal">₦0</span></div>
-    <button class="btn-oxblood" onclick="checkoutViaWhatsApp()">
-      Checkout via WhatsApp
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.87.5 3.63 1.44 5.15L2 22l5.1-1.53a9.87 9.87 0 0 0 4.94 1.32h.01c5.46 0 9.91-4.45 9.91-9.91C21.96 6.45 17.5 2 12.04 2Z"/></svg>
+    <button class="btn-oxblood" onclick="goToCheckout()">
+      Checkout
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
     </button>
     <div class="secure-note">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="10" width="16" height="10" rx="1"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
-      We confirm your order and payment on WhatsApp — nothing is charged here
+      Pay by card, or confirm on WhatsApp — your choice at the next step
     </div>
   </div>
 </aside>
 
 <script>
-/* ---------------- product data (real pieces, real prices in NGN) ---------------- */
-const PRODUCTS = {
-  "out-of-this-world": {
-    name: "Out Of This World Tee", category: "Tees", price: 49999, img: "products/product-1-out-of-this-world-tee.jpg",
-    desc: "Navy oversized tee, hand-painted end to end — a UFO beaming down over a lone figure, with \"Out Of This World\" hand-lettered in ice-blue across the chest. No two brush strokes are the same, so this exact piece exists once.",
-    sizes: ["S","M","L","XL"]
-  },
-  "ynr-icon-hoodie": {
-    name: "YnR Icon Hoodie", category: "Hoodies", price: 75000, img: "products/product-2-ynr-icon-hoodie.jpg",
-    desc: "Heather grey oversized hoodie with the YnR circular emblem on the chest and contrast dark cuffs. Heavyweight fleece built for layering — the everyday piece with the YnR mark front and centre.",
-    sizes: ["M","L","XL","XXL"]
-  },
-  "alien-invasion": {
-    name: "Alien Invasion Tee", category: "Tees", price: 49999, img: "products/product-3-alien-invasion-tee.jpg",
-    desc: "White oversized tee with a full-chest \"Alien Invasion\" graphic — chaos, awakening, and a new world order, hand-detailed over a printed base. Every piece gets its own hand-finishing pass before it leaves the shop.",
-    sizes: ["S","M","L","XL"]
-  },
-  "aliens-are-coming": {
-    name: "Aliens Are Coming Long Sleeve", category: "Long Sleeves", price: 59999, img: "products/product-4-aliens-are-coming-longsleeve.jpg",
-    desc: "Charcoal layered-sleeve long sleeve with a distressed finish and a hand-signed \"Young and Reckless\" tag. Bold green \"The Aliens Are Coming\" graphic across the chest, finished with a small hand-drawn alien detail.",
-    sizes: ["M","L","XL"]
-  },
-  "reckless-yute": {
-    name: "Reckless Yute Limited Edition Tee", category: "Tees", price: 49999, img: "products/product-5-reckless-yute-tee.jpg",
-    desc: "Black oversized tee, custom \"Reckless Yute\" wordmark in red and white with an original character illustration across the chest. One of the more requested pieces — once it's gone, we repaint the next.",
-    sizes: ["S","M","L","XL"]
-  },
-  "young-reckless-jeans": {
-    name: "Young Reckless Hand-Painted Jeans", category: "Denim", price: 35000, img: "products/product-6-young-reckless-jeans.jpg",
-    desc: "Dark wash denim, hand-painted front and back with a falling angel figure and \"Young Reckless\" hand-lettered across the thigh. Every pair is painted individually, so the exact placement is never identical twice.",
-    sizes: ["30","32","34","36"]
-  }
-};
-const SHOP_ORDER = ["ynr-icon-hoodie","out-of-this-world","aliens-are-coming","alien-invasion","reckless-yute","young-reckless-jeans"];
-const NGN = n => '₦' + n.toLocaleString('en-NG');
+/* ==========================================================================
+   YnR storefront
+   Talks to the YnR API. Nothing about the catalogue is hardcoded here any
+   more: pieces, prices, stock status and delivery fees all come from the
+   server, so the shop can be run from the admin panel without touching code.
+   ========================================================================== */
+
+/* Point this at your API. Same-origin in production, localhost in dev. */
+const API_BASE =
+  window.YNR_API ||
+  (location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+    ? 'http://localhost:4000/api'
+    : '/api');
+
 const WA_NUMBER = "2349026947815";
+const NGN = n => '₦' + Number(n).toLocaleString('en-NG');
+const kobo = k => '₦' + Math.round(k / 100).toLocaleString('en-NG');
 
-function renderGrid(target, keys){
-  target.innerHTML = keys.map(key=>{
-    const p = PRODUCTS[key];
-    return `
-    <article class="product-card" onclick="openProduct('${key}')" tabindex="0" role="button" aria-label="View ${p.name}">
-      <div class="product-media">
-        <div class="one-tag">One Of One</div>
-        <img src="${p.img}" alt="${p.name}, hand-painted by YnR" loading="lazy">
-        <div class="quick-add" onclick="event.stopPropagation(); openProduct('${key}')">View &amp; Order</div>
-      </div>
-      <div class="product-info">
-        <div><h4>${p.name}</h4><div class="pmeta">${p.category}</div></div>
-        <div class="price">${NGN(p.price)}</div>
-      </div>
-    </article>`;
-  }).join('');
-}
-
-/* ---------------- product detail ---------------- */
+/* ---------------- state ---------------- */
+let PRODUCTS = {};       // slug -> product, filled from the API
+let SHOP_ORDER = [];
+let ZONES = [];
+let bag = [];
 let currentProduct = null;
 let selectedSize = null;
 
-function openProduct(key){
-  currentProduct = key;
-  const p = PRODUCTS[key];
-  selectedSize = p.sizes[0];
-
-  document.getElementById('pdpEyebrow').textContent = "Hand-Painted · " + p.category;
-  document.getElementById('pdpName').textContent = p.name;
-  document.getElementById('pdpCrumbName').textContent = p.name;
-  document.getElementById('pdpCategory').textContent = p.category;
-  document.getElementById('pdpPrice').textContent = NGN(p.price);
-  document.getElementById('pdpDesc').textContent = p.desc;
-  document.getElementById('pdpMainImg').src = p.img;
-  document.getElementById('pdpMainImg').alt = p.name;
-
-  document.getElementById('sizeRow').innerHTML = p.sizes.map(s=>
-    `<button class="size-chip ${s===selectedSize?'active':''}" onclick="selectSize('${s}',this)">${s}</button>`
-  ).join('');
-
-  const related = SHOP_ORDER.filter(k=>k!==key).slice(0,3);
-  renderGrid(document.getElementById('relatedGrid'), related);
-
-  showView('product');
-  window.scrollTo({top:0});
+/* ---------------- api helper ---------------- */
+async function api(method, path, body) {
+  const opts = { method, headers: {} };
+  if (body !== undefined) {
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  }
+  let res, json = null;
+  try {
+    res = await fetch(API_BASE + path, opts);
+  } catch (e) {
+    throw new Error("Can't reach the shop right now. Check your connection and try again.");
+  }
+  try { json = await res.json(); } catch (e) { /* non-JSON error page */ }
+  if (!res.ok) {
+    const err = new Error((json && json.error) || 'Something went wrong. Please try again.');
+    err.code = json && json.code;
+    throw err;
+  }
+  return json;
 }
-function selectSize(s, el){
+
+/* ---------------- bag persistence ----------------
+   The bag used to live in a plain variable, so a refresh emptied it.        */
+const BAG_KEY = 'ynr_bag_v1';
+function saveBag() {
+  try { localStorage.setItem(BAG_KEY, JSON.stringify(bag)); } catch (e) { /* private mode */ }
+}
+function loadBag() {
+  try {
+    const raw = localStorage.getItem(BAG_KEY);
+    bag = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(bag)) bag = [];
+  } catch (e) { bag = []; }
+}
+
+/* ---------------- catalogue ---------------- */
+function productCard(p) {
+  const sold = p.isSold;
+  const tag = sold ? 'Sold — Repaint' : (p.isReserved ? 'Reserved' : 'One Of One');
+  return `
+  <article class="product-card ${sold ? 'is-sold' : ''}" onclick="openProduct('${p.slug}')" tabindex="0" role="button"
+           aria-label="View ${escapeAttr(p.name)}" onkeydown="if(event.key==='Enter')openProduct('${p.slug}')">
+    <div class="product-media">
+      <div class="one-tag ${sold ? 'sold-badge' : ''}">${tag}</div>
+      <img src="${imgUrl(p.image)}" alt="${escapeAttr(p.name)}, hand-painted by YnR" loading="lazy">
+      <div class="quick-add" onclick="event.stopPropagation(); openProduct('${p.slug}')">
+        ${sold ? 'Ask For A Repaint' : 'View &amp; Order'}
+      </div>
+    </div>
+    <div class="product-info">
+      <div><h4>${escapeHtml(p.name)}</h4><div class="pmeta">${escapeHtml(p.category)}</div></div>
+      <div class="price">${escapeHtml(p.priceLabel)}</div>
+    </div>
+  </article>`;
+}
+
+function renderGrid(target, list) {
+  if (!target) return;
+  target.innerHTML = list.map(productCard).join('');
+}
+
+function imgUrl(u) {
+  if (!u) return '';
+  if (/^https?:\/\//.test(u)) return u;
+  return API_BASE.replace(/\/api$/, '') + u;
+}
+
+const escapeHtml = s => String(s == null ? '' : s)
+  .replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const escapeAttr = escapeHtml;
+
+async function loadCatalogue() {
+  const grid = document.getElementById('shopGrid');
+  if (grid) {
+    grid.innerHTML = Array.from({ length: 6 }, () => '<div class="skeleton"></div>').join('');
+  }
+  try {
+    const data = await api('GET', '/products');
+    PRODUCTS = {};
+    SHOP_ORDER = [];
+    data.products.forEach(p => { PRODUCTS[p.slug] = p; SHOP_ORDER.push(p.slug); });
+    renderGrid(grid, data.products);
+  } catch (e) {
+    if (grid) {
+      grid.innerHTML = `<div class="load-msg">${escapeHtml(e.message)}
+        <br><br><button class="btn-outline" onclick="loadCatalogue()">Try again</button></div>`;
+    }
+  }
+}
+
+async function loadZones() {
+  try {
+    const data = await api('GET', '/delivery-zones');
+    ZONES = data.zones;
+  } catch (e) { ZONES = []; }
+}
+
+/* ---------------- product detail ---------------- */
+async function openProduct(slug) {
+  showView('product');
+  window.scrollTo({ top: 0 });
+  try {
+    const data = await api('GET', '/products/' + encodeURIComponent(slug));
+    const p = data.product;
+    PRODUCTS[p.slug] = p;
+    currentProduct = p.slug;
+    selectedSize = (p.sizes && p.sizes[0]) || '';
+
+    document.getElementById('pdpEyebrow').textContent = 'Hand-Painted · ' + p.category;
+    document.getElementById('pdpName').textContent = p.name;
+    document.getElementById('pdpCrumbName').textContent = p.name;
+    document.getElementById('pdpCategory').textContent = p.category;
+    document.getElementById('pdpPrice').textContent = p.priceLabel;
+    document.getElementById('pdpDesc').textContent = p.description;
+    document.getElementById('pdpMainImg').src = imgUrl(p.image);
+    document.getElementById('pdpMainImg').alt = p.name;
+    document.getElementById('pdpOneTag').textContent = p.isSold ? 'Sold — Repaint Available' : 'One Of One';
+
+    document.getElementById('sizeRow').innerHTML = (p.sizes || []).map(s =>
+      `<button class="size-chip ${s === selectedSize ? 'active' : ''}" onclick="selectSize('${escapeAttr(s)}',this)">${escapeHtml(s)}</button>`
+    ).join('');
+
+    renderPdpActions(p);
+    renderGrid(document.getElementById('relatedGrid'), data.related);
+  } catch (e) {
+    document.getElementById('pdpName').textContent = 'Piece unavailable';
+    document.getElementById('pdpDesc').textContent = e.message;
+  }
+}
+
+/* A sold one-of-one stays on the site, but the action becomes a repaint
+   request rather than an add-to-bag that could never be fulfilled. */
+function renderPdpActions(p) {
+  const el = document.querySelector('.pdp-actions');
+  if (!el) return;
+  if (p.isSold) {
+    el.innerHTML = `
+      <button class="btn-oxblood" onclick="requestRepaint()">Request A Repaint</button>
+      <button class="btn-outline" onclick="orderThisNow()">Ask On WhatsApp</button>`;
+  } else {
+    el.innerHTML = `
+      <button class="btn-oxblood" onclick="addToBag()">
+        Add To Bag
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+      </button>
+      <button class="btn-outline" onclick="orderThisNow()">Order On WhatsApp</button>`;
+  }
+}
+
+function selectSize(s, el) {
   selectedSize = s;
-  el.parentElement.querySelectorAll('.size-chip').forEach(c=>c.classList.remove('active'));
+  el.parentElement.querySelectorAll('.size-chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
 }
-function toggleAcc(btn){
+
+function toggleAcc(btn) {
   const item = btn.closest('.accordion-item');
   const panel = item.querySelector('.accordion-panel');
   const isOpen = item.classList.contains('open');
-  item.parentElement.querySelectorAll('.accordion-item').forEach(i=>{
+  item.parentElement.querySelectorAll('.accordion-item').forEach(i => {
     i.classList.remove('open'); i.querySelector('.accordion-panel').style.maxHeight = null;
   });
-  if(!isOpen){ item.classList.add('open'); panel.style.maxHeight = panel.scrollHeight + 'px'; }
+  if (!isOpen) { item.classList.add('open'); panel.style.maxHeight = panel.scrollHeight + 'px'; }
 }
 
-/* ---------------- bag (leads to WhatsApp checkout) ---------------- */
-let bag = [];
-function addToBag(){
+/* ---------------- bag ---------------- */
+function addToBag() {
   const p = PRODUCTS[currentProduct];
-  bag.push({key: currentProduct, name: p.name, price: p.price, size: selectedSize, img: p.img});
+  if (!p) return;
+  if (bag.some(i => i.slug === p.slug)) {
+    toggleCart(true);
+    return;
+  }
+  bag.push({ slug: p.slug, name: p.name, priceKobo: p.priceKobo, size: selectedSize, img: p.image });
+  saveBag();
   renderCart();
   toggleCart(true);
 }
-function removeFromBag(idx){ bag.splice(idx,1); renderCart(); }
-function renderCart(){
-  document.getElementById('bagCount').textContent = bag.length;
-  document.getElementById('cartHeadTitle').textContent = `Your Bag (${bag.length})`;
+
+function removeFromBag(idx) { bag.splice(idx, 1); saveBag(); renderCart(); }
+
+function bagSubtotal() { return bag.reduce((s, i) => s + i.priceKobo, 0); }
+
+function renderCart() {
+  const count = document.getElementById('bagCount');
+  if (count) count.textContent = bag.length;
+  const title = document.getElementById('cartHeadTitle');
+  if (title) title.textContent = `Your Bag (${bag.length})`;
   const itemsEl = document.getElementById('cartItems');
-  if(bag.length===0){
+  if (!itemsEl) return;
+
+  if (bag.length === 0) {
     itemsEl.innerHTML = '<div class="cart-empty">Your bag is empty. Add a piece to get started.</div>';
   } else {
-    itemsEl.innerHTML = bag.map((item,idx)=>`
+    itemsEl.innerHTML = bag.map((item, idx) => `
       <div class="cart-line">
-        <div class="thumb"><img src="${item.img}" alt="${item.name}"></div>
+        <div class="thumb"><img src="${imgUrl(item.img)}" alt="${escapeAttr(item.name)}"></div>
         <div class="cl-info">
-          <h5>${item.name}</h5>
-          <span>Size ${item.size}</span>
+          <h5>${escapeHtml(item.name)}</h5>
+          <span>${item.size ? 'Size ' + escapeHtml(item.size) : ''}</span>
           <button class="cl-remove" onclick="removeFromBag(${idx})">Remove</button>
         </div>
-        <div class="cl-price">${NGN(item.price)}</div>
+        <div class="cl-price">${kobo(item.priceKobo)}</div>
       </div>`).join('');
   }
-  const subtotal = bag.reduce((sum,i)=>sum+i.price,0);
-  document.getElementById('cartSubtotal').textContent = NGN(subtotal);
+  const sub = document.getElementById('cartSubtotal');
+  if (sub) sub.textContent = kobo(bagSubtotal());
 }
-function checkoutViaWhatsApp(){
-  if(bag.length===0){ toggleCart(true); return; }
-  let msg = "Hi YnR, I'd like to order:\n\n";
-  bag.forEach(item=>{ msg += `• ${item.name} — Size ${item.size} — ${NGN(item.price)}\n`; });
-  const subtotal = bag.reduce((sum,i)=>sum+i.price,0);
-  msg += `\nSubtotal: ${NGN(subtotal)}\n(Delivery: ₦2,000 within Abuja, or please confirm my location)`;
-  window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
+
+/* The cart button now opens real checkout instead of jumping straight to a
+   WhatsApp message that was never recorded anywhere. */
+function goToCheckout() {
+  if (!bag.length) { toggleCart(true); return; }
+  toggleCart(false);
+  showView('checkout');
+  renderCheckout();
+  window.scrollTo({ top: 0 });
 }
-function orderThisNow(){
+
+/* Direct WhatsApp enquiry about one piece. Kept because it is how YnR
+   actually talks to customers, but it no longer pretends to be checkout. */
+function orderThisNow() {
   const p = PRODUCTS[currentProduct];
-  const msg = `Hi YnR, I'd like to order the ${p.name} — Size ${selectedSize} — ${NGN(p.price)}.`;
+  if (!p) return;
+  const msg = p.isSold
+    ? `Hi YnR, the ${p.name} is sold — could you repaint one for me?`
+    : `Hi YnR, I'd like to order the ${p.name}${selectedSize ? ' — Size ' + selectedSize : ''} — ${p.priceLabel}.`;
   window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
-/* ---------------- view switching ---------------- */
-function showView(name){
-  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-  document.getElementById('view-'+name).classList.add('active');
-  document.getElementById('navLinks').classList.remove('open');
-  window.scrollTo({top:0});
+async function requestRepaint() {
+  const p = PRODUCTS[currentProduct];
+  if (!p) return;
+  const name = prompt('Your name?');
+  if (!name) return;
+  const email = prompt('Your email?');
+  if (!email) return;
+  try {
+    await api('POST', '/repaint', { slug: p.slug, name, email, size: selectedSize, note: '' });
+    alert('Request received. We will be in touch about repainting this piece.');
+  } catch (e) { alert(e.message); }
 }
-function scrollToId(id){
+
+/* ---------------- checkout ---------------- */
+function renderCheckout() {
+  const sum = document.getElementById('coSummary');
+  sum.innerHTML = bag.map(i => `
+    <div class="sum-line">
+      <span>${escapeHtml(i.name)}${i.size ? ' · ' + escapeHtml(i.size) : ''}</span>
+      <span>${kobo(i.priceKobo)}</span>
+    </div>`).join('');
+
+  const zoneSel = document.getElementById('coZone');
+  zoneSel.innerHTML = '<option value="">Choose your area…</option>' +
+    ZONES.map(z => `<option value="${escapeAttr(z.code)}">${escapeHtml(z.label)} — ${escapeHtml(z.feeLabel)}</option>`).join('');
+  zoneSel.onchange = updateCheckoutTotals;
+  updateCheckoutTotals();
+}
+
+function selectedZone() {
+  const code = document.getElementById('coZone').value;
+  return ZONES.find(z => z.code === code) || null;
+}
+
+function updateCheckoutTotals() {
+  const z = selectedZone();
+  const sub = bagSubtotal();
+  const fee = z && !z.quoted ? z.feeKobo : 0;
+
+  // Rebuild the delivery + total lines.
+  const sum = document.getElementById('coSummary');
+  const existing = sum.querySelector('.sum-line.delivery');
+  if (existing) existing.remove();
+  const line = document.createElement('div');
+  line.className = 'sum-line delivery';
+  line.innerHTML = `<span>Delivery</span><span>${
+    !z ? '—' : (z.quoted ? 'Confirmed on WhatsApp' : kobo(z.feeKobo))
+  }</span>`;
+  sum.appendChild(line);
+
+  document.getElementById('coTotal').textContent = kobo(sub + fee);
+  document.getElementById('zoneHint').textContent = z ? z.note : '';
+
+  // Paying online needs a known total. A quoted zone has none yet, so that
+  // path is closed off rather than failing later at the payment step.
+  const payBtn = document.getElementById('payCardBtn');
+  const blocked = !z || z.quoted;
+  payBtn.disabled = blocked;
+  payBtn.style.opacity = blocked ? '.45' : '1';
+  payBtn.style.cursor = blocked ? 'not-allowed' : 'pointer';
+  payBtn.title = blocked
+    ? 'Delivery to this area is quoted by us on WhatsApp, so the total is not final yet.'
+    : '';
+}
+
+function collectCheckout() {
+  const v = id => (document.getElementById(id).value || '').trim();
+  return {
+    name: v('coName'), email: v('coEmail'), phone: v('coPhone'),
+    zone: v('coZone'), addressLine: v('coAddress'),
+    city: v('coCity'), state: v('coState'), notes: v('coNotes'),
+    website: document.querySelector('#checkoutForm [name="website"]').value,
+    items: bag.map(i => ({ slug: i.slug, size: i.size })),
+  };
+}
+
+function checkoutError(msg) {
+  const el = document.getElementById('checkoutError');
+  if (!msg) { el.style.display = 'none'; return; }
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function validateCheckout(d) {
+  if (!d.name) return 'Please enter your name.';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(d.email)) return 'Please enter a valid email address.';
+  if (d.phone.replace(/\D/g, '').length < 7) return 'Please enter a phone number we can reach you on.';
+  if (!d.zone) return 'Please choose your delivery area.';
+  if (!bag.length) return 'Your bag is empty.';
+  return null;
+}
+
+async function placeOrder(channel) {
+  checkoutError(null);
+  const d = collectCheckout();
+  const problem = validateCheckout(d);
+  if (problem) return checkoutError(problem);
+
+  const btn = document.getElementById(channel === 'paystack' ? 'payCardBtn' : 'payWaBtn');
+  const label = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = 'Placing your order…';
+
+  try {
+    const created = await api('POST', '/orders', { ...d, channel });
+    const order = created.order;
+
+    if (channel === 'paystack') {
+      const pay = await api('POST', '/payments/init', { reference: order.reference });
+      bag = []; saveBag(); renderCart();
+      window.location.href = pay.authorizationUrl;   // hand off to Paystack
+      return;
+    }
+
+    bag = []; saveBag(); renderCart();
+    showOrderPlaced(order, created.whatsappUrl);
+  } catch (e) {
+    // A one-of-one taken mid-checkout is the interesting failure, so say so
+    // plainly rather than showing a generic error.
+    if (e.code === 'held_by_other' || e.code === 'already_sold') {
+      checkoutError(e.message + ' Refresh the shop to see what is still available.');
+    } else {
+      checkoutError(e.message);
+    }
+    btn.disabled = false;
+    btn.innerHTML = label;
+  }
+}
+
+function showOrderPlaced(order, waUrl) {
+  document.getElementById('ordRef').textContent = order.reference;
+  document.getElementById('ordMsg').textContent =
+    'Keep this reference. We have emailed it to you, and we will confirm everything on WhatsApp before anything ships.';
+  document.getElementById('ordItems').innerHTML =
+    order.items.map(i => `<div class="sum-line"><span>${escapeHtml(i.name)}${i.size ? ' · ' + escapeHtml(i.size) : ''}</span><span>${escapeHtml(i.priceLabel)}</span></div>`).join('') +
+    `<div class="sum-line"><span>Delivery</span><span>${escapeHtml(order.delivery.feeLabel)}</span></div>` +
+    `<div class="sum-total" style="font-size:20px;"><span>Total</span><span>${escapeHtml(order.totalLabel)}</span></div>`;
+  document.getElementById('ordWa').href = waUrl || `https://wa.me/${WA_NUMBER}`;
+  showView('order');
+  window.scrollTo({ top: 0 });
+}
+
+/* ---------------- view switching ---------------- */
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const el = document.getElementById('view-' + name);
+  if (el) el.classList.add('active');
+  document.getElementById('navLinks').classList.remove('open');
+  window.scrollTo({ top: 0 });
+}
+
+function scrollToId(id) {
   showView('home');
-  requestAnimationFrame(()=>{
+  requestAnimationFrame(() => {
     const el = document.getElementById(id);
-    if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 }
-document.querySelectorAll('[data-view]').forEach(el=>{
-  el.addEventListener('click', (e)=>{
+
+document.querySelectorAll('[data-view]').forEach(el => {
+  el.addEventListener('click', (e) => {
     e.preventDefault();
     const view = el.dataset.view;
     const scrollId = el.dataset.scroll;
-    if(scrollId){ scrollToId(scrollId); } else { showView(view); }
+    if (scrollId) { scrollToId(scrollId); } else { showView(view); }
   });
 });
-document.getElementById('mobileToggle').addEventListener('click', ()=>{
+document.getElementById('mobileToggle').addEventListener('click', () => {
   document.getElementById('navLinks').classList.toggle('open');
 });
 
 /* ---------------- modal / cart controls ---------------- */
-function toggleCart(open){
+function toggleCart(open) {
   document.getElementById('cartDrawer').classList.toggle('open', open);
   document.getElementById('cartOverlay').classList.toggle('open', open);
 }
-function toggleSizeGuide(open){ document.getElementById('sizeModal').classList.toggle('open', open); }
-document.getElementById('sizeModal').addEventListener('click', (e)=>{ if(e.target.id==='sizeModal') toggleSizeGuide(false); });
+function toggleSizeGuide(open) { document.getElementById('sizeModal').classList.toggle('open', open); }
+document.getElementById('sizeModal').addEventListener('click', (e) => { if (e.target.id === 'sizeModal') toggleSizeGuide(false); });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { toggleSizeGuide(false); toggleCart(false); }
+});
 
-/* ---------------- forms ---------------- */
-function handleSignup(e){
+/* ---------------- forms ----------------
+   These two used to fake success and throw the data away. They now post to
+   the API and report what actually happened.                                */
+function formNotice(form, msg, ok) {
+  let el = form.querySelector('.notice');
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'notice';
+    form.appendChild(el);
+  }
+  el.className = 'notice ' + (ok ? 'ok' : 'err');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+async function handleSignup(e) {
   e.preventDefault();
-  document.getElementById('signupForm').style.display='none';
-  document.getElementById('signupSuccess').style.display='block';
+  const form = document.getElementById('signupForm');
+  const btn = form.querySelector('button');
+  const email = document.getElementById('signupEmail').value.trim();
+  btn.disabled = true;
+  const was = btn.textContent;
+  btn.textContent = '…';
+  try {
+    const r = await api('POST', '/newsletter', { email });
+    form.style.display = 'none';
+    const okEl = document.getElementById('signupSuccess');
+    okEl.textContent = r.message || 'Check your email to confirm.';
+    okEl.style.display = 'block';
+  } catch (ex) {
+    formNotice(form.parentElement, ex.message, false);
+    btn.disabled = false;
+    btn.textContent = was;
+  }
   return false;
 }
-function handleContact(e){
+
+async function handleContact(e) {
   e.preventDefault();
-  document.getElementById('contactForm').querySelectorAll('input,textarea,button').forEach(el=>el.style.display='none');
-  document.getElementById('contactSuccess').style.display='block';
+  const form = document.getElementById('contactForm');
+  const btn = form.querySelector('button[type="submit"]');
+  const payload = {
+    name: document.getElementById('cName').value.trim(),
+    email: document.getElementById('cEmail').value.trim(),
+    subject: document.getElementById('cSubject').value.trim(),
+    message: document.getElementById('cMessage').value.trim(),
+  };
+  btn.disabled = true;
+  const was = btn.innerHTML;
+  btn.innerHTML = 'Sending…';
+  try {
+    await api('POST', '/contact', payload);
+    form.querySelectorAll('.field, button[type="submit"]').forEach(el => el.style.display = 'none');
+    const okEl = document.getElementById('contactSuccess');
+    okEl.style.display = 'block';
+  } catch (ex) {
+    formNotice(form, ex.message, false);
+    btn.disabled = false;
+    btn.innerHTML = was;
+  }
   return false;
 }
 
 /* ---------------- init ---------------- */
-renderGrid(document.getElementById('shopGrid'), SHOP_ORDER);
+document.getElementById('payCardBtn').addEventListener('click', () => placeOrder('paystack'));
+document.getElementById('payWaBtn').addEventListener('click', () => placeOrder('whatsapp'));
+
+loadBag();
 renderCart();
 showView('home');
+loadCatalogue();
+loadZones();
+
 </script>
 
 </body>

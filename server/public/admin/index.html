@@ -1,0 +1,527 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>YnR Admin</title>
+<style>
+  :root{
+    --void:#0a0a0a; --panel:#121212; --panel-2:#181818; --ink:#161616;
+    --bone:#f2efe9; --bone-dim:#cfcbc3; --smoke:#8f8b84;
+    --ox:#7c1015; --ox-bright:#a8181d;
+    --line:rgba(242,239,233,.12); --line-2:rgba(242,239,233,.22);
+    --good:#1f7a4d; --warn:#8a6d1f;
+    --f:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  body{margin:0;background:var(--void);color:var(--bone);font-family:var(--f);
+       -webkit-font-smoothing:antialiased;font-size:15px;line-height:1.5}
+  a{color:inherit}
+  button,input,select,textarea{font:inherit;color:inherit}
+  :focus-visible{outline:2px solid var(--ox-bright);outline-offset:2px}
+  .hide{display:none !important}
+
+  /* ---------- shell ---------- */
+  header{position:sticky;top:0;z-index:40;background:rgba(10,10,10,.94);
+         backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .bar{display:flex;align-items:center;gap:16px;padding:12px 18px;max-width:1240px;margin:0 auto}
+  .logo{font-weight:800;font-size:20px;letter-spacing:-.02em}
+  .logo span{color:var(--ox-bright)}
+  .tag{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+       color:var(--smoke);border:1px solid var(--line);padding:3px 8px}
+  .spacer{flex:1}
+  nav{display:flex;gap:2px;padding:0 18px 0;max-width:1240px;margin:0 auto;overflow-x:auto}
+  nav button{background:none;border:0;border-bottom:2px solid transparent;color:var(--smoke);
+    padding:10px 14px;cursor:pointer;font-size:13px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+  nav button[aria-selected="true"]{color:var(--bone);border-bottom-color:var(--ox-bright)}
+  main{max-width:1240px;margin:0 auto;padding:22px 18px 90px}
+
+  /* ---------- bits ---------- */
+  .btn{background:var(--bone);color:var(--void);border:0;padding:10px 16px;cursor:pointer;
+    font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+  .btn:hover{background:#fff}
+  .btn.ox{background:var(--ox);color:var(--bone)} .btn.ox:hover{background:var(--ox-bright)}
+  .btn.ghost{background:none;border:1px solid var(--line-2);color:var(--bone)}
+  .btn.ghost:hover{border-color:var(--bone)}
+  .btn.sm{padding:7px 11px;font-size:11px}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+
+  label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.16em;
+        text-transform:uppercase;color:var(--smoke);margin:0 0 6px}
+  input,select,textarea{width:100%;background:var(--panel-2);border:1px solid var(--line);
+    color:var(--bone);padding:10px 12px;font-size:14px}
+  input:focus,select:focus,textarea:focus{border-color:var(--line-2);outline:none}
+  textarea{resize:vertical;min-height:80px}
+  .field{margin-bottom:14px}
+  .row{display:grid;gap:12px}
+  @media(min-width:640px){.row.two{grid-template-columns:1fr 1fr}.row.three{grid-template-columns:repeat(3,1fr)}}
+
+  .card{background:var(--panel);border:1px solid var(--line);padding:16px}
+  .grid{display:grid;gap:12px}
+  @media(min-width:560px){.grid.g2{grid-template-columns:repeat(2,1fr)}}
+  @media(min-width:900px){.grid.g4{grid-template-columns:repeat(4,1fr)}
+                          .grid.g3{grid-template-columns:repeat(3,1fr)}}
+
+  .stat b{display:block;font-size:28px;letter-spacing:-.02em;margin-bottom:2px}
+  .stat span{font-family:var(--mono);font-size:10px;letter-spacing:.16em;
+             text-transform:uppercase;color:var(--smoke)}
+
+  .pill{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;
+        text-transform:uppercase;padding:3px 8px;border:1px solid var(--line-2)}
+  .pill.available{color:#7fd1a3;border-color:rgba(127,209,163,.4)}
+  .pill.held{color:#e0c070;border-color:rgba(224,192,112,.4)}
+  .pill.sold,.pill.repaint_only{color:#ff8a8f;border-color:rgba(255,138,143,.4)}
+  .pill.paid{color:#7fd1a3;border-color:rgba(127,209,163,.4)}
+  .pill.unpaid{color:var(--smoke)}
+  .pill.pending{color:#e0c070;border-color:rgba(224,192,112,.4)}
+
+  .thumb{width:100%;aspect-ratio:1;object-fit:cover;background:var(--panel-2);display:block}
+  .muted{color:var(--smoke)}
+  .mono{font-family:var(--mono)}
+  h2{font-size:20px;margin:26px 0 12px;letter-spacing:-.01em}
+  h2:first-child{margin-top:0}
+  .empty{color:var(--smoke);padding:26px;text-align:center;border:1px dashed var(--line)}
+
+  /* ---------- login ---------- */
+  #login{min-height:100vh;display:grid;place-items:center;padding:24px}
+  #login .box{width:100%;max-width:360px}
+
+  /* ---------- toast ---------- */
+  #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(140%);
+    background:var(--bone);color:var(--void);padding:12px 20px;font-size:13px;font-weight:600;
+    z-index:100;transition:transform .3s cubic-bezier(.16,.8,.24,1);max-width:90vw}
+  #toast.show{transform:translateX(-50%) translateY(0)}
+  #toast.bad{background:var(--ox-bright);color:var(--bone)}
+
+  /* ---------- modal ---------- */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:60;display:none;
+    padding:20px;overflow-y:auto}
+  .overlay.open{display:block}
+  .modal{background:var(--panel);border:1px solid var(--line);max-width:620px;margin:30px auto;padding:20px}
+  .modal h3{margin:0 0 16px;font-size:18px}
+  .modal-foot{display:flex;gap:10px;justify-content:flex-end;margin-top:18px}
+
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+     text-transform:uppercase;color:var(--smoke);padding:8px;border-bottom:1px solid var(--line)}
+  td{padding:10px 8px;border-bottom:1px solid var(--line)}
+  .scroll{overflow-x:auto}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="login">
+  <div class="box">
+    <div class="logo" style="font-size:30px;margin-bottom:6px">Yn<span>R</span></div>
+    <p class="muted" style="margin:0 0 22px;font-size:14px">Shop admin</p>
+    <form id="loginForm" class="card">
+      <div class="field"><label for="le">Email</label><input id="le" type="email" required autocomplete="username"></div>
+      <div class="field"><label for="lp">Password</label><input id="lp" type="password" required autocomplete="current-password"></div>
+      <button class="btn ox" style="width:100%" type="submit">Sign in</button>
+      <p id="loginErr" class="hide" style="color:#ff8a8f;font-size:13px;margin:12px 0 0"></p>
+    </form>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" class="hide">
+  <header>
+    <div class="bar">
+      <div class="logo">Yn<span>R</span></div>
+      <span class="tag">Admin</span>
+      <div class="spacer"></div>
+      <span id="who" class="muted" style="font-size:13px"></span>
+      <button class="btn ghost sm" id="logout">Sign out</button>
+    </div>
+    <nav role="tablist">
+      <button role="tab" data-tab="dash" aria-selected="true">Dashboard</button>
+      <button role="tab" data-tab="pieces" aria-selected="false">Pieces</button>
+      <button role="tab" data-tab="orders" aria-selected="false">Orders</button>
+      <button role="tab" data-tab="inbox" aria-selected="false">Inbox</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="tab-dash"></section>
+
+    <section id="tab-pieces" class="hide">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <h2 style="margin:0">Pieces</h2><div class="spacer" style="flex:1"></div>
+        <button class="btn ox sm" id="newPiece">Add a piece</button>
+      </div>
+      <div id="piecesList" class="grid g3"></div>
+    </section>
+
+    <section id="tab-orders" class="hide">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+        <h2 style="margin:0">Orders</h2><div class="spacer" style="flex:1"></div>
+        <select id="orderFilter" style="width:auto">
+          <option value="">All</option>
+          <option value="pending_confirmation">Awaiting confirmation</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="paid">Paid</option>
+          <option value="in_production">Being painted</option>
+          <option value="shipped">Shipped</option>
+          <option value="delivered">Delivered</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+      <div id="ordersList" class="grid"></div>
+    </section>
+
+    <section id="tab-inbox" class="hide">
+      <h2>Messages</h2><div id="msgList" class="grid"></div>
+      <h2>Repaint requests</h2><div id="repaintList" class="grid"></div>
+      <h2>Subscribers</h2><div id="subsList" class="scroll"></div>
+    </section>
+  </main>
+</div>
+
+<!-- ============ PIECE EDITOR ============ -->
+<div class="overlay" id="pieceOverlay">
+  <div class="modal">
+    <h3 id="pieceTitle">Edit piece</h3>
+    <form id="pieceForm">
+      <input type="hidden" id="pId">
+      <div class="field"><label for="pName">Name</label><input id="pName" required></div>
+      <div class="row two">
+        <div class="field"><label for="pPrice">Price (₦)</label><input id="pPrice" type="number" min="0" step="1" required></div>
+        <div class="field"><label for="pCat">Category</label><select id="pCat"></select></div>
+      </div>
+      <div class="row two">
+        <div class="field"><label for="pSizes">Sizes (comma separated)</label><input id="pSizes" placeholder="S, M, L, XL"></div>
+        <div class="field"><label for="pStatus">Status</label>
+          <select id="pStatus">
+            <option value="available">Available</option>
+            <option value="sold">Sold</option>
+            <option value="repaint_only">Repaint only</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label for="pDesc">Description</label><textarea id="pDesc" rows="4"></textarea></div>
+      <div class="field" id="pImagesWrap">
+        <label>Photographs</label>
+        <div id="pImages" class="grid g2" style="margin-bottom:10px"></div>
+        <input type="file" id="pFiles" accept="image/*" multiple>
+        <p class="muted" style="font-size:12px;margin:6px 0 0">JPG, PNG, WebP or AVIF. Up to 6MB each.</p>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn ghost" id="pCancel">Cancel</button>
+        <button type="submit" class="btn ox">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const esc = (s) => String(s==null?'':s).replace(/[&<>"']/g, c => (
+  {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const naira = (kobo) => '₦' + (kobo/100).toLocaleString('en-NG');
+const when = (ms) => new Date(ms).toLocaleString('en-NG',{dateStyle:'medium',timeStyle:'short'});
+
+let toastTimer;
+function toast(msg, bad){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.toggle('bad', !!bad);
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 3200);
+}
+
+async function api(method, path, body, isForm){
+  const opts = { method, credentials:'same-origin' };
+  if (body !== undefined){
+    if (isForm) opts.body = body;
+    else { opts.headers = {'Content-Type':'application/json'}; opts.body = JSON.stringify(body); }
+  }
+  const res = await fetch('/api' + path, opts);
+  let json = null;
+  try { json = await res.json(); } catch {}
+  if (res.status === 401 && !path.startsWith('/admin/login')) { showLogin(); throw new Error('Session expired'); }
+  if (!res.ok) throw new Error((json && json.error) || ('Request failed (' + res.status + ')'));
+  return json;
+}
+
+let CATEGORIES = [];
+
+/* ---------------- auth ---------------- */
+function showLogin(){ $('#login').classList.remove('hide'); $('#app').classList.add('hide'); }
+function showApp(admin){
+  $('#login').classList.add('hide'); $('#app').classList.remove('hide');
+  $('#who').textContent = admin.email;
+  loadAll();
+}
+
+$('#loginForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const err = $('#loginErr'); err.classList.add('hide');
+  try {
+    const r = await api('POST','/admin/login',{ email:$('#le').value, password:$('#lp').value });
+    $('#lp').value = '';
+    showApp(r.admin);
+  } catch (ex) { err.textContent = ex.message; err.classList.remove('hide'); }
+});
+
+$('#logout').addEventListener('click', async ()=>{
+  try { await api('POST','/admin/logout'); } catch {}
+  showLogin();
+});
+
+/* ---------------- tabs ---------------- */
+$$('nav button').forEach(b => b.addEventListener('click', ()=>{
+  $$('nav button').forEach(x => x.setAttribute('aria-selected', String(x===b)));
+  ['dash','pieces','orders','inbox'].forEach(t =>
+    $('#tab-'+t).classList.toggle('hide', t !== b.dataset.tab));
+}));
+
+/* ---------------- dashboard ---------------- */
+async function loadDash(){
+  const { stats: s } = await api('GET','/admin/stats');
+  const tile = (v,l) => `<div class="card stat"><b>${v}</b><span>${l}</span></div>`;
+  $('#tab-dash').innerHTML = `
+    <h2>Today</h2>
+    <div class="grid g4">
+      ${tile(s.awaiting,'Awaiting confirmation')}
+      ${tile(s.paidOrders,'Paid orders')}
+      ${tile(s.revenueLabel,'Revenue taken')}
+      ${tile(s.unreadMessages,'Unread messages')}
+    </div>
+    <h2>Stock</h2>
+    <div class="grid g4">
+      ${tile(s.available,'Available')}
+      ${tile(s.held,'Reserved right now')}
+      ${tile(s.sold,'Sold')}
+      ${tile(s.repaints,'Repaint requests')}
+    </div>
+    <h2>List</h2>
+    <div class="grid g2">
+      ${tile(s.subscribers,'Confirmed subscribers')}
+      ${tile(s.orders,'Orders all time')}
+    </div>`;
+}
+
+/* ---------------- pieces ---------------- */
+async function loadPieces(){
+  const { products } = await api('GET','/admin/products');
+  const el = $('#piecesList');
+  if (!products.length){ el.innerHTML = '<div class="empty">No pieces yet.</div>'; return; }
+  el.innerHTML = products.map(p => `
+    <div class="card" style="padding:0;overflow:hidden">
+      <img class="thumb" src="${p.images[0] ? esc(p.images[0].url) : ''}" alt="${esc(p.name)}"
+           onerror="this.style.opacity=.15">
+      <div style="padding:13px">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:start">
+          <strong style="font-size:14px;line-height:1.3">${esc(p.name)}</strong>
+          <span class="pill ${esc(p.status)}">${esc(p.status.replace('_',' '))}</span>
+        </div>
+        <p class="muted mono" style="font-size:12px;margin:6px 0 12px">
+          ${esc(p.priceLabel)} · ${esc(p.category||'no category')}${p.published?'':' · hidden'}</p>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn ghost sm" data-edit="${p.id}">Edit</button>
+          ${p.status === 'available'
+            ? `<button class="btn sm" data-sold="${p.id}">Mark sold</button>`
+            : `<button class="btn sm" data-avail="${p.id}">Mark available</button>`}
+        </div>
+      </div>
+    </div>`).join('');
+
+  $$('[data-edit]', el).forEach(b => b.addEventListener('click',
+    () => openPiece(products.find(p => p.id === b.dataset.edit))));
+  $$('[data-sold]', el).forEach(b => b.addEventListener('click', () => setStatus(b.dataset.sold,'sold')));
+  $$('[data-avail]', el).forEach(b => b.addEventListener('click', () => setStatus(b.dataset.avail,'available')));
+}
+
+async function setStatus(id, status){
+  try { await api('POST', `/admin/products/${id}/status`, { status });
+    toast(status === 'sold' ? 'Marked sold' : 'Back in the shop');
+    loadPieces(); loadDash();
+  } catch (e) { toast(e.message, true); }
+}
+
+function openPiece(p){
+  $('#pieceTitle').textContent = p ? 'Edit piece' : 'Add a piece';
+  $('#pId').value = p ? p.id : '';
+  $('#pName').value = p ? p.name : '';
+  $('#pPrice').value = p ? p.price : '';
+  $('#pSizes').value = p ? p.sizes.join(', ') : '';
+  $('#pDesc').value = p ? p.description : '';
+  $('#pStatus').value = p ? (p.status === 'held' ? 'available' : p.status) : 'available';
+  $('#pCat').innerHTML = '<option value="">No category</option>' +
+    CATEGORIES.map(c => `<option value="${esc(c.id)}"${p && p.categoryId===c.id?' selected':''}>${esc(c.name)}</option>`).join('');
+  $('#pFiles').value = '';
+
+  // Photos can only be attached once the piece exists and has an id.
+  $('#pImagesWrap').classList.toggle('hide', !p);
+  $('#pImages').innerHTML = p ? p.images.map(im => `
+    <div style="position:relative">
+      <img class="thumb" src="${esc(im.url)}" alt="">
+      <button type="button" class="btn sm" data-img="${im.id}"
+        style="position:absolute;top:6px;right:6px;background:var(--ox);color:var(--bone)">Remove</button>
+    </div>`).join('') : '';
+  $$('[data-img]', $('#pImages')).forEach(b => b.addEventListener('click', async ()=>{
+    if (!confirm('Remove this photograph?')) return;
+    try { await api('DELETE', '/admin/images/' + b.dataset.img); toast('Photo removed');
+      const fresh = (await api('GET','/admin/products')).products.find(x => x.id === $('#pId').value);
+      openPiece(fresh); loadPieces();
+    } catch (e) { toast(e.message, true); }
+  }));
+
+  $('#pieceOverlay').classList.add('open');
+}
+function closePiece(){ $('#pieceOverlay').classList.remove('open'); }
+$('#pCancel').addEventListener('click', closePiece);
+$('#newPiece').addEventListener('click', ()=>openPiece(null));
+$('#pieceOverlay').addEventListener('click', (e)=>{ if(e.target.id==='pieceOverlay') closePiece(); });
+
+$('#pieceForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const id = $('#pId').value;
+  const payload = {
+    name: $('#pName').value,
+    price: Number($('#pPrice').value),
+    categoryId: $('#pCat').value || null,
+    sizes: $('#pSizes').value,
+    description: $('#pDesc').value,
+    status: $('#pStatus').value,
+  };
+  try {
+    const saved = id ? (await api('PATCH','/admin/products/'+id, payload), {id})
+                     : await api('POST','/admin/products', payload);
+    const files = $('#pFiles').files;
+    if (files && files.length){
+      const fd = new FormData();
+      for (const f of files) fd.append('images', f);
+      await api('POST', `/admin/products/${id || saved.id}/images`, fd, true);
+    }
+    toast('Saved');
+    closePiece(); loadPieces(); loadDash();
+  } catch (ex) { toast(ex.message, true); }
+});
+
+/* ---------------- orders ---------------- */
+const ORDER_STEPS = ['pending_confirmation','confirmed','paid','in_production','shipped','delivered','cancelled'];
+const STEP_LABEL = {pending_confirmation:'Awaiting confirmation',confirmed:'Confirmed',paid:'Paid',
+  in_production:'Being painted',shipped:'Shipped',delivered:'Delivered',cancelled:'Cancelled',draft:'Draft'};
+
+async function loadOrders(){
+  const f = $('#orderFilter').value;
+  const { orders } = await api('GET','/admin/orders' + (f ? '?status='+encodeURIComponent(f) : ''));
+  const el = $('#ordersList');
+  if (!orders.length){ el.innerHTML = '<div class="empty">No orders here yet.</div>'; return; }
+  el.innerHTML = orders.map(o => `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:start">
+        <div>
+          <strong class="mono">${esc(o.reference)}</strong>
+          <span class="pill ${esc(o.paymentStatus)}" style="margin-left:8px">${esc(o.paymentStatus)}</span>
+          <div class="muted" style="font-size:13px;margin-top:4px">
+            ${esc(o.name)} · ${esc(o.phone)} · ${esc(o.email)}</div>
+          ${o.address ? `<div class="muted" style="font-size:13px">${esc(o.address)}</div>` : ''}
+          ${o.notes ? `<div class="muted" style="font-size:13px;font-style:italic">“${esc(o.notes)}”</div>` : ''}
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:19px;font-weight:700">${esc(o.totalLabel)}</div>
+          <div class="muted mono" style="font-size:11px">${esc(o.subtotalLabel)} + ${esc(o.deliveryLabel)}</div>
+          <div class="muted mono" style="font-size:11px">${when(o.createdAt)}</div>
+        </div>
+      </div>
+      <div style="margin:12px 0;padding:10px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+        ${o.items.map(i => `<div style="display:flex;justify-content:space-between;font-size:14px;padding:2px 0">
+          <span>${esc(i.name)}${i.size?' · '+esc(i.size):''}</span><span class="mono">${esc(i.priceLabel)}</span></div>`).join('')}
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <select data-status="${o.id}" style="width:auto">
+          ${ORDER_STEPS.map(s=>`<option value="${s}"${s===o.status?' selected':''}>${STEP_LABEL[s]}</option>`).join('')}
+        </select>
+        <a class="btn ghost sm" target="_blank" rel="noopener"
+           href="https://wa.me/${esc((o.phone||'').replace(/\D/g,'').replace(/^0/,'234'))}">WhatsApp</a>
+        ${o.deliveryLabel === 'TBC' ? `<button class="btn ghost sm" data-fee="${o.id}">Set delivery fee</button>` : ''}
+        ${o.paymentStatus !== 'paid' ? `<button class="btn ghost sm" data-paid="${o.id}">Mark paid</button>` : ''}
+      </div>
+    </div>`).join('');
+
+  $$('[data-status]', el).forEach(s => s.addEventListener('change', async ()=>{
+    try { await api('PATCH','/admin/orders/'+s.dataset.status,{status:s.value});
+      toast('Order updated'); loadDash(); } catch(e){ toast(e.message,true); }
+  }));
+  $$('[data-fee]', el).forEach(b => b.addEventListener('click', async ()=>{
+    const v = prompt('Delivery fee in naira?');
+    if (v === null) return;
+    try { await api('PATCH','/admin/orders/'+b.dataset.fee,{deliveryFee:Number(v)||0});
+      toast('Delivery fee set'); loadOrders(); } catch(e){ toast(e.message,true); }
+  }));
+  $$('[data-paid]', el).forEach(b => b.addEventListener('click', async ()=>{
+    if (!confirm('Mark this order as paid? Use this for bank transfers you have confirmed yourself.')) return;
+    try { await api('PATCH','/admin/orders/'+b.dataset.paid,{paymentStatus:'paid'});
+      toast('Marked paid'); loadOrders(); loadDash(); } catch(e){ toast(e.message,true); }
+  }));
+}
+$('#orderFilter').addEventListener('change', loadOrders);
+
+/* ---------------- inbox ---------------- */
+async function loadInbox(){
+  const [{messages},{repaints},{subscribers}] = await Promise.all([
+    api('GET','/admin/messages'), api('GET','/admin/repaints'), api('GET','/admin/subscribers')]);
+
+  $('#msgList').innerHTML = messages.length ? messages.map(m => `
+    <div class="card" style="${m.handled?'opacity:.55':''}">
+      <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <strong>${esc(m.subject)}</strong>
+        <span class="muted mono" style="font-size:11px">${when(m.created_at)}</span>
+      </div>
+      <div class="muted" style="font-size:13px;margin:4px 0 8px">${esc(m.name)} · ${esc(m.email)}</div>
+      <p style="margin:0 0 10px;white-space:pre-wrap">${esc(m.message)}</p>
+      <div style="display:flex;gap:8px">
+        <a class="btn ghost sm" href="mailto:${esc(m.email)}?subject=Re: ${encodeURIComponent(m.subject)}">Reply</a>
+        ${m.handled?'':`<button class="btn ghost sm" data-done="${m.id}">Mark handled</button>`}
+      </div>
+    </div>`).join('') : '<div class="empty">No messages.</div>';
+
+  $$('[data-done]', $('#msgList')).forEach(b => b.addEventListener('click', async ()=>{
+    await api('POST',`/admin/messages/${b.dataset.done}/handled`); toast('Marked handled'); loadInbox(); loadDash();
+  }));
+
+  $('#repaintList').innerHTML = repaints.length ? repaints.map(r => `
+    <div class="card">
+      <strong>${esc(r.product_name||'Unknown piece')}</strong>
+      <div class="muted" style="font-size:13px;margin:4px 0">${esc(r.name)} · ${esc(r.email)} ${r.phone?'· '+esc(r.phone):''}</div>
+      ${r.note?`<p style="margin:6px 0 0">${esc(r.note)}</p>`:''}
+    </div>`).join('') : '<div class="empty">No repaint requests.</div>';
+
+  $('#subsList').innerHTML = subscribers.length ? `<table><thead><tr><th>Email</th><th>Status</th><th>Joined</th></tr></thead>
+    <tbody>${subscribers.map(s=>`<tr><td>${esc(s.email)}</td>
+      <td><span class="pill ${s.status==='confirmed'?'available':'unpaid'}">${esc(s.status)}</span></td>
+      <td class="muted mono" style="font-size:12px">${when(s.created_at)}</td></tr>`).join('')}</tbody></table>`
+    : '<div class="empty">No subscribers yet.</div>';
+}
+
+/* ---------------- boot ---------------- */
+async function loadAll(){
+  try {
+    CATEGORIES = (await api('GET','/admin/products')) && [];
+    const cats = await fetch('/api/categories').then(r=>r.json());
+    // The admin editor needs category ids, which the public route does not expose.
+    const prods = await api('GET','/admin/products');
+    const seen = new Map();
+    prods.products.forEach(p => { if (p.categoryId && !seen.has(p.categoryId)) seen.set(p.categoryId, p.category); });
+    CATEGORIES = [...seen].map(([id,name]) => ({id,name}));
+    if (!CATEGORIES.length && cats.categories) CATEGORIES = cats.categories.map(c=>({id:'',name:c.name}));
+    await Promise.all([loadDash(), loadPieces(), loadOrders(), loadInbox()]);
+  } catch (e) { toast(e.message, true); }
+}
+
+(async ()=>{
+  try { const me = await api('GET','/admin/me'); showApp(me.admin); }
+  catch { showLogin(); }
+})();
+</script>
+</body>
+</html>
