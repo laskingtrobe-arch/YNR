@@ -1,0 +1,64 @@
+# One-service deployment: the API, the admin panel and the storefront all
+# served from a single origin, so there is no CORS and no second host.
+#
+# The disk matters. Without it the SQLite database and every uploaded product
+# photo live on an ephemeral filesystem and are wiped on each redeploy, taking
+# your orders with them. Disks require a paid instance type on Render.
+services:
+  - type: web
+    name: ynr-shop
+    runtime: node
+    plan: starter          # free instances have no persistent disk
+    rootDir: server
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /api/health
+
+    disk:
+      name: ynr-data
+      mountPath: /var/data
+      sizeGB: 1
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      # Database and uploads live on the mounted disk, not the container.
+      - key: DATA_DIR
+        value: /var/data
+      - key: UPLOADS_DIR
+        value: /var/data/uploads
+
+      # Signs admin sessions. Render generates this once and keeps it.
+      - key: SESSION_SECRET
+        generateValue: true
+
+      # Loads the starting catalogue on first boot, when there is no shell.
+      - key: AUTO_SEED
+        value: "1"
+
+      # Creates the first admin on first boot. Change the password after the
+      # first sign-in, then delete ADMIN_PASSWORD from the dashboard.
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+
+      # Set once the Paystack account is approved. Until then the shop takes
+      # orders and confirms them on WhatsApp.
+      - key: PAYSTACK_SECRET_KEY
+        sync: false
+      - key: PAYSTACK_PUBLIC_KEY
+        sync: false
+
+      # Order notifications. Without SMTP_URL, mail is recorded in the outbox
+      # table and visible in the admin panel rather than being sent.
+      - key: OWNER_EMAIL
+        sync: false
+      - key: SMTP_URL
+        sync: false
+
+      - key: WHATSAPP_NUMBER
+        value: "2349026947815"
+      - key: HOLD_MINUTES
+        value: "30"

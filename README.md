@@ -74,45 +74,68 @@ are served from the same origin, so it uses `/api`. Override with
 
 ## Deploying
 
-The two halves deploy differently, and this trips people up.
+The shop needs two things running: a place to serve the storefront, and a
+place to run the back end that remembers products, orders and stock. This is
+the part that was missing — the storefront alone is an empty shop with no
+catalogue and no working checkout.
 
-### The storefront (Vercel)
+There are two ways to do this. Pick one.
 
-`vercel.json` tells Vercel the site lives in `storefront/`. Without it Vercel
-serves the repository root, finds no `index.html`, and returns 404 on every
-request.
+### Option A — one service, simplest
 
-If the project was created before that file existed, either redeploy so the
-config is picked up, or set **Root Directory** to `storefront` in the Vercel
-project settings. Either works; the file is preferable because it is version
-controlled.
+As of this commit, the Express server can serve the storefront itself, so
+the whole shop (API, admin panel, storefront) runs as a single deployment on
+one origin. No second host, no CORS, nothing to wire together.
 
-### The back end (not Vercel)
+**Render**, using the `render.yaml` already in this repo:
 
-`server/` will not run on Vercel as it stands, for two reasons:
+1. Push this repo to GitHub (already done).
+2. On [render.com](https://render.com), New → Blueprint → pick this repo.
+   Render reads `render.yaml` automatically.
+3. It will ask for `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `OWNER_EMAIL` — fill
+   these in. `PAYSTACK_SECRET_KEY` and `SMTP_URL` can be left blank for now;
+   the shop works on WhatsApp-confirmed orders without them.
+4. Deploy. Render mounts a persistent disk (`render.yaml` requests 1GB), so
+   the database and uploaded product photos survive every future redeploy.
+   **This is the part a plain free-tier host usually gets wrong.**
+5. On first boot the server seeds the starting catalogue and creates the
+   admin account from those env vars automatically — there is no shell step.
+   Sign in at `https://<your-render-url>/admin`, then delete
+   `ADMIN_PASSWORD` from Render's environment settings so it is not sitting
+   there in plain text.
 
-1. It is a long-running Express server. Vercel runs serverless functions.
-2. It stores data in a SQLite file and saves uploads to disk. Vercel's
-   filesystem is read-only apart from `/tmp`, which is wiped between
-   invocations, so the database and every product photo would vanish.
+Any host that gives you a persistent disk and runs a long-lived Node process
+works the same way: Railway, Fly.io, a VPS. The included `Dockerfile` covers
+those.
 
-Host it somewhere with a persistent disk and a long-running process. Render,
-Railway and Fly.io all do this and all have free or cheap tiers. Then point
-the storefront at it by uncommenting the `window.YNR_API` line in
-`storefront/index.html`.
+### Option B — storefront on Vercel, back end elsewhere
 
-Alternatively, once the API has a public address, add a rewrite to
-`vercel.json` so the shop can keep calling `/api` on its own origin, which
-avoids CORS entirely:
+If you want to keep the existing Vercel deployment for the storefront:
 
-```json
-"rewrites": [
-  { "source": "/api/:path*", "destination": "https://your-api-host/api/:path*" }
-]
-```
+1. Deploy `server/` to Render (steps above) or similar. Note the URL it
+   gives you, e.g. `https://ynr-shop.onrender.com`.
+2. Add this to `vercel.json` so the storefront's `/api` calls are
+   transparently sent to that server — no CORS, and no change needed to any
+   JavaScript file:
 
-Remember to set `SITE_URL` on the API to the deployed storefront URL, or CORS
-will block the browser.
+   ```json
+   "rewrites": [
+     { "source": "/api/:path*", "destination": "https://ynr-shop.onrender.com/api/:path*" }
+   ]
+   ```
+3. Redeploy the Vercel project so it picks up the change.
+4. Set `SITE_URL` in the back end's environment to the Vercel URL, or the
+   browser's CORS check will block every request.
+
+### Why the back end cannot go on Vercel itself
+
+Vercel runs serverless functions on a filesystem that is read-only outside
+of `/tmp`, and `/tmp` is wiped between invocations. This server keeps its
+database in a file and saves uploaded photos to disk, so on Vercel every
+order and every product photo would be silently gone on the next deploy, or
+sooner. This is not a code problem to fix — it needs a host built for a
+long-running process with real storage, which is what Option A or B's
+`server/` deployment provides.
 
 ## Tests
 

@@ -31,9 +31,22 @@ const config = {
 
   paths: {
     root: ROOT,
-    data: path.join(ROOT, 'data'),
-    uploads: path.join(ROOT, 'uploads'),
-    db: process.env.DB_PATH || path.join(ROOT, 'data', 'ynr.db'),
+    data: process.env.DATA_DIR || path.join(ROOT, 'data'),
+    // On a hosted platform these two point at a mounted disk, so the database
+    // and the product photos survive restarts and redeploys.
+    uploads: process.env.UPLOADS_DIR || path.join(ROOT, 'uploads'),
+    db: process.env.DB_PATH
+      || path.join(process.env.DATA_DIR || path.join(ROOT, 'data'), 'ynr.db'),
+    // The storefront, served by this server when it is deployed as one app.
+    storefront: process.env.STOREFRONT_DIR || path.join(ROOT, '..', 'storefront'),
+  },
+
+  // Create the first admin on boot when none exists. Lets the shop be set up
+  // on a platform with no shell access.
+  bootstrap: {
+    adminEmail: process.env.ADMIN_EMAIL || '',
+    adminPassword: process.env.ADMIN_PASSWORD || '',
+    autoSeed: /^(1|true|yes)$/i.test(process.env.AUTO_SEED || ''),
   },
 
   session: {
@@ -70,12 +83,22 @@ const config = {
 };
 
 if (config.isProd) {
-  const missing = [];
-  if (!config.paystack.secretKey) missing.push('PAYSTACK_SECRET_KEY');
-  if (!process.env.SESSION_SECRET) missing.push('SESSION_SECRET');
-  if (missing.length) {
-    // Fail loudly rather than booting a production server that cannot take money.
-    throw new Error('Missing required production env vars: ' + missing.join(', '));
+  // Only genuinely unsafe gaps stop the boot. Sessions are signed with this,
+  // so without it admin logins would be forgeable.
+  if (!process.env.SESSION_SECRET) {
+    throw new Error(
+      'SESSION_SECRET must be set in production. Generate one with:\n' +
+      "  node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\""
+    );
+  }
+  // Paystack is deliberately not required. Merchant approval takes weeks in
+  // Nigeria, and the shop should be able to launch on WhatsApp-confirmed
+  // orders before then. The payment routes return a clear 503 until it is set.
+  if (!config.paystack.secretKey) {
+    console.warn(
+      '[config] No PAYSTACK_SECRET_KEY. Card payment is switched off; ' +
+      'customers can still order and confirm on WhatsApp.'
+    );
   }
 }
 

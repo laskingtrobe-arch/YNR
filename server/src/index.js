@@ -1,6 +1,7 @@
 'use strict';
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const config = require('./config');
 const { db } = require('./db');
 const {
@@ -66,16 +67,70 @@ app.use('/api', paymentRoutes);
 app.use('/api/admin', adminRoutes);
 
 app.use('/api', (req, res, next) => next(new HttpError(404, 'No such endpoint.', 'not_found')));
+
+// ---------------------------------------------------------------------------
+// The storefront.
+//
+// Serving it from here means the whole shop is one deployment on one origin:
+// no CORS, no second host, and the browser's /api calls land on this server.
+// Skipped when the folder is absent, so the API can still be deployed alone
+// with the storefront hosted separately (on Vercel, say).
+// ---------------------------------------------------------------------------
+const hasStorefront = fs.existsSync(path.join(config.paths.storefront, 'index.html'));
+if (hasStorefront) {
+  app.use(express.static(config.paths.storefront, { extensions: ['html'] }));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) return next();
+    res.sendFile(path.join(config.paths.storefront, 'index.html'));
+  });
+}
+
 app.use(errorHandler);
 
-if (require.main === module) {
-  const admins = db.prepare('SELECT COUNT(*) AS v FROM admin_users').get().v;
-  if (!admins) {
-    console.warn('\n  ! No admin user yet. Create one with:  npm run create-admin\n');
+/**
+ * First-boot setup for hosted deployments, where there may be no shell to run
+ * the setup scripts from. Both steps are skipped once they have happened, so
+ * this is safe to run on every restart.
+ */
+function bootstrap() {
+  if (config.bootstrap.autoSeed) {
+    const count = db.prepare('SELECT COUNT(*) AS v FROM products').get().v;
+    if (!count) {
+      try {
+        require('../seed.js');
+        console.log('  Seeded the starting catalogue (AUTO_SEED).');
+      } catch (e) {
+        console.error('  ! AUTO_SEED failed:', e.message);
+      }
+    }
   }
+
+  const admins = db.prepare('SELECT COUNT(*) AS v FROM admin_users').get().v;
+  if (!admins && config.bootstrap.adminEmail && config.bootstrap.adminPassword) {
+    const { id, hashPassword } = require('./lib/util');
+    const { hash, salt } = hashPassword(config.bootstrap.adminPassword);
+    db.prepare(
+      'INSERT INTO admin_users (id, email, password_hash, password_salt, created_at) VALUES (?,?,?,?,?)'
+    ).run(id(), config.bootstrap.adminEmail.toLowerCase(), hash, salt, Date.now());
+    console.log(`  Created admin ${config.bootstrap.adminEmail} from ADMIN_EMAIL/ADMIN_PASSWORD.`);
+    console.warn('  ! Change that password, then clear ADMIN_PASSWORD from the environment.');
+  } else if (!admins) {
+    console.warn('\n  ! No admin user yet. Create one with:  npm run create-admin <email>');
+    console.warn('    Or set ADMIN_EMAIL and ADMIN_PASSWORD and restart.\n');
+  }
+
+  const products = db.prepare('SELECT COUNT(*) AS v FROM products').get().v;
+  if (!products) {
+    console.warn('  ! The catalogue is empty. Run:  npm run seed   (or set AUTO_SEED=1)');
+  }
+}
+
+if (require.main === module) {
+  bootstrap();
   startHoldSweeper();
   app.listen(config.port, () => {
     console.log(`\n  YnR API   http://localhost:${config.port}`);
+    console.log(`  Shop      ${hasStorefront ? `http://localhost:${config.port}/` : 'served separately (storefront/ not found)'}`);
     console.log(`  Admin     http://localhost:${config.port}/admin`);
     console.log(`  Health    http://localhost:${config.port}/api/health`);
     console.log(`  Payments  ${config.paystack.mock ? 'MOCK MODE (no real money)' : (config.paystack.secretKey ? 'Paystack key present' : 'not configured')}`);
