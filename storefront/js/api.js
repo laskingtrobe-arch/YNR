@@ -39,3 +39,11 @@ async function api(method, path, body) {
   }
   return json;
 }
+
+/* First-party analytics: page views, product views, WhatsApp click-through.
+   Fire-and-forget on purpose — a tracking call must never delay or break
+   whatever the visitor actually came here to do, so failures are swallowed
+   rather than surfaced. */
+function track(type, extra) {
+  api('POST', '/events', { type, path: location.pathname, ...extra }).catch(() => {});
+}

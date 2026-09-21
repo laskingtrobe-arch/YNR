@@ -31,14 +31,20 @@ const config = {
 
   paths: {
     root: ROOT,
-    data: process.env.DATA_DIR || path.join(ROOT, 'data'),
-    // On a hosted platform these two point at a mounted disk, so the database
-    // and the product photos survive restarts and redeploys.
+    // Uploaded product photos still live on disk (see UPLOADS_DIR on a host
+    // with a mounted volume), independent of where the database lives.
     uploads: process.env.UPLOADS_DIR || path.join(ROOT, 'uploads'),
-    db: process.env.DB_PATH
-      || path.join(process.env.DATA_DIR || path.join(ROOT, 'data'), 'ynr.db'),
     // The storefront, served by this server when it is deployed as one app.
     storefront: process.env.STOREFRONT_DIR || path.join(ROOT, '..', 'storefront'),
+  },
+
+  // The database is Postgres, hosted on Supabase (or any Postgres, since
+  // this connects with a plain connection string rather than the Supabase
+  // SDK — nothing here is Supabase-specific beyond where the string points).
+  db: {
+    url: process.env.DATABASE_URL || '',
+    ssl: !/^(0|false|no)$/i.test(process.env.DATABASE_SSL || '1'),
+    poolMax: parseInt(process.env.DATABASE_POOL_MAX || '10', 10),
   },
 
   // Create the first admin on boot when none exists. Lets the shop be set up
@@ -83,12 +89,17 @@ const config = {
 };
 
 if (config.isProd) {
-  // Only genuinely unsafe gaps stop the boot. Sessions are signed with this,
-  // so without it admin logins would be forgeable.
+  // Only genuinely unsafe or unrunnable gaps stop the boot.
   if (!process.env.SESSION_SECRET) {
     throw new Error(
       'SESSION_SECRET must be set in production. Generate one with:\n' +
       "  node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\""
+    );
+  }
+  if (!config.db.url) {
+    throw new Error(
+      'DATABASE_URL must be set in production — a Postgres connection string ' +
+      '(Supabase: Project Settings -> Database -> Connection string -> URI).'
     );
   }
   // Paystack is deliberately not required. Merchant approval takes weeks in

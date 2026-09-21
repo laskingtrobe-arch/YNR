@@ -1,22 +1,35 @@
 'use strict';
 // End-to-end smoke test. Runs a throwaway server against a throwaway database
 // so it can be run repeatedly without touching real data.
-const { spawn, spawnSync } = require('child_process');
+//
+// The database is pg-mem: an in-memory, Postgres-wire-compatible engine that
+// lives inside the spawned server process only (see PG_DRIVER below and
+// src/db.js). Because it is in-process memory rather than a shared file, it
+// cannot be seeded from a separate `node seed.js` child process the way the
+// old SQLite version was — that would seed a different, discarded database.
+// Instead this drives the server's own first-boot bootstrap (AUTO_SEED,
+// ADMIN_EMAIL/ADMIN_PASSWORD in src/index.js), which is also a real exercise
+// of the exact path a host with no shell access relies on.
+const { spawn } = require('child_process');
 const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
 
 const ROOT = path.join(__dirname, '..');
-const DB = path.join(os.tmpdir(), `ynr-smoke-${Date.now()}.db`);
 const PORT = 4999;
 const SECRET = 'sk_test_smoke_secret';
 const BASE = `http://127.0.0.1:${PORT}`;
+const ADMIN_EMAIL = 'smoke@ynr.test';
+const ADMIN_PASSWORD = 'smoke-password-123';
 
 const ENV = {
   ...process.env,
   NODE_ENV: 'development',
-  DB_PATH: DB,
+  PG_DRIVER: 'pg-mem',
+  AUTO_SEED: '1',
+  ADMIN_EMAIL,
+  ADMIN_PASSWORD,
   PORT: String(PORT),
   PAYSTACK_MODE: 'mock',
   PAYSTACK_SECRET_KEY: SECRET,
@@ -46,21 +59,35 @@ async function req(method, url, body, headers = {}) {
 (async () => {
   console.log('\nYnR back end smoke test\n');
 
-  spawnSync(process.execPath, ['--no-warnings', 'seed.js'], { cwd: ROOT, env: ENV, stdio: 'ignore' });
-  spawnSync(process.execPath, ['--no-warnings', 'create-admin.js', 'smoke@ynr.test', 'smoke-password-123'],
-    { cwd: ROOT, env: ENV, stdio: 'ignore' });
-
+  // Seeding and admin creation happen inside the server's own boot sequence
+  // now (AUTO_SEED / ADMIN_EMAIL / ADMIN_PASSWORD in ENV above), not as
+  // separate processes — see the note at the top of this file for why.
+  //
+  // The child's output is captured to a file rather than discarded
+  // (stdio: 'ignore' used to be the default here): a startup failure with no
+  // stdout/stderr to show for it is undiagnosable, which is exactly the spot
+  // a real problem hid the first time this was written.
+  const bootLog = path.join(os.tmpdir(), `ynr-smoke-boot-${process.pid}.log`);
+  const bootFd = fs.openSync(bootLog, 'w');
   const server = spawn(process.execPath, ['--no-warnings', 'src/index.js'],
-    { cwd: ROOT, env: ENV, stdio: 'ignore' });
+    { cwd: ROOT, env: ENV, stdio: ['ignore', bootFd, bootFd] });
 
-  // Wait for the port to answer.
+  // Wait for the port to answer. 50 x 300ms = 15s: generous for a loaded dev
+  // machine or a cold container start, not just the common case.
   let up = false;
   for (let i = 0; i < 50; i++) {
+    if (server.exitCode !== null) break; // crashed — no point polling further
     try { const h = await req('GET', '/api/health'); if (h.json && h.json.ok) { up = true; break; } }
     catch { /* not listening yet */ }
-    await sleep(200);
+    await sleep(300);
   }
-  if (!up) { console.error('server never came up'); server.kill(); process.exit(1); }
+  if (!up) {
+    fs.closeSync(bootFd);
+    console.error(`server never came up (exit code: ${server.exitCode})\n--- server output (${bootLog}) ---`);
+    console.error(fs.readFileSync(bootLog, 'utf8') || '(empty — nothing was written)');
+    server.kill();
+    process.exit(1);
+  }
 
   try {
     // ---- catalogue -------------------------------------------------------
@@ -195,11 +222,11 @@ async function req(method, url, body, headers = {}) {
     const noAuth = await req('GET', '/api/admin/products');
     ok(noAuth.status === 401, 'admin API refuses unauthenticated access');
 
-    const badLogin = await req('POST', '/api/admin/login', { email: 'smoke@ynr.test', password: 'wrong' });
+    const badLogin = await req('POST', '/api/admin/login', { email: ADMIN_EMAIL, password: 'wrong' });
     ok(badLogin.status === 401, 'wrong admin password rejected');
 
-    const login = await req('POST', '/api/admin/login', { email: 'smoke@ynr.test', password: 'smoke-password-123' });
-    ok(login.status === 200, 'admin login succeeds');
+    const login = await req('POST', '/api/admin/login', { email: ADMIN_EMAIL, password: ADMIN_PASSWORD });
+    ok(login.status === 200, 'admin login succeeds (bootstrap-created account)');
     const cookie = (login.headers.get('set-cookie') || '').split(';')[0];
     ok(cookie.startsWith('ynr_admin='), 'session cookie issued');
     ok(/HttpOnly/i.test(login.headers.get('set-cookie') || ''), 'session cookie is HttpOnly');
@@ -228,13 +255,73 @@ async function req(method, url, body, headers = {}) {
     const delUsed = await req('DELETE', `/api/admin/products/${hoodieRow.id}`, undefined, { Cookie: cookie });
     ok(delUsed.json.unpublished === true, 'product with orders is unpublished, not deleted (history preserved)');
 
+    // ---- refunds -----------------------------------------------------
+    const orderList = await req('GET', '/api/admin/orders', undefined, { Cookie: cookie });
+    const paidOrderRow = orderList.json.orders.find((o) => o.reference === ref);
+    ok(Boolean(paidOrderRow), 'the paid order is visible to admin');
+    // `other` (reckless-yute, placed earlier via the WhatsApp channel) was
+    // never paid — exactly the case a refund attempt should be refused on.
+    const unpaidOrderRow = orderList.json.orders.find((o) => o.reference === other.json.order.reference);
+    ok(Boolean(unpaidOrderRow), 'the unpaid order is visible to admin');
+
+    const refundOnUnpaid = await req('POST', `/api/admin/orders/${unpaidOrderRow.id}/refund`, {}, { Cookie: cookie });
+    ok(refundOnUnpaid.status === 409 && refundOnUnpaid.json.code === 'not_paid',
+      'refund refused on an order that was never paid', refundOnUnpaid.json && refundOnUnpaid.json.code);
+
+    const refundReq = await req('POST', `/api/admin/orders/${paidOrderRow.id}/refund`, {}, { Cookie: cookie });
+    ok(refundReq.status === 201, 'refund requested on the paid order', String(refundReq.status) + ' ' + refundReq.text.slice(0, 150));
+    ok(refundReq.json.refund && refundReq.json.refund.status === 'pending',
+      'initiating a refund reports pending, not immediately complete', refundReq.json.refund && refundReq.json.refund.status);
+
+    const refundAgain = await req('POST', `/api/admin/orders/${paidOrderRow.id}/refund`, {}, { Cookie: cookie });
+    ok(refundAgain.status === 409 && refundAgain.json.code === 'refund_exists',
+      'a second refund request on the same order is refused');
+
+    const refundCheck = await req('POST', `/api/admin/orders/${paidOrderRow.id}/refund/check`, undefined, { Cookie: cookie });
+    ok(refundCheck.status === 200 && refundCheck.json.refund.status === 'processed',
+      'checking the refund reflects it completing', refundCheck.json && JSON.stringify(refundCheck.json.refund));
+
+    const afterRefund = await req('GET', `/api/orders/${ref}`, undefined, { Cookie: cookie });
+    ok(afterRefund.json.order.paymentStatus === 'refunded',
+      'order payment status flips to refunded once the check confirms it', afterRefund.json.order.paymentStatus);
+
+    // ---- privacy: lookup and erasure (NDPA) ---------------------------
+    const lookupBefore = await req('GET', '/api/admin/privacy/lookup?email=chidi@example.com', undefined, { Cookie: cookie });
+    ok(lookupBefore.json.data.orders.length === 1 && lookupBefore.json.data.orders[0].customer_name === 'Chidi Test',
+      'privacy lookup finds the order by email, name intact before erasure',
+      JSON.stringify(lookupBefore.json.data.orders[0]));
+
+    const erase = await req('POST', '/api/admin/privacy/erase', { email: 'chidi@example.com' }, { Cookie: cookie });
+    ok(erase.status === 200 && erase.json.erased.orders === 1,
+      'erasure reports one order redacted', JSON.stringify(erase.json));
+
+    const lookupAfter = await req('GET', '/api/admin/privacy/lookup?email=chidi@example.com', undefined, { Cookie: cookie });
+    ok(lookupAfter.json.data.orders.length === 0,
+      'a second lookup by the original email finds nothing — the order is no longer associated with it',
+      JSON.stringify(lookupAfter.json.data));
+
+    // A contact message has no accounting-retention reason to survive, so
+    // erasure removes it outright rather than redacting it in place.
+    const msgLookupBefore = await req('GET', '/api/admin/privacy/lookup?email=test@example.com', undefined, { Cookie: cookie });
+    ok(msgLookupBefore.json.data.messages.length === 1, 'privacy lookup finds the earlier contact message');
+
+    const eraseMsg = await req('POST', '/api/admin/privacy/erase', { email: 'test@example.com' }, { Cookie: cookie });
+    ok(eraseMsg.json.erased.messages === 1, 'erasure deletes the contact message outright, not redacts it');
+
+    const msgLookupAfter = await req('GET', '/api/admin/privacy/lookup?email=test@example.com', undefined, { Cookie: cookie });
+    ok(msgLookupAfter.json.data.messages.length === 0, 'the contact message is genuinely gone after erasure');
+
   } catch (e) {
     fail++;
     console.log('  FAIL  unexpected error:', e && e.message);
   } finally {
+    // pg-mem lives only inside the killed process, so there is nothing on
+    // disk to clean up — unlike the old SQLite temp file. The boot log is
+    // the one file this run creates; only worth keeping around on failure.
     server.kill();
     await sleep(200);
-    for (const f of [DB, DB + '-wal', DB + '-shm']) fs.promises.unlink(f).catch(() => {});
+    try { fs.closeSync(bootFd); } catch { /* already closed on the failure path */ }
+    if (fail === 0) fs.promises.unlink(bootLog).catch(() => {});
   }
 
   console.log(`\n  ${pass} passed, ${fail} failed\n`);

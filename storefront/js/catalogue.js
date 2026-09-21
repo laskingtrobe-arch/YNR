@@ -76,6 +76,7 @@ async function openProduct(slug) {
     PRODUCTS[p.slug] = p;
     currentProduct = p.slug;
     selectedSize = (p.sizes && p.sizes[0]) || '';
+    track('product_view', { slug: p.slug });
 
     document.getElementById('pdpEyebrow').textContent = 'Hand-Painted · ' + p.category;
     document.getElementById('pdpName').textContent = p.name;

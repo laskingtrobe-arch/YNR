@@ -11,6 +11,10 @@ function showView(name) {
   if (el) el.classList.add('active');
   document.getElementById('navLinks').classList.remove('open');
   window.scrollTo({ top: 0 });
+  // `path` carries the view name (home, product, checkout, ...) — not
+  // `slug`, which is reserved for an actual product slug. openProduct()
+  // fires the per-piece product_view event separately, once it knows which.
+  track('page_view', { path: '/' + name });
 }
 
 function scrollToId(id) {
@@ -52,6 +56,14 @@ function wireUp() {
   document.getElementById('coZone').addEventListener('change', updateCheckoutTotals);
   document.getElementById('payCardBtn').addEventListener('click', () => placeOrder('paystack'));
   document.getElementById('payWaBtn').addEventListener('click', () => placeOrder('whatsapp'));
+
+  // Delegated rather than attached per-link: catches the floating button,
+  // the footer links and every JS-built wa.me URL (checkout, order-now,
+  // repaint) in one place, including any added later without more wiring.
+  document.addEventListener('click', (e) => {
+    const link = e.target.closest('a[href*="wa.me"]');
+    if (link) track('whatsapp_click', { slug: currentProduct || '' });
+  });
 }
 
 /* ---------------- boot ---------------- */

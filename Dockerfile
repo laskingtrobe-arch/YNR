@@ -11,13 +11,18 @@ RUN cd server && npm ci --omit=dev
 COPY server/ ./server/
 COPY storefront/ ./storefront/
 
-# Database and uploads belong on a mounted volume, not the container layer,
-# or every redeploy wipes the shop's orders.
+# Uploaded product photos belong on a mounted volume, not the container
+# layer, or every redeploy wipes them. The database itself is external
+# (Postgres — DATABASE_URL, below), so it needs no volume of its own.
 ENV NODE_ENV=production \
-    DATA_DIR=/data \
     UPLOADS_DIR=/data/uploads \
     PORT=4000
 VOLUME /data
+
+# DATABASE_URL and SESSION_SECRET are required and deliberately not set here:
+# secrets do not belong baked into an image. Supply them at `docker run`
+# time, e.g. -e DATABASE_URL=... -e SESSION_SECRET=... — the process refuses
+# to start without them.
 
 EXPOSE 4000
 

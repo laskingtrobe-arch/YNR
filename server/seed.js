@@ -1,9 +1,12 @@
 'use strict';
-// Seeds the catalogue from the six pieces currently hardcoded in the
+// Seeds the catalogue from the six pieces originally hardcoded in the
 // storefront, plus the delivery tiers from its Delivery table.
+//
+// Exports an async run() so it can be awaited from index.js on first boot
+// (AUTO_SEED=1) as well as invoked directly via `npm run seed`.
 const fs = require('fs');
 const path = require('path');
-const { db, now } = require('./src/db');
+const db = require('./src/db');
 const config = require('./src/config');
 const { id, toKobo } = require('./src/lib/util');
 
@@ -58,12 +61,11 @@ const ZONES = [
   { code: 'international', label: 'International', fee: null, note: 'Shipped via courier partner, cost confirmed on WhatsApp', sort: 3 },
 ];
 
-function upsertCategory(c) {
-  const existing = db.prepare('SELECT * FROM categories WHERE slug=?').get(c.slug);
+async function upsertCategory(c) {
+  const existing = await db.get('SELECT * FROM categories WHERE slug=?', [c.slug]);
   if (existing) return existing.id;
   const cid = id();
-  db.prepare('INSERT INTO categories (id, slug, name, sort) VALUES (?,?,?,?)')
-    .run(cid, c.slug, c.name, c.sort);
+  await db.run('INSERT INTO categories (id, slug, name, sort) VALUES (?,?,?,?)', [cid, c.slug, c.name, c.sort]);
   return cid;
 }
 
@@ -78,42 +80,50 @@ function copyImage(file) {
   return `/uploads/${file}`;
 }
 
-function run() {
+async function run() {
   console.log('Seeding YnR catalogue...');
+  await db.migrate();
 
   const catIds = {};
-  for (const c of CATEGORIES) catIds[c.slug] = upsertCategory(c);
+  for (const c of CATEGORIES) catIds[c.slug] = await upsertCategory(c);
   console.log(`  categories: ${CATEGORIES.length}`);
 
   for (const z of ZONES) {
-    const existing = db.prepare('SELECT * FROM delivery_zones WHERE code=?').get(z.code);
+    const existing = await db.get('SELECT * FROM delivery_zones WHERE code=?', [z.code]);
     if (existing) continue;
-    db.prepare('INSERT INTO delivery_zones (id, code, label, fee_kobo, note, sort, active) VALUES (?,?,?,?,?,?,1)')
-      .run(id(), z.code, z.label, z.fee == null ? null : toKobo(z.fee), z.note, z.sort);
+    await db.run('INSERT INTO delivery_zones (id, code, label, fee_kobo, note, sort, active) VALUES (?,?,?,?,?,?,1)',
+      [id(), z.code, z.label, z.fee == null ? null : toKobo(z.fee), z.note, z.sort]);
   }
   console.log(`  delivery zones: ${ZONES.length}`);
 
   let added = 0, skipped = 0;
-  PRODUCTS.forEach((p, i) => {
-    if (db.prepare('SELECT 1 FROM products WHERE slug=?').get(p.slug)) { skipped++; return; }
+  for (let i = 0; i < PRODUCTS.length; i++) {
+    const p = PRODUCTS[i];
+    if (await db.get('SELECT 1 FROM products WHERE slug=?', [p.slug])) { skipped++; continue; }
     const pid = id();
-    db.prepare(`
+    await db.run(`
       INSERT INTO products (id, slug, name, category_id, price_kobo, description, sizes_json,
         status, sort, published, created_at, updated_at)
-      VALUES (?,?,?,?,?,?,?,'available',?,1,?,?)`)
-      .run(pid, p.slug, p.name, catIds[p.category], toKobo(p.price), p.description,
-        JSON.stringify(p.sizes), i, now(), now());
+      VALUES (?,?,?,?,?,?,?,'available',?,1,?,?)`,
+      [pid, p.slug, p.name, catIds[p.category], toKobo(p.price), p.description,
+       JSON.stringify(p.sizes), i, db.now(), db.now()]);
 
     const url = copyImage(p.file);
     if (url) {
-      db.prepare('INSERT INTO product_images (id, product_id, url, alt, sort) VALUES (?,?,?,?,0)')
-        .run(id(), pid, url, `${p.name}, hand-painted by YnR`);
+      await db.run('INSERT INTO product_images (id, product_id, url, alt, sort) VALUES (?,?,?,?,0)',
+        [id(), pid, url, `${p.name}, hand-painted by YnR`]);
     }
     added++;
-  });
+  }
 
   console.log(`  products: ${added} added, ${skipped} already present`);
   console.log('Done.');
 }
 
-run();
+module.exports = { run };
+
+if (require.main === module) {
+  run()
+    .then(() => process.exit(0))
+    .catch((e) => { console.error('Seed failed:', e); process.exit(1); });
+}

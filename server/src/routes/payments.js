@@ -1,6 +1,6 @@
 'use strict';
 const express = require('express');
-const { db, now } = require('../db');
+const db = require('../db');
 const config = require('../config');
 const { wrap, bad, notFound, conflict, rateLimit, HttpError } = require('../middleware');
 const { id, formatNaira } = require('../lib/util');
@@ -9,49 +9,54 @@ const { markOrderProductsSold, notifyOwner, sendMail } = require('../services');
 
 const router = express.Router();
 
+// Postgres's unique-violation error code. Used to tell "this exact webhook
+// event was already recorded" (expected, safe to ignore) apart from any
+// other database failure (must not be silently swallowed).
+const PG_UNIQUE_VIOLATION = '23505';
+
 // ---------------------------------------------------------------------------
 // Fulfilment
 //
 // Single place where an order becomes paid. Idempotent: replaying a webhook,
 // or a callback racing the webhook, must not double-fulfil or double-notify.
+// The paid-status flip and the products-sold update happen on one connection
+// inside db.transaction(), so a crash partway through cannot leave an order
+// marked paid with its piece still showing as available, or vice versa.
 // ---------------------------------------------------------------------------
-function fulfil(order, amountKobo, reference) {
+async function fulfil(order, amountKobo, reference) {
   if (order.payment_status === 'paid') {
     return { alreadyPaid: true };
   }
 
-  db.exec('BEGIN IMMEDIATE');
-  try {
-    const fresh = db.prepare('SELECT * FROM orders WHERE id = ?').get(order.id);
-    if (fresh.payment_status === 'paid') {
-      db.exec('COMMIT');
-      return { alreadyPaid: true };
-    }
-    db.prepare(
+  const outcome = await db.transaction(async (tx) => {
+    const fresh = await tx.get('SELECT * FROM orders WHERE id = ?', [order.id]);
+    if (fresh.payment_status === 'paid') return { alreadyPaid: true };
+
+    await tx.run(
       `UPDATE orders
           SET payment_status = 'paid', status = 'paid', paid_at = ?,
               amount_paid_kobo = ?, paystack_reference = ?, updated_at = ?
-        WHERE id = ?`
-    ).run(now(), amountKobo, reference, now(), order.id);
-    markOrderProductsSold(order.id);
-    db.exec('COMMIT');
-  } catch (e) {
-    db.exec('ROLLBACK');
-    throw e;
-  }
+        WHERE id = ?`,
+      [db.now(), amountKobo, reference, db.now(), order.id]
+    );
+    await markOrderProductsSold(tx, order.id);
+    return { alreadyPaid: false };
+  });
 
-  notifyOwner(
+  if (outcome.alreadyPaid) return outcome;
+
+  await notifyOwner(
     `PAID ${order.reference} — ${formatNaira(amountKobo)}`,
     `${order.customer_name} (${order.customer_phone}) has paid for order ${order.reference}.`
   );
-  sendMail(
+  await sendMail(
     order.customer_email,
     `Payment received — ${order.reference}`,
     `Hi ${order.customer_name},\n\nWe have received ${formatNaira(amountKobo)} for order ` +
     `${order.reference}. Your piece is now reserved for you and we will be in touch ` +
     `about delivery.\n\n— YnR`
   );
-  return { alreadyPaid: false };
+  return outcome;
 }
 
 // ---------------------------------------------------------------------------
@@ -67,7 +72,7 @@ router.post('/payments/init',
     }
 
     const reference = String((req.body && req.body.reference) || '').toUpperCase();
-    const order = db.prepare('SELECT * FROM orders WHERE reference = ?').get(reference);
+    const order = await db.get('SELECT * FROM orders WHERE reference = ?', [reference]);
     if (!order) throw notFound('No order with that reference.');
 
     if (order.payment_status === 'paid') throw conflict('That order is already paid.', 'already_paid');
@@ -89,9 +94,10 @@ router.post('/payments/init',
       },
     });
 
-    db.prepare(
-      "UPDATE orders SET payment_status='pending', channel='paystack', paystack_reference=?, updated_at=? WHERE id=?"
-    ).run(order.reference, now(), order.id);
+    await db.run(
+      "UPDATE orders SET payment_status='pending', channel='paystack', paystack_reference=?, updated_at=? WHERE id=?",
+      [order.reference, db.now(), order.id]
+    );
 
     res.json({
       ok: true,
@@ -131,22 +137,29 @@ async function webhookHandler(req, res) {
     console.warn('[paystack] rejected webhook with bad signature', { event, reference });
     // Logged under a throwaway key so rejects can be reviewed without ever
     // colliding with a real event.
-    db.prepare(
+    await db.run(
       `INSERT INTO payment_events (id, provider, event, reference, signature_ok, processed, result, payload, created_at)
-       VALUES (?, 'paystack', ?, ?, 0, 1, 'rejected_bad_signature', ?, ?)`
-    ).run(id(), event, `!rejected:${id()}`, body, now());
+       VALUES (?, 'paystack', ?, ?, 0, 1, 'rejected_bad_signature', ?, ?)`,
+      [id(), event, `!rejected:${id()}`, body, db.now()]
+    );
     return res.sendStatus(401);
   }
 
   // Only verified events take the dedupe key. A unique-index conflict here
-  // means Paystack is retrying an event already handled, which is normal.
+  // means Paystack is retrying an event already handled — expected and safe
+  // to ignore. Any other error is a real failure and must not be swallowed:
+  // silently returning 200 for it would tell Paystack we processed an event
+  // we never actually recorded.
   try {
-    db.prepare(
+    await db.run(
       `INSERT INTO payment_events (id, provider, event, reference, signature_ok, processed, result, payload, created_at)
-       VALUES (?, 'paystack', ?, ?, 1, 0, '', ?, ?)`
-    ).run(id(), event, reference, body, now());
-  } catch {
-    return res.sendStatus(200);
+       VALUES (?, 'paystack', ?, ?, 1, 0, '', ?, ?)`,
+      [id(), event, reference, body, db.now()]
+    );
+  } catch (e) {
+    if (e.code === PG_UNIQUE_VIOLATION) return res.sendStatus(200);
+    console.error('[paystack] failed to record webhook event:', e.message);
+    return res.sendStatus(500); // triggers a Paystack retry, as it should
   }
 
   // Acknowledge quickly; Paystack retries on slow or failed responses.
@@ -155,7 +168,7 @@ async function webhookHandler(req, res) {
   if (event !== 'charge.success' || !reference) return;
 
   try {
-    const order = db.prepare('SELECT * FROM orders WHERE reference = ?').get(reference);
+    const order = await db.get('SELECT * FROM orders WHERE reference = ?', [reference]);
     if (!order) {
       console.warn('[paystack] webhook for unknown order', reference);
       return;
@@ -164,32 +177,33 @@ async function webhookHandler(req, res) {
     // Never trust the amount in the webhook body. Ask Paystack directly.
     const verified = await paystack.verify(reference);
     if (verified.status !== 'success') {
-      mark(reference, 'verify_not_success');
+      await mark(reference, 'verify_not_success');
       return;
     }
     const paid = verified.amount == null ? order.total_kobo : Number(verified.amount);
     if (paid < order.total_kobo) {
       // Underpayment: flag it rather than releasing goods.
-      mark(reference, `underpaid:${paid}<${order.total_kobo}`);
-      notifyOwner(
+      await mark(reference, `underpaid:${paid}<${order.total_kobo}`);
+      await notifyOwner(
         `UNDERPAID ${order.reference}`,
         `Paystack reports ${formatNaira(paid)} against a total of ${formatNaira(order.total_kobo)}. Not fulfilled.`
       );
       return;
     }
 
-    const r = fulfil(order, paid, reference);
-    mark(reference, r.alreadyPaid ? 'already_paid' : 'fulfilled');
+    const r = await fulfil(order, paid, reference);
+    await mark(reference, r.alreadyPaid ? 'already_paid' : 'fulfilled');
   } catch (e) {
     console.error('[paystack] webhook processing failed', e);
-    mark(reference, 'error:' + (e && e.message));
+    await mark(reference, 'error:' + (e && e.message));
   }
 }
 
 function mark(reference, result) {
-  db.prepare(
-    "UPDATE payment_events SET processed = 1, result = ? WHERE reference = ? AND event = 'charge.success'"
-  ).run(String(result).slice(0, 300), reference);
+  return db.run(
+    "UPDATE payment_events SET processed = 1, result = ? WHERE reference = ? AND event = 'charge.success'",
+    [String(result).slice(0, 300), reference]
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -199,20 +213,20 @@ function mark(reference, result) {
 // ---------------------------------------------------------------------------
 router.get('/payments/callback', wrap(async (req, res) => {
   const reference = String(req.query.reference || req.query.trxref || '').toUpperCase();
-  const order = reference && db.prepare('SELECT * FROM orders WHERE reference = ?').get(reference);
+  const order = reference && await db.get('SELECT * FROM orders WHERE reference = ?', [reference]);
   if (!order) return res.status(404).send(resultPage('Order not found', 'We could not find that payment.', false));
 
   try {
     const verified = await paystack.verify(reference);
     if (verified.status === 'success') {
       const paid = verified.amount == null ? order.total_kobo : Number(verified.amount);
-      if (paid >= order.total_kobo) fulfil(order, paid, reference);
+      if (paid >= order.total_kobo) await fulfil(order, paid, reference);
     }
   } catch (e) {
     console.error('[paystack] callback verify failed', e);
   }
 
-  const fresh = db.prepare('SELECT * FROM orders WHERE id = ?').get(order.id);
+  const fresh = await db.get('SELECT * FROM orders WHERE id = ?', [order.id]);
   const paidOk = fresh.payment_status === 'paid';
   res.send(resultPage(
     paidOk ? 'Payment received' : 'Payment pending',
@@ -227,10 +241,10 @@ router.get('/payments/callback', wrap(async (req, res) => {
 // Mock payment page. Development only: config.paystack.mock is forced false
 // when NODE_ENV=production, so this cannot be reached on a live server.
 // ---------------------------------------------------------------------------
-router.get('/payments/mock/:reference', wrap((req, res) => {
+router.get('/payments/mock/:reference', wrap(async (req, res) => {
   if (!config.paystack.mock) throw notFound();
   const reference = String(req.params.reference).toUpperCase();
-  const order = db.prepare('SELECT * FROM orders WHERE reference = ?').get(reference);
+  const order = await db.get('SELECT * FROM orders WHERE reference = ?', [reference]);
   if (!order) throw notFound('No such order.');
   res.send(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Mock payment — ${reference}</title>

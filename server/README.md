@@ -3,8 +3,8 @@
 Catalogue, one-of-one stock control, orders, Paystack checkout, and an admin
 panel for the YnR storefront.
 
-Node 22+ (uses the built-in `node:sqlite`, so there is no native module to
-compile and no database server to run).
+Node 22+, Postgres (via a connection string — this was built against Supabase,
+but connects the standard way, so any Postgres works).
 
 ## Quick start
 
@@ -12,6 +12,8 @@ compile and no database server to run).
 cd server
 npm install
 cp .env.example .env
+# edit .env: set DATABASE_URL to your Supabase connection string
+# (Project Settings -> Database -> Connection string -> URI)
 npm run seed                       # loads the 6 existing pieces + delivery zones
 npm run create-admin you@email.com # prints a generated password once
 npm start
@@ -25,8 +27,10 @@ npm start
 npm test
 ```
 
-Runs an end-to-end smoke test against a throwaway database: 43 checks covering
-the hold race, webhook signatures, payment fulfilment and admin auth.
+Runs an end-to-end smoke test against `pg-mem`, an in-memory Postgres-compatible
+engine (dev dependency only, never used outside this harness): 43 checks
+covering the hold race, webhook signatures, payment fulfilment and admin auth.
+No real database needed to run it.
 
 ## How the important parts work
 
@@ -76,6 +80,17 @@ With no `SMTP_URL`, mail is written to the `mail_outbox` table and logged rather
 than silently dropped. Wiring a real transport is one function in
 `src/services/index.js`.
 
+### Database
+Postgres, connected with a plain connection string rather than the Supabase
+SDK — nothing here is Supabase-specific beyond where `DATABASE_URL` points, so
+any Postgres works. `src/db.js` exposes `get`/`all`/`run`, async equivalents of
+the query shapes used throughout the routes, plus `transaction(fn)`: runs `fn`
+against one dedicated connection wrapped in `BEGIN`/`COMMIT`, rolling back
+automatically if it throws. Anything that touches a one-of-one hold alongside
+another write — placing an order, cancelling one — goes through it, because a
+hold taken on a different connection than the rest of that unit of work would
+not be undone by that transaction's rollback.
+
 ## API
 
 ### Public
@@ -107,18 +122,22 @@ than silently dropped. Wiring a real transport is one function in
 
 ## Going live
 
-1. Register the business with CAC and get a Paystack account approved. This
-   takes days to weeks and gates everything else about payment.
-2. Set `NODE_ENV=production`, a real `PAYSTACK_SECRET_KEY`, and a
-   `SESSION_SECRET`. The server refuses to boot without them.
-3. Remove `PAYSTACK_MODE=mock`.
-4. Point the Paystack dashboard webhook at
+1. Set `NODE_ENV=production`, a real `DATABASE_URL`, and a `SESSION_SECRET`.
+   The server refuses to boot without any of these three — a missing database
+   or a forgeable session cookie are not conditions to run in.
+2. Paystack is not required to boot. Register the business with CAC and get a
+   Paystack account approved when ready — this alone can take days to weeks —
+   and the shop takes orders and confirms them on WhatsApp until then. Once
+   approved, set `PAYSTACK_SECRET_KEY` and remove `PAYSTACK_MODE=mock`.
+3. Point the Paystack dashboard webhook at
    `https://your-domain/api/payments/webhook`.
-5. Configure `SMTP_URL` and add SPF, DKIM and DMARC records, or order emails
+4. Configure `SMTP_URL` and add SPF, DKIM and DMARC records, or order emails
    will land in spam.
-6. Serve over HTTPS. Session cookies set `secure` in production and will not be
+5. Serve over HTTPS. Session cookies set `secure` in production and will not be
    sent over plain HTTP.
-7. Back up `data/ynr.db` and `uploads/` on a schedule, and test a restore.
+6. Back up `uploads/` on a schedule. The database is on Supabase, which takes
+   its own backups — check the plan's retention window, and consider Point in
+   Time Recovery if the shop's order history needs a tighter one.
 
 ## Not built yet
 
@@ -130,4 +149,7 @@ Deliberately left out, in rough priority order:
 - Refunds through the API. Refund in the Paystack dashboard, then set the
   order's payment status in admin.
 - Per-size stock, if a piece ever becomes several physical garments.
-- Server-side image resizing, noted above, is the main gap for mobile data.
+- Moving uploads to Supabase Storage. They are still local disk (see
+  `UPLOADS_DIR`), which is the one thing still keeping this off a fully
+  serverless host — everything else the database now needs is already a
+  network call.

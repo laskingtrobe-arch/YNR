@@ -1,5 +1,5 @@
 'use strict';
-const { db, now } = require('../db');
+const db = require('../db');
 const config = require('../config');
 const { sha256 } = require('../lib/util');
 
@@ -91,27 +91,34 @@ function parseCookies(req) {
   return out;
 }
 
-function currentAdmin(req) {
+async function currentAdmin(req) {
   const raw = parseCookies(req)[config.session.cookie];
   if (!raw) return null;
-  const row = db.prepare(
+  const row = await db.get(
     `SELECT s.admin_id, s.expires_at, a.email
        FROM sessions s JOIN admin_users a ON a.id = s.admin_id
-      WHERE s.token_hash = ?`
-  ).get(sha256(raw));
+      WHERE s.token_hash = ?`,
+    [sha256(raw)]
+  );
   if (!row) return null;
-  if (row.expires_at < now()) {
-    db.prepare('DELETE FROM sessions WHERE token_hash = ?').run(sha256(raw));
+  if (Number(row.expires_at) < db.now()) {
+    await db.run('DELETE FROM sessions WHERE token_hash = ?', [sha256(raw)]);
     return null;
   }
   return { id: row.admin_id, email: row.email };
 }
 
+// Express 4 does not catch a rejected promise from an async middleware on its
+// own (that lands in Express 5), so this catches it explicitly, the same way
+// wrap() does for route handlers.
 function requireAdmin(req, res, next) {
-  const admin = currentAdmin(req);
-  if (!admin) return next(new HttpError(401, 'Sign in required', 'unauthenticated'));
-  req.admin = admin;
-  next();
+  currentAdmin(req)
+    .then((admin) => {
+      if (!admin) return next(new HttpError(401, 'Sign in required', 'unauthenticated'));
+      req.admin = admin;
+      next();
+    })
+    .catch(next);
 }
 
 // ---------------------------------------------------------------------------

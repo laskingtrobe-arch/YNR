@@ -1,33 +1,50 @@
 'use strict';
-const { db, now } = require('../db');
+const db = require('../db');
 const config = require('../config');
 const { id, formatNaira } = require('../lib/util');
+
+/**
+ * Every function below that touches the database takes `exec` as its first
+ * argument: either the shared `db` module (a plain query, no transaction), or
+ * a `tx` object handed in by `db.transaction()`. This is deliberate rather
+ * than defaulted, because it is exactly the kind of thing that goes wrong
+ * silently: call acquireHold with the pool instead of the transaction it is
+ * supposed to be part of, and the hold survives a rollback that was meant to
+ * undo it. Making it an explicit, required argument means that mistake shows
+ * up as an obvious missing-parameter bug, not a rare production race.
+ */
 
 // ---------------------------------------------------------------------------
 // Mail
 //
-// With no SMTP transport configured, mail is persisted to the outbox and
-// logged. That keeps development honest: messages are visibly recorded rather
-// than silently discarded, which is exactly the bug this project started with.
+// Every message is recorded in the outbox first, delivery or not — that
+// keeps development honest and gives admin a real log to check, which is
+// exactly the gap this project started with. With SMTP_URL set (see
+// services/mail.js), the outbox row is then updated with the real outcome
+// instead of staying an intention that was never followed through on.
 // ---------------------------------------------------------------------------
-function sendMail(to, subject, body) {
-  const row = {
-    id: id(), to_addr: to, subject, body,
-    sent: 0, error: '', created_at: now(),
-  };
-  db.prepare(
-    `INSERT INTO mail_outbox (id, to_addr, subject, body, sent, error, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`
-  ).run(row.id, row.to_addr, row.subject, row.body, row.sent, row.error, row.created_at);
+const mailer = require('./mail');
 
-  if (!config.mail.smtpUrl) {
+async function sendMail(to, subject, body) {
+  const row = { id: id(), to_addr: to, subject, body, sent: 0, error: '', created_at: db.now() };
+  await db.run(
+    `INSERT INTO mail_outbox (id, to_addr, subject, body, sent, error, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [row.id, row.to_addr, row.subject, row.body, row.sent, row.error, row.created_at]
+  );
+
+  if (!mailer.enabled()) {
     console.log(`[mail:outbox] -> ${to} | ${subject}`);
     return { queued: true, delivered: false, id: row.id };
   }
-  // Real SMTP delivery plugs in here (nodemailer or an HTTP mail API).
-  // Left unwired deliberately rather than faking a send.
-  console.log(`[mail:pending-transport] -> ${to} | ${subject}`);
-  return { queued: true, delivered: false, id: row.id };
+
+  const result = await mailer.send({ to, subject, text: body });
+  await db.run('UPDATE mail_outbox SET sent = ?, error = ? WHERE id = ?',
+    [result.delivered ? 1 : 0, result.error || '', row.id]);
+  console.log(result.delivered
+    ? `[mail:sent] -> ${to} | ${subject}`
+    : `[mail:failed] -> ${to} | ${subject} (${result.error})`);
+  return { queued: true, delivered: result.delivered, id: row.id };
 }
 
 function notifyOwner(subject, body) {
@@ -64,59 +81,67 @@ function whatsappLink(text) {
 // A one-of-one piece must never be promised to two people. Acquisition is a
 // single conditional UPDATE so the check and the claim cannot interleave.
 // ---------------------------------------------------------------------------
-function acquireHold(productId, orderId) {
-  const t = now();
+async function acquireHold(exec, productId, orderId) {
+  const t = db.now();
   const until = t + config.holdMinutes * 60_000;
-  const r = db.prepare(
+  const r = await exec.run(
     `UPDATE products
         SET status = 'held', held_until = ?, held_by = ?, updated_at = ?
       WHERE id = ?
         AND published = 1
         AND ( status = 'available'
               OR (status = 'held' AND (held_until IS NULL OR held_until < ?))
-              OR (status = 'held' AND held_by = ?) )`
-  ).run(until, orderId, t, productId, t, orderId);
+              OR (status = 'held' AND held_by = ?) )`,
+    [until, orderId, t, productId, t, orderId]
+  );
   return r.changes === 1;
 }
 
-function releaseHold(productId, orderId) {
-  db.prepare(
+async function releaseHold(exec, productId, orderId) {
+  await exec.run(
     `UPDATE products
         SET status = 'available', held_until = NULL, held_by = NULL, updated_at = ?
-      WHERE id = ? AND status = 'held' AND held_by = ?`
-  ).run(now(), productId, orderId);
+      WHERE id = ? AND status = 'held' AND held_by = ?`,
+    [db.now(), productId, orderId]
+  );
 }
 
-function releaseOrderHolds(orderId) {
-  const rows = db.prepare('SELECT product_id FROM order_items WHERE order_id = ?').all(orderId);
-  for (const r of rows) if (r.product_id) releaseHold(r.product_id, orderId);
+async function releaseOrderHolds(exec, orderId) {
+  const rows = await exec.all('SELECT product_id FROM order_items WHERE order_id = ?', [orderId]);
+  for (const r of rows) if (r.product_id) await releaseHold(exec, r.product_id, orderId);
 }
 
-function markOrderProductsSold(orderId) {
-  const rows = db.prepare('SELECT product_id FROM order_items WHERE order_id = ?').all(orderId);
+async function markOrderProductsSold(exec, orderId) {
+  const rows = await exec.all('SELECT product_id FROM order_items WHERE order_id = ?', [orderId]);
   for (const r of rows) {
     if (!r.product_id) continue;
-    db.prepare(
+    await exec.run(
       `UPDATE products SET status = 'sold', held_until = NULL, held_by = NULL, updated_at = ?
-        WHERE id = ?`
-    ).run(now(), r.product_id);
+        WHERE id = ?`,
+      [db.now(), r.product_id]
+    );
   }
 }
 
-// Sweep expired holds back to available.
-function releaseExpiredHolds() {
-  const r = db.prepare(
+// Sweep expired holds back to available. Always runs against the shared pool
+// directly: it is one statement, not part of any larger unit of work.
+async function releaseExpiredHolds() {
+  const t = db.now();
+  const r = await db.run(
     `UPDATE products
         SET status = 'available', held_until = NULL, held_by = NULL, updated_at = ?
-      WHERE status = 'held' AND held_until IS NOT NULL AND held_until < ?`
-  ).run(now(), now());
+      WHERE status = 'held' AND held_until IS NOT NULL AND held_until < ?`,
+    [t, t]
+  );
   if (r.changes) console.log(`[holds] released ${r.changes} expired hold(s)`);
   return r.changes;
 }
 
 function startHoldSweeper() {
-  releaseExpiredHolds();
-  const timer = setInterval(releaseExpiredHolds, 60_000);
+  releaseExpiredHolds().catch((e) => console.error('[holds] sweep failed:', e.message));
+  const timer = setInterval(() => {
+    releaseExpiredHolds().catch((e) => console.error('[holds] sweep failed:', e.message));
+  }, 60_000);
   timer.unref();
   return timer;
 }
@@ -124,11 +149,12 @@ function startHoldSweeper() {
 // ---------------------------------------------------------------------------
 // Audit
 // ---------------------------------------------------------------------------
-function audit(adminId, action, target = '', detail = '') {
-  db.prepare(
+async function audit(adminId, action, target = '', detail = '') {
+  await db.run(
     `INSERT INTO audit_log (id, admin_id, action, target, detail, created_at)
-     VALUES (?, ?, ?, ?, ?, ?)`
-  ).run(id(), adminId || null, action, target, detail, now());
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [id(), adminId || null, action, target, detail, db.now()]
+  );
 }
 
 module.exports = {

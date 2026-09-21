@@ -1,6 +1,6 @@
 'use strict';
 const express = require('express');
-const { db, now } = require('../db');
+const db = require('../db');
 const { wrap, bad, notFound, rateLimit, honeypot } = require('../middleware');
 const { id, isEmail, clean, token, formatNaira } = require('../lib/util');
 const { sendMail, notifyOwner } = require('../services');
@@ -12,14 +12,15 @@ const router = express.Router();
 // Shaping
 // ---------------------------------------------------------------------------
 function imagesFor(productId) {
-  return db.prepare(
-    'SELECT url, alt FROM product_images WHERE product_id = ? ORDER BY sort, rowid'
-  ).all(productId);
+  return db.all(
+    'SELECT url, alt FROM product_images WHERE product_id = ? ORDER BY sort, seq',
+    [productId]
+  );
 }
 
-function shape(p) {
-  const imgs = imagesFor(p.id);
-  const held = p.status === 'held' && p.held_until && p.held_until > now();
+async function shape(p) {
+  const imgs = await imagesFor(p.id);
+  const held = p.status === 'held' && p.held_until && p.held_until > db.now();
   return {
     slug: p.slug,
     name: p.name,
@@ -40,6 +41,7 @@ function shape(p) {
     image: imgs.length ? imgs[0].url : '',
   };
 }
+const shapeAll = (rows) => Promise.all(rows.map(shape));
 
 const SELECT_PRODUCT = `
   SELECT p.*, c.name AS category_name, c.slug AS category_slug
@@ -48,7 +50,7 @@ const SELECT_PRODUCT = `
 // ---------------------------------------------------------------------------
 // Catalog
 // ---------------------------------------------------------------------------
-router.get('/products', wrap((req, res) => {
+router.get('/products', wrap(async (req, res) => {
   const params = [];
   let sql = SELECT_PRODUCT + ' WHERE p.published = 1';
   if (req.query.category) {
@@ -56,34 +58,34 @@ router.get('/products', wrap((req, res) => {
     params.push(String(req.query.category));
   }
   sql += ' ORDER BY p.sort, p.created_at';
-  const rows = db.prepare(sql).all(...params);
-  res.json({ ok: true, products: rows.map(shape) });
+  const rows = await db.all(sql, params);
+  res.json({ ok: true, products: await shapeAll(rows) });
 }));
 
-router.get('/products/:slug', wrap((req, res) => {
-  const row = db.prepare(SELECT_PRODUCT + ' WHERE p.slug = ? AND p.published = 1')
-    .get(req.params.slug);
+router.get('/products/:slug', wrap(async (req, res) => {
+  const row = await db.get(SELECT_PRODUCT + ' WHERE p.slug = ? AND p.published = 1', [req.params.slug]);
   if (!row) throw notFound('That piece does not exist.');
 
-  const related = db.prepare(
-    SELECT_PRODUCT + ' WHERE p.published = 1 AND p.slug != ? ORDER BY p.sort LIMIT 3'
-  ).all(req.params.slug);
+  const related = await db.all(
+    SELECT_PRODUCT + ' WHERE p.published = 1 AND p.slug != ? ORDER BY p.sort LIMIT 3',
+    [req.params.slug]
+  );
 
-  res.json({ ok: true, product: shape(row), related: related.map(shape) });
+  res.json({ ok: true, product: await shape(row), related: await shapeAll(related) });
 }));
 
-router.get('/categories', wrap((req, res) => {
-  const rows = db.prepare('SELECT slug, name FROM categories ORDER BY sort, name').all();
+router.get('/categories', wrap(async (req, res) => {
+  const rows = await db.all('SELECT slug, name FROM categories ORDER BY sort, name');
   res.json({ ok: true, categories: rows });
 }));
 
 // ---------------------------------------------------------------------------
 // Delivery zones
 // ---------------------------------------------------------------------------
-router.get('/delivery-zones', wrap((req, res) => {
-  const rows = db.prepare(
+router.get('/delivery-zones', wrap(async (req, res) => {
+  const rows = await db.all(
     'SELECT code, label, fee_kobo, note FROM delivery_zones WHERE active = 1 ORDER BY sort'
-  ).all();
+  );
   res.json({
     ok: true,
     zones: rows.map((z) => ({
@@ -104,7 +106,7 @@ router.get('/delivery-zones', wrap((req, res) => {
 router.post('/contact',
   rateLimit({ key: 'contact', windowMs: 10 * 60_000, max: 5 }),
   honeypot(),
-  wrap((req, res) => {
+  wrap(async (req, res) => {
     const name = clean(req.body.name, 120);
     const email = clean(req.body.email, 200);
     const subject = clean(req.body.subject, 200);
@@ -116,16 +118,17 @@ router.post('/contact',
     if (message.length < 5) throw bad('Please write a slightly longer message.', 'message_short');
 
     const rowId = id();
-    db.prepare(
+    await db.run(
       `INSERT INTO contact_messages (id, name, email, subject, message, handled, ip, created_at)
-       VALUES (?, ?, ?, ?, ?, 0, ?, ?)`
-    ).run(rowId, name, email, subject, message, clean(req.ip, 60), now());
+       VALUES (?, ?, ?, ?, ?, 0, ?, ?)`,
+      [rowId, name, email, subject, message, clean(req.ip, 60), db.now()]
+    );
 
-    notifyOwner(
+    await notifyOwner(
       `New message from ${name}: ${subject}`,
       `${name} <${email}> wrote:\n\n${message}`
     );
-    sendMail(
+    await sendMail(
       email,
       'We got your message — YnR',
       `Hi ${name},\n\nThanks for reaching out. We have your message and will reply soon.\n` +
@@ -142,28 +145,29 @@ router.post('/contact',
 router.post('/newsletter',
   rateLimit({ key: 'newsletter', windowMs: 10 * 60_000, max: 5 }),
   honeypot(),
-  wrap((req, res) => {
+  wrap(async (req, res) => {
     const email = clean(req.body.email, 200).toLowerCase();
     if (!isEmail(email)) throw bad('That email address does not look right.', 'email_invalid');
 
-    const existing = db.prepare('SELECT * FROM subscribers WHERE email = ?').get(email);
+    const existing = await db.get('SELECT * FROM subscribers WHERE email = ?', [email]);
     if (existing && existing.status === 'confirmed') {
       return res.json({ ok: true, message: 'You are already on the list.' });
     }
 
     const confirmToken = token(24);
     if (existing) {
-      db.prepare('UPDATE subscribers SET status = ?, confirm_token = ? WHERE id = ?')
-        .run('pending', confirmToken, existing.id);
+      await db.run('UPDATE subscribers SET status = ?, confirm_token = ? WHERE id = ?',
+        ['pending', confirmToken, existing.id]);
     } else {
-      db.prepare(
+      await db.run(
         `INSERT INTO subscribers (id, email, status, confirm_token, unsub_token, created_at)
-         VALUES (?, ?, 'pending', ?, ?, ?)`
-      ).run(id(), email, confirmToken, token(24), now());
+         VALUES (?, ?, 'pending', ?, ?, ?)`,
+        [id(), email, confirmToken, token(24), db.now()]
+      );
     }
 
     const link = `${config.apiUrl}/api/newsletter/confirm?token=${confirmToken}`;
-    sendMail(
+    await sendMail(
       email,
       'Confirm your YnR subscription',
       `Tap to confirm you want to hear when a new one-of-one piece drops:\n\n${link}\n\n` +
@@ -174,21 +178,21 @@ router.post('/newsletter',
   })
 );
 
-router.get('/newsletter/confirm', wrap((req, res) => {
+router.get('/newsletter/confirm', wrap(async (req, res) => {
   const t = String(req.query.token || '');
-  const row = t && db.prepare('SELECT * FROM subscribers WHERE confirm_token = ?').get(t);
+  const row = t && await db.get('SELECT * FROM subscribers WHERE confirm_token = ?', [t]);
   if (!row) return res.status(400).send(page('Link expired', 'That confirmation link is no longer valid.'));
 
-  db.prepare("UPDATE subscribers SET status='confirmed', confirmed_at=?, confirm_token=NULL WHERE id=?")
-    .run(now(), row.id);
+  await db.run("UPDATE subscribers SET status='confirmed', confirmed_at=?, confirm_token=NULL WHERE id=?",
+    [db.now(), row.id]);
   res.send(page('You are on the list', 'We will let you know the moment a new piece goes up.'));
 }));
 
-router.get('/newsletter/unsubscribe', wrap((req, res) => {
+router.get('/newsletter/unsubscribe', wrap(async (req, res) => {
   const t = String(req.query.token || '');
-  const row = t && db.prepare('SELECT * FROM subscribers WHERE unsub_token = ?').get(t);
+  const row = t && await db.get('SELECT * FROM subscribers WHERE unsub_token = ?', [t]);
   if (!row) return res.status(400).send(page('Not found', 'That unsubscribe link is not valid.'));
-  db.prepare("UPDATE subscribers SET status='unsubscribed' WHERE id=?").run(row.id);
+  await db.run("UPDATE subscribers SET status='unsubscribed' WHERE id=?", [row.id]);
   res.send(page('Unsubscribed', 'You will not hear from us again.'));
 }));
 
@@ -198,8 +202,8 @@ router.get('/newsletter/unsubscribe', wrap((req, res) => {
 router.post('/repaint',
   rateLimit({ key: 'repaint', windowMs: 10 * 60_000, max: 5 }),
   honeypot(),
-  wrap((req, res) => {
-    const p = db.prepare('SELECT * FROM products WHERE slug = ?').get(clean(req.body.slug, 90));
+  wrap(async (req, res) => {
+    const p = await db.get('SELECT * FROM products WHERE slug = ?', [clean(req.body.slug, 90)]);
     if (!p) throw notFound('That piece does not exist.');
 
     const name = clean(req.body.name, 120);
@@ -207,14 +211,39 @@ router.post('/repaint',
     if (!name) throw bad('Please tell us your name.', 'name_required');
     if (!isEmail(email)) throw bad('That email address does not look right.', 'email_invalid');
 
-    db.prepare(
+    await db.run(
       `INSERT INTO repaint_requests (id, product_id, name, email, phone, size, note, handled, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)`
-    ).run(id(), p.id, name, email, clean(req.body.phone, 40),
-          clean(req.body.size, 12), clean(req.body.note, 1000), now());
+       VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)`,
+      [id(), p.id, name, email, clean(req.body.phone, 40),
+       clean(req.body.size, 12), clean(req.body.note, 1000), db.now()]
+    );
 
-    notifyOwner(`Repaint request: ${p.name}`, `${name} <${email}> wants ${p.name} repainted.`);
+    await notifyOwner(`Repaint request: ${p.name}`, `${name} <${email}> wants ${p.name} repainted.`);
     res.json({ ok: true, message: 'Request received. We will be in touch about a repaint.' });
+  })
+);
+
+// ---------------------------------------------------------------------------
+// Analytics — see the note on the analytics_events table in db.js for why
+// this collects no IP or user-agent. Fires on every page view and product
+// view, so the rate limit here is generous compared to the form endpoints
+// above: normal browsing legitimately produces a burst of these.
+// ---------------------------------------------------------------------------
+const EVENT_TYPES = new Set(['page_view', 'product_view', 'whatsapp_click']);
+
+router.post('/events',
+  rateLimit({ key: 'events', windowMs: 60_000, max: 120 }),
+  wrap(async (req, res) => {
+    const type = String((req.body && req.body.type) || '');
+    if (!EVENT_TYPES.has(type)) throw bad('Unknown event type.', 'type_invalid');
+
+    await db.run(
+      'INSERT INTO analytics_events (id, type, path, slug, created_at) VALUES (?, ?, ?, ?, ?)',
+      [id(), type, clean(req.body.path, 200), clean(req.body.slug, 90), db.now()]
+    );
+    // 204: the storefront fires this in the background and does not act on
+    // the response, so there is nothing worth a body for.
+    res.sendStatus(204);
   })
 );
 

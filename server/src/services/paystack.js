@@ -72,6 +72,55 @@ async function verify(reference) {
 }
 
 /**
+ * Requests a refund. `amountKobo` omitted means a full refund of whatever
+ * the original transaction charged; Paystack rejects an amount larger than
+ * that on its own.
+ *
+ * A refund does NOT complete synchronously — Paystack's own documentation is
+ * explicit that refund status should be tracked via their refund.processed /
+ * refund.failed webhooks, not the initial response, which normally comes
+ * back "pending". This app does not wire those webhooks: the exact shape of
+ * their payload could not be verified with confidence, and parsing a
+ * guessed field name for a payment webhook is worse than not having it —
+ * it would silently never match, leaving a refund that actually completed
+ * still shown as pending. fetchRefund() below re-checks status on demand
+ * against Paystack directly instead, the same "never trust it, verify it"
+ * rule this file already applies to payment confirmation.
+ */
+async function refund({ transaction, amountKobo, reason }) {
+  if (config.paystack.mock) {
+    // Real Paystack returns "pending" here too — initiating is not
+    // completing. Mirroring that (rather than shortcutting straight to
+    // "processed") is what makes fetchRefund()'s pending -> processed
+    // transition something the mock flow actually exercises.
+    return {
+      mock: true,
+      id: 'mock_refund_' + transaction,
+      status: 'pending',
+      amount: amountKobo ?? null,
+      transaction,
+    };
+  }
+  const body = { transaction };
+  if (amountKobo != null) {
+    if (!Number.isInteger(amountKobo) || amountKobo <= 0) {
+      throw new HttpError(400, 'Refund amount must be a positive integer in kobo.', 'bad_amount');
+    }
+    body.amount = amountKobo;
+  }
+  if (reason) body.reason = String(reason).slice(0, 200);
+  return call('POST', '/refund', body);
+}
+
+/** Re-checks one refund's current status directly with Paystack. */
+async function fetchRefund(refundId) {
+  if (config.paystack.mock || String(refundId).startsWith('mock_refund_')) {
+    return { mock: true, id: refundId, status: 'processed' };
+  }
+  return call('GET', '/refund/' + encodeURIComponent(refundId));
+}
+
+/**
  * Verify a webhook signature.
  *
  * Paystack signs with HMAC SHA512 (not SHA256) using the SECRET key, over the
@@ -91,4 +140,4 @@ function verifySignature(rawBody, signature) {
   return crypto.timingSafeEqual(a, b);
 }
 
-module.exports = { enabled, initialize, verify, verifySignature };
+module.exports = { enabled, initialize, verify, refund, fetchRefund, verifySignature };

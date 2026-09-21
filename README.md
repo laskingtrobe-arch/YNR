@@ -23,7 +23,7 @@ storefront/          The shop customers see
     app.js             View switching, DOM wiring, boot
   assets/products/     Product photography
 
-server/              The back end (Node + Express + SQLite)
+server/              The back end (Node + Express + Postgres, on Supabase)
   src/
     routes/            Public API, orders, payments, admin
     services/          Paystack, mail, holds, audit
@@ -89,16 +89,21 @@ one origin. No second host, no CORS, nothing to wire together.
 
 **Render**, using the `render.yaml` already in this repo:
 
-1. Push this repo to GitHub (already done).
-2. On [render.com](https://render.com), New → Blueprint → pick this repo.
+1. Create a Supabase project and copy its Postgres connection string
+   (Project Settings → Database → Connection string → URI). Free tier is
+   fine to start.
+2. Push this repo to GitHub (already done).
+3. On [render.com](https://render.com), New → Blueprint → pick this repo.
    Render reads `render.yaml` automatically.
-3. It will ask for `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `OWNER_EMAIL` — fill
-   these in. `PAYSTACK_SECRET_KEY` and `SMTP_URL` can be left blank for now;
-   the shop works on WhatsApp-confirmed orders without them.
-4. Deploy. Render mounts a persistent disk (`render.yaml` requests 1GB), so
-   the database and uploaded product photos survive every future redeploy.
-   **This is the part a plain free-tier host usually gets wrong.**
-5. On first boot the server seeds the starting catalogue and creates the
+4. It will ask for `DATABASE_URL` (paste the Supabase string from step 1),
+   `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `OWNER_EMAIL` — fill these in.
+   `PAYSTACK_SECRET_KEY` and `SMTP_URL` can be left blank for now; the shop
+   works on WhatsApp-confirmed orders without them.
+5. Deploy. The database is already durable on Supabase; the persistent disk
+   `render.yaml` requests is for uploaded product photos, so those survive
+   every future redeploy too. **This is the part a plain free-tier host
+   usually gets wrong.**
+6. On first boot the server seeds the starting catalogue and creates the
    admin account from those env vars automatically — there is no shell step.
    Sign in at `https://<your-render-url>/admin`, then delete
    `ADMIN_PASSWORD` from Render's environment settings so it is not sitting
@@ -127,15 +132,19 @@ If you want to keep the existing Vercel deployment for the storefront:
 4. Set `SITE_URL` in the back end's environment to the Vercel URL, or the
    browser's CORS check will block every request.
 
-### Why the back end cannot go on Vercel itself
+### Why the back end still does not go on Vercel itself
 
-Vercel runs serverless functions on a filesystem that is read-only outside
-of `/tmp`, and `/tmp` is wiped between invocations. This server keeps its
-database in a file and saves uploaded photos to disk, so on Vercel every
-order and every product photo would be silently gone on the next deploy, or
-sooner. This is not a code problem to fix — it needs a host built for a
-long-running process with real storage, which is what Option A or B's
-`server/` deployment provides.
+The database is Postgres on Supabase now, a real network service — the kind
+of thing Vercel's serverless functions talk to all the time, and no longer a
+reason on its own to rule Vercel out.
+
+What still rules it out is uploads. Vercel's filesystem is read-only outside
+of `/tmp`, and `/tmp` is wiped between invocations, but this server saves
+uploaded product photos straight to local disk (`UPLOADS_DIR`). On Vercel
+every photo would be gone on the next deploy, or sooner. That is the one
+remaining piece: move uploads to object storage (Supabase Storage, or Vercel
+Blob) and there is nothing left holding this to a persistent-disk host. Until
+then, Option A or B's `server/` deployment is where it needs to run.
 
 ## Tests
 
