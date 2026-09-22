@@ -22,9 +22,16 @@ function errorHandler(err, req, res, _next) {
   if (status >= 500) {
     console.error('[error]', req.method, req.originalUrl, err);
   }
+  // HttpError is always thrown deliberately, with a message already written
+  // to be shown to the customer (e.g. "Card payment is not switched on yet.
+  // Please check out on WhatsApp.") — that's true regardless of its status
+  // code, including the 5xx ones like 503 "not configured". Masking is only
+  // for a genuinely unexpected exception, where err.message could be a raw
+  // driver/internal error never meant for a customer to see.
+  const safeToShow = err instanceof HttpError || status < 500 || !config.isProd;
   res.status(status).json({
     ok: false,
-    error: status >= 500 && config.isProd ? 'Something went wrong' : err.message,
+    error: safeToShow ? err.message : 'Something went wrong',
     code: err.code || 'error',
   });
 }
