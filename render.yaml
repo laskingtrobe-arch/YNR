@@ -29,6 +29,17 @@ services:
       - key: UPLOADS_DIR
         value: /var/data/uploads
 
+      # This service's own public URL. Without it, the Paystack callback,
+      # the newsletter confirm/unsubscribe links, and the CORS allow-list
+      # all silently fall back to localhost — meaning real customers would
+      # be sent to a URL that only exists on a developer's own machine.
+      # Update both if this service is ever renamed or moved to a custom
+      # domain (they are the same value because one origin serves everything).
+      - key: SITE_URL
+        value: https://ynr-shop.onrender.com
+      - key: API_URL
+        value: https://ynr-shop.onrender.com
+
       # Supabase: Project Settings -> Database -> Connection string -> URI.
       # Use the Session pooler (port 5432) — this is a long-running server
       # with its own connection pool, not a serverless function, so it does
