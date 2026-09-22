@@ -23,7 +23,7 @@ storefront/          The shop customers see
     app.js             View switching, DOM wiring, boot
   assets/products/     Product photography
 
-server/              The back end (Node + Express + Postgres, on Neon)
+server/              The back end (Node + Express + Postgres, on Supabase)
   src/
     routes/            Public API, orders, payments, admin
     services/          Paystack, mail, holds, audit
@@ -89,16 +89,17 @@ one origin. No second host, no CORS, nothing to wire together.
 
 **Render**, using the `render.yaml` already in this repo:
 
-1. Create a Neon project and copy its Postgres connection string (shown
-   directly on the project dashboard). Free tier is fine to start.
+1. Create a Supabase project and copy its Postgres connection string
+   (Project Settings → Database → Connection string → URI). Free tier is
+   fine to start.
 2. Push this repo to GitHub (already done).
 3. On [render.com](https://render.com), New → Blueprint → pick this repo.
    Render reads `render.yaml` automatically.
-4. It will ask for `DATABASE_URL` (paste the Neon string from step 1),
+4. It will ask for `DATABASE_URL` (paste the Supabase string from step 1),
    `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `OWNER_EMAIL` — fill these in.
    `PAYSTACK_SECRET_KEY` and `SMTP_URL` can be left blank for now; the shop
    works on WhatsApp-confirmed orders without them.
-5. Deploy. The database is already durable on Neon; the persistent disk
+5. Deploy. The database is already durable on Supabase; the persistent disk
    `render.yaml` requests is for uploaded product photos, so those survive
    every future redeploy too. **This is the part a plain free-tier host
    usually gets wrong.**
@@ -133,7 +134,7 @@ If you want to keep the existing Vercel deployment for the storefront:
 
 ### Why the back end still does not go on Vercel itself
 
-The database is Postgres on Neon now, a real network service — the kind
+The database is Postgres on Supabase now, a real network service — the kind
 of thing Vercel's serverless functions talk to all the time, and no longer a
 reason on its own to rule Vercel out.
 
@@ -141,10 +142,9 @@ What still rules it out is uploads. Vercel's filesystem is read-only outside
 of `/tmp`, and `/tmp` is wiped between invocations, but this server saves
 uploaded product photos straight to local disk (`UPLOADS_DIR`). On Vercel
 every photo would be gone on the next deploy, or sooner. That is the one
-remaining piece: move uploads to object storage (Vercel Blob, or an
-S3-compatible store like Cloudflare R2) and there is nothing left holding
-this to a persistent-disk host. Until then, Option A or B's `server/`
-deployment is where it needs to run.
+remaining piece: move uploads to object storage (Supabase Storage, or Vercel
+Blob) and there is nothing left holding this to a persistent-disk host. Until
+then, Option A or B's `server/` deployment is where it needs to run.
 
 ## Tests
 

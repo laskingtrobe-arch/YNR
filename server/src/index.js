@@ -51,7 +51,7 @@ app.use('/admin', express.static(path.join(config.paths.root, 'public', 'admin')
 app.get('/api/health', async (req, res) => {
   // The database is now a network service, not a local file, so it can be
   // down for reasons that have nothing to do with this process — a bad
-  // connection string, an expired credential, Neon suspending an idle free
+  // connection string, an expired credential, Supabase pausing an idle free
   // project. render.yaml points its health check at this route specifically
   // so a broken database shows up as an unhealthy service, not a silent 200.
   let dbOk = true;

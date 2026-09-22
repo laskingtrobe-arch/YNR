@@ -3,8 +3,8 @@
 Catalogue, one-of-one stock control, orders, Paystack checkout, and an admin
 panel for the YnR storefront.
 
-Node 22+, Postgres (via a connection string — this runs on Neon, but connects
-the standard way, so any Postgres works).
+Node 22+, Postgres (via a connection string — this was built against Supabase,
+but connects the standard way, so any Postgres works).
 
 ## Quick start
 
@@ -12,8 +12,8 @@ the standard way, so any Postgres works).
 cd server
 npm install
 cp .env.example .env
-# edit .env: set DATABASE_URL to your Neon connection string
-# (project dashboard -> Connection string)
+# edit .env: set DATABASE_URL to your Supabase connection string
+# (Project Settings -> Database -> Connection string -> URI)
 npm run seed                       # loads the 6 existing pieces + delivery zones
 npm run create-admin you@email.com # prints a generated password once
 npm start
@@ -81,10 +81,9 @@ than silently dropped. Wiring a real transport is one function in
 `src/services/index.js`.
 
 ### Database
-Postgres, connected with a plain connection string rather than a
-provider-specific SDK — nothing here is Neon-specific beyond where
-`DATABASE_URL` points, so any Postgres works. `src/db.js` exposes
-`get`/`all`/`run`, async equivalents of
+Postgres, connected with a plain connection string rather than the Supabase
+SDK — nothing here is Supabase-specific beyond where `DATABASE_URL` points, so
+any Postgres works. `src/db.js` exposes `get`/`all`/`run`, async equivalents of
 the query shapes used throughout the routes, plus `transaction(fn)`: runs `fn`
 against one dedicated connection wrapped in `BEGIN`/`COMMIT`, rolling back
 automatically if it throws. Anything that touches a one-of-one hold alongside
@@ -136,20 +135,21 @@ not be undone by that transaction's rollback.
    will land in spam.
 5. Serve over HTTPS. Session cookies set `secure` in production and will not be
    sent over plain HTTP.
-6. Back up `uploads/` on a schedule. The database is on Neon, which keeps its
-   own history for point-in-time restore — check the plan's retention window,
-   and budget for longer retention if the shop's order history needs it.
+6. Back up `uploads/` on a schedule. The database is on Supabase, which takes
+   its own backups — check the plan's retention window, and consider Point in
+   Time Recovery if the shop's order history needs a tighter one.
 
 ## Not built yet
 
 Deliberately left out, in rough priority order:
 
+- Server-side image resizing (`sharp`). Uploads are validated and stored at
+  original size, so large photos will be slow on mobile data.
+- Real SMTP transport. The outbox records mail but nothing sends it.
+- Refunds through the API. Refund in the Paystack dashboard, then set the
+  order's payment status in admin.
 - Per-size stock, if a piece ever becomes several physical garments.
-- Moving uploads to an S3-compatible object store. They are still local disk
-  (see `UPLOADS_DIR`), which is the one thing still keeping this off a fully
+- Moving uploads to Supabase Storage. They are still local disk (see
+  `UPLOADS_DIR`), which is the one thing still keeping this off a fully
   serverless host — everything else the database now needs is already a
   network call.
-- Paystack refund completion via webhook. Initiating a refund and re-checking
-  its status on demand both work (`services/paystack.js`); the
-  `refund.processed`/`refund.failed` webhooks themselves are deliberately not
-  wired — see the comment there for why.

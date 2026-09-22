@@ -36,8 +36,8 @@ if (usingMemory) {
 
 if (!usingMemory && !config.db.url) {
   throw new Error(
-    'DATABASE_URL is not set. Point it at your Postgres connection string ' +
-    '(on Neon: the project dashboard\'s "Connection string" panel).'
+    'DATABASE_URL is not set. Point it at your Supabase Postgres connection ' +
+    'string (Project Settings -> Database -> Connection string -> URI).'
   );
 }
 
@@ -45,10 +45,10 @@ const pool = usingMemory
   ? new Pool()
   : new Pool({
       connectionString: config.db.url,
-      // Hosted Postgres (Neon included) requires TLS, and its certificate
-      // chain is not always in Node's default trust store, so this follows
-      // the commonly documented node-postgres example rather than a
-      // stricter check that would refuse to connect at all.
+      // Supabase requires TLS. Its certificate chain is not always in Node's
+      // default trust store, so this follows Supabase's own documented
+      // node-postgres example rather than a stricter check that would refuse
+      // to connect at all.
       ssl: config.db.ssl ? { rejectUnauthorized: false } : false,
       max: config.db.poolMax,
       idleTimeoutMillis: 30_000,
@@ -142,8 +142,8 @@ const now = () => Date.now();
  * CREATE TABLE IF NOT EXISTS only creates a table that does not exist yet —
  * it does not add a column to one that already does. That is harmless while
  * no real deployment exists (every test run starts from an empty pg-mem
- * database, so this always runs against a fresh schema); the moment the real
- * Postgres database has live rows in it, a column added here needs a real
+ * database, so this always runs against a fresh schema); the moment a real
+ * Supabase database has live rows in it, a column added here needs a real
  * `ALTER TABLE ... ADD COLUMN` migration alongside it, not just an edit to
  * this string.
  * ------------------------------------------------------------------------- */

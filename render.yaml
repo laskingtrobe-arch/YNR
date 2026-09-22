@@ -1,7 +1,7 @@
 # One-service deployment: the API, the admin panel and the storefront all
 # served from a single origin, so there is no CORS and no second host.
 #
-# The database is Postgres on Neon (DATABASE_URL below) — external to
+# The database is Postgres on Supabase (DATABASE_URL below) — external to
 # this service, so it survives redeploys on its own. The disk mounted here is
 # for uploaded product photos only: without it, they would live on this
 # container's own filesystem and be wiped on every redeploy. Disks require a
@@ -29,8 +29,10 @@ services:
       - key: UPLOADS_DIR
         value: /var/data/uploads
 
-      # Neon: paste the connection string from the project dashboard
-      # ("Connection string" panel — includes ?sslmode=require already).
+      # Supabase: Project Settings -> Database -> Connection string -> URI.
+      # Use the Session pooler (port 5432) — this is a long-running server
+      # with its own connection pool, not a serverless function, so it does
+      # not need the transaction-mode pooler serverless deployments require.
       - key: DATABASE_URL
         sync: false
 
