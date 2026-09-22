@@ -9,7 +9,7 @@ const config = require('../config');
  * nodemailer.createTransport accepts a full connection URL directly:
  *   smtp://user:pass@smtp.provider.com:587
  * Any SMTP provider works this way — Postmark, SendGrid, Mailgun's SMTP
- * endpoint, Gmail with an app password, Supabase does not provide one itself.
+ * endpoint, Gmail with an app password. Neon does not provide one itself.
  * Built once and reused: creating a new transport per email would reopen a
  * connection for every send.
  */

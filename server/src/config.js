@@ -38,9 +38,9 @@ const config = {
     storefront: process.env.STOREFRONT_DIR || path.join(ROOT, '..', 'storefront'),
   },
 
-  // The database is Postgres, hosted on Supabase (or any Postgres, since
-  // this connects with a plain connection string rather than the Supabase
-  // SDK — nothing here is Supabase-specific beyond where the string points).
+  // The database is Postgres, hosted on Neon (or any Postgres, since this
+  // connects with a plain connection string rather than a provider-specific
+  // SDK — nothing here is Neon-specific beyond where the string points).
   db: {
     url: process.env.DATABASE_URL || '',
     ssl: !/^(0|false|no)$/i.test(process.env.DATABASE_SSL || '1'),
@@ -99,7 +99,7 @@ if (config.isProd) {
   if (!config.db.url) {
     throw new Error(
       'DATABASE_URL must be set in production — a Postgres connection string ' +
-      '(Supabase: Project Settings -> Database -> Connection string -> URI).'
+      '(on Neon: the project dashboard\'s "Connection string" panel).'
     );
   }
   // Paystack is deliberately not required. Merchant approval takes weeks in
