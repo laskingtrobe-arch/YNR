@@ -16,6 +16,12 @@ services:
     startCommand: npm start
     healthCheckPath: /api/health
 
+    # Render adds www.ynrfashion.com automatically. DNS lives on Cloudflare:
+    # CNAME @ and www -> ynr-shop.onrender.com, both "DNS only" (not
+    # proxied) so Render can verify the domain and issue its certificate.
+    domains:
+      - ynrfashion.com
+
     disk:
       name: ynr-uploads
       mountPath: /var/data
@@ -72,7 +78,14 @@ services:
       # Order notifications. Without SMTP_URL, mail is recorded in the outbox
       # table and visible in the admin panel rather than being sent.
       - key: OWNER_EMAIL
-        sync: false
+        value: Ynrfashion93@gmail.com
+      # Resend only sends from a domain verified with DNS records (see the
+      # resend._domainkey / send / rsend records on Cloudflare), and it has
+      # no inbox — replies go to OWNER_EMAIL via Reply-To instead.
+      - key: MAIL_FROM
+        value: "YnR <orders@ynrfashion.com>"
+      # Secret — set in the Render dashboard, never in this file:
+      #   smtps://resend:<RESEND_API_KEY>@smtp.resend.com:465
       - key: SMTP_URL
         sync: false
 
