@@ -3,6 +3,9 @@
   "outputDirectory": "storefront",
   "cleanUrls": true,
   "trailingSlash": false,
+  "redirects": [
+    { "source": "/:path*", "destination": "https://ynrfashion.com/:path*", "permanent": false }
+  ],
   "headers": [
     {
       "source": "/assets/(.*)",
