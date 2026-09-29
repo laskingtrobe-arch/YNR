@@ -77,6 +77,11 @@ const config = {
   mail: {
     from: process.env.MAIL_FROM || 'YnR <orders@ynr.local>',
     ownerTo: process.env.OWNER_EMAIL || 'owner@ynr.local',
+    // Resend (and most transactional senders) can only send, not receive, so
+    // a branded from-address like orders@ynrfashion.com has no real inbox
+    // behind it. Falls back to ownerTo so a customer's reply still reaches
+    // someone, rather than bouncing off an address nobody reads.
+    replyTo: process.env.MAIL_REPLY_TO || process.env.OWNER_EMAIL || '',
     // When no SMTP transport is configured, mail is written to the outbox
     // table and logged, so nothing is silently lost during development.
     smtpUrl: process.env.SMTP_URL || '',

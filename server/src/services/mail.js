@@ -36,7 +36,13 @@ async function send({ to, subject, text }) {
   if (!t) return { delivered: false, error: 'SMTP not configured' };
 
   try {
-    await t.sendMail({ from: config.mail.from, to, subject, text });
+    await t.sendMail({
+      from: config.mail.from,
+      to,
+      subject,
+      text,
+      ...(config.mail.replyTo ? { replyTo: config.mail.replyTo } : {}),
+    });
     return { delivered: true, error: null };
   } catch (e) {
     console.error('[mail] send failed:', e.message);
