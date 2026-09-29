@@ -445,12 +445,15 @@ async function loadOrders(){
            href="https://wa.me/${esc((o.phone||'').replace(/\D/g,'').replace(/^0/,'234'))}">WhatsApp</a>
         ${o.deliveryLabel === 'TBC' ? `<button class="btn ghost sm" data-fee="${o.id}">Set delivery fee</button>` : ''}
         ${o.paymentStatus !== 'paid' ? `<button class="btn ghost sm" data-paid="${o.id}">Mark paid</button>` : ''}
+        ${['shipped','delivered'].includes(o.status) ? `<button class="btn ghost sm" data-track="${o.id}">${o.trackingRef ? 'Tracking: '+esc(o.trackingRef) : 'Add tracking'}</button>` : ''}
       </div>
     </div>`).join('');
 
+  const EMAILED_STATUSES = ['confirmed','in_production','shipped','delivered','cancelled'];
   $$('[data-status]', el).forEach(s => s.addEventListener('change', async ()=>{
     try { await api('PATCH','/admin/orders/'+s.dataset.status,{status:s.value});
-      toast('Order updated'); loadDash(); } catch(e){ toast(e.message,true); }
+      toast(EMAILED_STATUSES.includes(s.value) ? 'Order updated — customer emailed' : 'Order updated');
+      loadDash(); } catch(e){ toast(e.message,true); }
   }));
   $$('[data-fee]', el).forEach(b => b.addEventListener('click', async ()=>{
     const v = prompt('Delivery fee in naira?');
@@ -458,10 +461,16 @@ async function loadOrders(){
     try { await api('PATCH','/admin/orders/'+b.dataset.fee,{deliveryFee:Number(v)||0});
       toast('Delivery fee set'); loadOrders(); } catch(e){ toast(e.message,true); }
   }));
+  $$('[data-track]', el).forEach(b => b.addEventListener('click', async ()=>{
+    const v = prompt('Tracking reference / courier link?');
+    if (v === null) return;
+    try { await api('PATCH','/admin/orders/'+b.dataset.track,{trackingRef:v});
+      toast('Tracking saved'); loadOrders(); } catch(e){ toast(e.message,true); }
+  }));
   $$('[data-paid]', el).forEach(b => b.addEventListener('click', async ()=>{
     if (!confirm('Mark this order as paid? Use this for bank transfers you have confirmed yourself.')) return;
     try { await api('PATCH','/admin/orders/'+b.dataset.paid,{paymentStatus:'paid'});
-      toast('Marked paid'); loadOrders(); loadDash(); } catch(e){ toast(e.message,true); }
+      toast('Marked paid — customer emailed'); loadOrders(); loadDash(); } catch(e){ toast(e.message,true); }
   }));
 }
 $('#orderFilter').addEventListener('change', loadOrders);

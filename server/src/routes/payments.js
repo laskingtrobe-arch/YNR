@@ -5,7 +5,7 @@ const config = require('../config');
 const { wrap, bad, notFound, conflict, rateLimit, HttpError } = require('../middleware');
 const { id, formatNaira } = require('../lib/util');
 const paystack = require('../services/paystack');
-const { markOrderProductsSold, notifyOwner, sendMail } = require('../services');
+const { markOrderProductsSold, notifyOwner, sendMail, whatsappLink } = require('../services');
 
 const router = express.Router();
 
@@ -214,10 +214,19 @@ function mark(reference, result) {
 router.get('/payments/callback', wrap(async (req, res) => {
   const reference = String(req.query.reference || req.query.trxref || '').toUpperCase();
   const order = reference && await db.get('SELECT * FROM orders WHERE reference = ?', [reference]);
-  if (!order) return res.status(404).send(resultPage('Order not found', 'We could not find that payment.', false));
+  if (!order) return res.status(404).send(resultPage('Order not found', 'We could not find that payment.', 'failed'));
 
+  // Paystack's own status strings (success / failed / abandoned / reversed —
+  // see verify()'s caller elsewhere for the same rule): only 'failed' and
+  // 'reversed' are a definite negative outcome worth its own page. Anything
+  // else that isn't a confirmed 'success' — including the verify call itself
+  // throwing — is genuinely ambiguous, not a failure, so it gets the neutral
+  // "pending" treatment rather than telling a customer their payment failed
+  // when it may simply not have been confirmed yet.
+  let verifiedStatus = null;
   try {
     const verified = await paystack.verify(reference);
+    verifiedStatus = verified.status;
     if (verified.status === 'success') {
       const paid = verified.amount == null ? order.total_kobo : Number(verified.amount);
       if (paid >= order.total_kobo) await fulfil(order, paid, reference);
@@ -227,13 +236,37 @@ router.get('/payments/callback', wrap(async (req, res) => {
   }
 
   const fresh = await db.get('SELECT * FROM orders WHERE id = ?', [order.id]);
-  const paidOk = fresh.payment_status === 'paid';
+  const waLink = whatsappLink(
+    `Hi YnR, my payment for order ${fresh.reference} needs a look — could you check it for me?`
+  );
+
+  // The DB's payment_status is the source of truth (a webhook may already
+  // have marked it paid via a race with this same request), so "paid" wins
+  // over whatever this particular verify call returned.
+  if (fresh.payment_status === 'paid') {
+    return res.send(resultPage(
+      'Payment received',
+      `Thank you. Order <b>${fresh.reference}</b> is paid and we are on it.`,
+      'success'
+    ));
+  }
+
+  if (verifiedStatus === 'failed' || verifiedStatus === 'reversed') {
+    return res.send(resultPage(
+      'Payment failed',
+      `Your payment for order <b>${fresh.reference}</b> did not go through — no charge was made. ` +
+      `You can try again from the shop, or confirm on WhatsApp instead.`,
+      'failed',
+      waLink
+    ));
+  }
+
   res.send(resultPage(
-    paidOk ? 'Payment received' : 'Payment pending',
-    paidOk
-      ? `Thank you. Order <b>${fresh.reference}</b> is paid and we are on it.`
-      : `We have not seen confirmation for <b>${fresh.reference}</b> yet. If money left your account, message us on WhatsApp with this reference and we will sort it.`,
-    paidOk
+    'Payment pending',
+    `We have not seen confirmation for <b>${fresh.reference}</b> yet. If money left your account, ` +
+    `message us on WhatsApp with this reference and we will sort it.`,
+    'pending',
+    waLink
   ));
 }));
 
@@ -260,16 +293,22 @@ text-decoration:none;font-size:13px;letter-spacing:.12em;text-transform:uppercas
 <a href="/api/payments/callback?reference=${encodeURIComponent(reference)}">Pay now (simulated)</a></div>`);
 }));
 
-function resultPage(title, body, ok) {
+// kind: 'success' | 'pending' | 'failed' — drives the heading colour and
+// whether a WhatsApp link is worth offering alongside "back to the shop".
+function resultPage(title, body, kind, waLink) {
+  const color = kind === 'success' ? '#f2efe9' : kind === 'failed' ? '#a8181d' : '#c9a227';
   return `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${title} — YnR</title>
 <style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0a0a0a;color:#f2efe9;
 font:16px/1.6 system-ui,sans-serif;padding:24px}.c{max-width:460px;text-align:center}
-h1{font-size:30px;margin:0 0 12px;color:${ok ? '#f2efe9' : '#a8181d'}}p{color:#8f8b84;margin:0 0 22px}
+h1{font-size:30px;margin:0 0 12px;color:${color}}p{color:#8f8b84;margin:0 0 26px}
+.links{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 a{color:#f2efe9;border:1px solid rgba(242,239,233,.3);padding:11px 20px;text-decoration:none;
 display:inline-block;font-size:13px;letter-spacing:.12em;text-transform:uppercase}
 a:hover{background:#7c1015;border-color:#7c1015}</style>
-<div class="c"><h1>${title}</h1><p>${body}</p><a href="${config.siteUrl}">Back to the shop</a></div>`;
+<div class="c"><h1>${title}</h1><p>${body}</p><div class="links">
+${waLink ? `<a href="${waLink}" target="_blank" rel="noopener">Message us on WhatsApp</a>` : ''}
+<a href="${config.siteUrl}">Back to the shop</a></div></div>`;
 }
 
 module.exports = router;

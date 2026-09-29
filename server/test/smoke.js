@@ -218,6 +218,22 @@ async function req(method, url, body, headers = {}) {
     });
     ok(hp.status === 200, 'honeypot returns success to the bot');
 
+    // ---- payment result page (received / pending / failed) --------------
+    // `ref` is still genuinely 'paid' at this point in the file — the refund
+    // section below moves it to 'refunded', which would make a callback hit
+    // here re-trigger fulfil() and silently flip it back to 'paid'. That is
+    // itself a real gap (the callback route trusts payment_status alone,
+    // not whether a refund has since been issued), tracked separately —
+    // this test deliberately runs before refunds to not walk into it.
+    const cbMissing = await req('GET', '/api/payments/callback?reference=YNR-NOPE99');
+    ok(cbMissing.status === 404 && /Order not found/.test(cbMissing.text),
+      'callback page for an unknown reference reports "order not found"');
+    ok(cbMissing.text.includes('#a8181d'), 'unknown-reference page uses the failed colour');
+
+    const cbPaid = await req('GET', `/api/payments/callback?reference=${ref}`);
+    ok(cbPaid.status === 200 && /Payment received/.test(cbPaid.text),
+      'callback page for an already-paid order reports "payment received"');
+
     // ---- admin auth ------------------------------------------------------
     const noAuth = await req('GET', '/api/admin/products');
     ok(noAuth.status === 401, 'admin API refuses unauthenticated access');
@@ -284,6 +300,36 @@ async function req(method, url, body, headers = {}) {
     const afterRefund = await req('GET', `/api/orders/${ref}`, undefined, { Cookie: cookie });
     ok(afterRefund.json.order.paymentStatus === 'refunded',
       'order payment status flips to refunded once the check confirms it', afterRefund.json.order.paymentStatus);
+
+    // ---- admin: bank-transfer "mark paid" must sell the piece too --------
+    // `other` (Chidi Test, reckless-yute) was placed via WhatsApp and never
+    // paid online — exactly the case "Mark paid" exists for. Before this fix,
+    // this path updated payment_status alone and left the piece on its
+    // ordinary 30-minute hold, so a slow admin confirming a bank transfer
+    // could lose the piece to someone else mid-confirmation.
+    const beforeMark = await req('GET', '/api/products/reckless-yute');
+    ok(beforeMark.json.product.isSold === false, 'reckless-yute is not yet sold before admin marks it paid');
+
+    const markPaid = await req('PATCH', `/api/admin/orders/${unpaidOrderRow.id}`,
+      { paymentStatus: 'paid' }, { Cookie: cookie });
+    ok(markPaid.status === 200, 'admin marks a bank-transfer order paid', String(markPaid.status));
+
+    const afterMark = await req('GET', '/api/products/reckless-yute');
+    ok(afterMark.json.product.isSold === true,
+      'piece is actually marked SOLD (not left on its hold) once admin confirms a bank transfer');
+
+    const mailAfterMark = await req('GET', '/api/admin/mail', undefined, { Cookie: cookie });
+    ok(mailAfterMark.json.mail.some((m) => m.to_addr === 'chidi@example.com' && /Payment received/.test(m.subject)),
+      'customer is emailed once admin confirms the bank transfer');
+
+    // ---- admin: order status changes email the customer -------------------
+    const ship = await req('PATCH', `/api/admin/orders/${unpaidOrderRow.id}`,
+      { status: 'shipped', trackingRef: 'GIG-12345' }, { Cookie: cookie });
+    ok(ship.status === 200, 'admin marks the order shipped with a tracking reference');
+
+    const mailAfterShip = await req('GET', '/api/admin/mail', undefined, { Cookie: cookie });
+    ok(mailAfterShip.json.mail.some((m) => m.to_addr === 'chidi@example.com' && /on its way/.test(m.subject)),
+      'customer is emailed that the order shipped');
 
     // ---- privacy: lookup and erasure (NDPA) ---------------------------
     const lookupBefore = await req('GET', '/api/admin/privacy/lookup?email=chidi@example.com', undefined, { Cookie: cookie });
