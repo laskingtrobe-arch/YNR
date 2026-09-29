@@ -39,12 +39,12 @@ services:
       # the newsletter confirm/unsubscribe links, and the CORS allow-list
       # all silently fall back to localhost — meaning real customers would
       # be sent to a URL that only exists on a developer's own machine.
-      # Update both if this service is ever renamed or moved to a custom
-      # domain (they are the same value because one origin serves everything).
+      # Same value for both because one origin serves everything. The
+      # ynr-shop.onrender.com address keeps working alongside it.
       - key: SITE_URL
-        value: https://ynr-shop.onrender.com
+        value: https://ynrfashion.com
       - key: API_URL
-        value: https://ynr-shop.onrender.com
+        value: https://ynrfashion.com
 
       # Supabase: Project Settings -> Database -> Connection string -> URI.
       # Use the Session pooler (port 5432) — this is a long-running server
