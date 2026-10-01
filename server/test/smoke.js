@@ -219,12 +219,8 @@ async function req(method, url, body, headers = {}) {
     ok(hp.status === 200, 'honeypot returns success to the bot');
 
     // ---- payment result page (received / pending / failed) --------------
-    // `ref` is still genuinely 'paid' at this point in the file — the refund
-    // section below moves it to 'refunded', which would make a callback hit
-    // here re-trigger fulfil() and silently flip it back to 'paid'. That is
-    // itself a real gap (the callback route trusts payment_status alone,
-    // not whether a refund has since been issued), tracked separately —
-    // this test deliberately runs before refunds to not walk into it.
+    // `ref` is still 'paid' here; the refund section below revisits this same
+    // callback once it's refunded, to prove that can't flip it back to paid.
     const cbMissing = await req('GET', '/api/payments/callback?reference=YNR-NOPE99');
     ok(cbMissing.status === 404 && /Order not found/.test(cbMissing.text),
       'callback page for an unknown reference reports "order not found"');
@@ -263,6 +259,24 @@ async function req(method, url, body, headers = {}) {
     }, { Cookie: cookie });
     ok(created.status === 201, 'admin can create a product');
 
+    // Photo upload end to end (multer -> sharp -> disk -> served back).
+    const sharp = require('sharp');
+    const big = await sharp({ create: { width: 2400, height: 1600, channels: 3, background: { r: 168, g: 24, b: 29 } } })
+      .jpeg().toBuffer();
+    const form = new FormData();
+    form.append('images', new Blob([big], { type: 'image/jpeg' }), 'big.jpg');
+    const up = await fetch(`${BASE}/api/admin/products/${created.json.id}/images`,
+      { method: 'POST', headers: { Cookie: cookie }, body: form });
+    const upJson = await up.json().catch(() => ({}));
+    ok(up.status === 201 && upJson.images && upJson.images.length === 1, 'admin can upload a product photo', String(up.status));
+    if (upJson.images && upJson.images[0]) {
+      const served = await fetch(BASE + upJson.images[0].url);
+      const meta = await sharp(Buffer.from(await served.arrayBuffer())).metadata();
+      ok(served.status === 200 && meta.width <= 1600, 'uploaded photo is resized for the web (2400px in, 1600px max out)',
+        `${meta.width}x${meta.height}`);
+      fs.rmSync(path.join(ROOT, 'uploads', path.basename(upJson.images[0].url)), { force: true });
+    }
+
     const del = await req('DELETE', `/api/admin/products/${created.json.id}`, undefined, { Cookie: cookie });
     ok(del.status === 200 && del.json.deleted, 'admin can delete an unused product');
 
@@ -300,6 +314,19 @@ async function req(method, url, body, headers = {}) {
     const afterRefund = await req('GET', `/api/orders/${ref}`, undefined, { Cookie: cookie });
     ok(afterRefund.json.order.paymentStatus === 'refunded',
       'order payment status flips to refunded once the check confirms it', afterRefund.json.order.paymentStatus);
+
+    // Reopening the payment link after a refund re-verifies the original
+    // charge (which still reads as success). It must not undo the refund.
+    const receiptsFor = async (r) => (await req('GET', '/api/admin/mail', undefined, { Cookie: cookie }))
+      .json.mail.filter((m) => m.subject === `Payment received — ${r}`).length;
+    const receiptsBefore = await receiptsFor(ref);
+    const cbRefunded = await req('GET', `/api/payments/callback?reference=${ref}`);
+    ok(cbRefunded.status === 200 && cbRefunded.text.includes('Order<span>refunded.</span>'),
+      'payment link reopened after a refund shows the refunded page');
+    const stillRefunded = await req('GET', `/api/orders/${ref}`);
+    ok(stillRefunded.json.order.paymentStatus === 'refunded',
+      'reopening the payment link does not flip a refunded order back to paid', stillRefunded.json.order.paymentStatus);
+    ok(await receiptsFor(ref) === receiptsBefore, 'and does not resend the payment receipt');
 
     // ---- admin: bank-transfer "mark paid" must sell the piece too --------
     // `other` (Chidi Test, reckless-yute) was placed via WhatsApp and never
@@ -379,6 +406,36 @@ async function req(method, url, body, headers = {}) {
       'receipt email uses absolute image URLs (email clients have no base URL)');
     ok(Buffer.byteLength(rendered.html) < 100_000, 'receipt email stays under Gmail\'s ~102KB clipping limit',
       String(Buffer.byteLength(rendered.html)));
+
+    const { statusEmail } = require('../src/templates/email');
+    const statusArgs = (status, trackingRef) => ({
+      order: { ...sample, status }, trackingRef, siteUrl: 'https://shop.test', whatsappUrl: 'https://wa.me/1',
+      items: [{ name_snapshot: 'Tee', size: 'M', price_kobo: 100, image: null }],
+    });
+    const shippedLink = statusEmail(statusArgs('shipped', 'https://courier.test/t/123'));
+    ok(shippedLink.subject === 'Order YNR-TEST01 is on its way' && shippedLink.html.includes('href="https://courier.test/t/123"'),
+      'shipped email links a real courier URL');
+    ok(shippedLink.html.includes('>Shipped</div>') && shippedLink.html.includes('Order progress'),
+      'shipped email shows the order progress tracker');
+    const shippedEvil = statusEmail(statusArgs('shipped', 'javascript:alert(1)'));
+    ok(!shippedEvil.html.includes('href="javascript:') && shippedEvil.html.includes('javascript:alert(1)'),
+      'a javascript: "tracking link" is shown as text, never made clickable');
+    const shippedTag = statusEmail(statusArgs('shipped', evil));
+    ok(!shippedTag.html.includes('<img src=x') && shippedTag.html.includes('&lt;img src=x'),
+      'status email escapes the tracking reference and the customer name');
+    ok(statusEmail(statusArgs('paid')) === null && statusEmail(statusArgs('pending_confirmation')) === null,
+      'statuses that should not email the customer render nothing');
+    ok(statusEmail(statusArgs('cancelled')).html.includes('Order cancelled.') &&
+       !statusEmail(statusArgs('cancelled')).html.includes('Order progress'),
+      'cancelled email has no progress tracker');
+
+    // ---- search engines -------------------------------------------------
+    const robots = await req('GET', '/robots.txt');
+    ok(robots.status === 200 && /Disallow: \/admin/.test(robots.text) && /Sitemap: https:\/\/ynrfashion\.com\/sitemap\.xml/.test(robots.text),
+      'robots.txt keeps crawlers out of admin and points at the sitemap');
+    const sitemap = await req('GET', '/sitemap.xml');
+    ok(sitemap.status === 200 && sitemap.text.includes('<urlset') && sitemap.text.includes('<loc>https://ynrfashion.com/</loc>'),
+      'sitemap.xml lists the shop');
 
     // ---- privacy: lookup and erasure (NDPA) ---------------------------
     const lookupBefore = await req('GET', '/api/admin/privacy/lookup?email=chidi@example.com', undefined, { Cookie: cookie });
