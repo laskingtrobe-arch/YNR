@@ -11,7 +11,9 @@ const {
 const {
   id, token, sha256, slugify, clean, isEmail, verifyPassword, hashPassword, formatNaira, toKobo,
 } = require('../lib/util');
-const { audit, releaseOrderHolds, markOrderProductsSold, sendMail, sendReceipt, notifyOwner } = require('../services');
+const {
+  audit, releaseOrderHolds, markOrderProductsSold, sendMail, sendReceipt, sendStatusEmail, notifyOwner,
+} = require('../services');
 const paystack = require('../services/paystack');
 
 const router = express.Router();
@@ -21,50 +23,6 @@ const ORDER_STATUSES = [
   'in_production', 'shipped', 'delivered', 'cancelled',
 ];
 const PRODUCT_STATUSES = ['available', 'held', 'sold', 'repaint_only'];
-
-// Customer-facing copy for the order.status transitions worth an email.
-// 'draft', 'pending_confirmation' and 'paid' are deliberately left out:
-// the first two aren't customer-facing yet, and 'paid' as a status value is
-// redundant with the payment_status-triggered email sent below — sending
-// both for the same moment would just be two emails saying the same thing.
-function statusEmail(order, trackingRef) {
-  const ref = order.reference;
-  switch (order.status) {
-    case 'confirmed':
-      return {
-        subject: `Order confirmed — ${ref}`,
-        body: `Hi ${order.customer_name},\n\nYour order ${ref} is confirmed on our end. ` +
-          `We'll be in touch on WhatsApp about next steps.\n\n— YnR`,
-      };
-    case 'in_production':
-      return {
-        subject: `Your piece is being painted — ${ref}`,
-        body: `Hi ${order.customer_name},\n\nGood news — work on your piece for order ${ref} ` +
-          `has started. Every piece is hand-painted, so this is the part that takes the care.\n\n— YnR`,
-      };
-    case 'shipped':
-      return {
-        subject: `Order ${ref} is on its way`,
-        body: `Hi ${order.customer_name},\n\nOrder ${ref} has shipped.` +
-          (trackingRef ? ` Tracking reference: ${trackingRef}.` : '') +
-          `\n\n— YnR`,
-      };
-    case 'delivered':
-      return {
-        subject: `Order ${ref} delivered`,
-        body: `Hi ${order.customer_name},\n\nOrder ${ref} is marked as delivered. We hope you love it — ` +
-          `if anything's wrong, just message us on WhatsApp.\n\n— YnR`,
-      };
-    case 'cancelled':
-      return {
-        subject: `Order ${ref} cancelled`,
-        body: `Hi ${order.customer_name},\n\nOrder ${ref} has been cancelled. If that's a mistake or ` +
-          `you'd like to reorder, message us on WhatsApp.\n\n— YnR`,
-      };
-    default:
-      return null;
-  }
-}
 
 // ---------------------------------------------------------------------------
 // Auth
@@ -418,8 +376,7 @@ router.patch('/orders/:id', wrap(async (req, res) => {
     );
     await sendReceipt('payment_received', await db.get('SELECT * FROM orders WHERE id=?', [o.id]));
   } else if (req.body.status !== undefined) {
-    const mail = statusEmail({ ...o, status: req.body.status }, trackingRef);
-    if (mail) await sendMail(o.customer_email, mail.subject, mail.body);
+    await sendStatusEmail({ ...o, status: req.body.status }, trackingRef);
   }
 
   res.json({ ok: true });

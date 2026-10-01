@@ -2,7 +2,7 @@
 const db = require('../db');
 const config = require('../config');
 const { id, formatNaira } = require('../lib/util');
-const { receiptEmail } = require('../templates/email');
+const { receiptEmail, statusEmail } = require('../templates/email');
 
 /**
  * Every function below that touches the database takes `exec` as its first
@@ -82,6 +82,19 @@ async function sendReceipt(kind, order) {
     // storefront — the same origin in production, but not necessarily in dev.
     imageBase: config.apiUrl,
   });
+  return sendMail(order.customer_email, mail.subject, mail.text, { html: mail.html });
+}
+
+/** Sends the designed order-status email for `order.status`, if it has one. */
+async function sendStatusEmail(order, trackingRef) {
+  const { items } = await receiptDetails(order);
+  const mail = statusEmail({
+    order, items, trackingRef,
+    siteUrl: config.siteUrl,
+    imageBase: config.apiUrl,
+    whatsappUrl: whatsappLink(`Hi YnR, it's about my order ${order.reference}.`),
+  });
+  if (!mail) return null;
   return sendMail(order.customer_email, mail.subject, mail.text, { html: mail.html });
 }
 
@@ -192,7 +205,7 @@ async function audit(adminId, action, target = '', detail = '') {
 }
 
 module.exports = {
-  sendMail, notifyOwner, receiptDetails, sendReceipt,
+  sendMail, notifyOwner, receiptDetails, sendReceipt, sendStatusEmail,
   orderMessage, whatsappLink,
   acquireHold, releaseHold, releaseOrderHolds, markOrderProductsSold,
   releaseExpiredHolds, startHoldSweeper,

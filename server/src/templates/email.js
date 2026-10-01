@@ -112,25 +112,17 @@ function detailCell(k, v, extraStyle = '') {
     <div style="font-family:${BODY};font-size:14px;line-height:20px;color:${C.ink};margin-top:4px;">${v}</div></td>`;
 }
 
-/**
- * Renders the customer's order email. `kind` is 'order_placed' (sent the
- * moment they check out) or 'payment_received' (their receipt). Every value
- * that came from a customer is escaped — a name is user input like any other.
- */
-function receiptEmail({ kind, order: o, items, zoneLabel, siteUrl, imageBase = siteUrl, whatsappUrl }) {
-  const copy = COPY[kind];
-  if (!copy) throw new Error(`Unknown receipt kind: ${kind}`);
-  const paid = o.payment_status === 'paid';
-  const address = [o.address_line, o.city, o.state, o.country].filter(Boolean).map(esc).join(', ');
-  const steps = copy.steps.map((s, n) => `<tr>
-      <td valign="top" width="34" style="width:34px;font-family:${MONO};font-size:12px;line-height:22px;color:${C.oxblood};font-weight:600;">0${n + 1}</td>
-      <td valign="top" style="font-family:${BODY};font-size:14px;line-height:22px;color:${C.ink};padding:0 0 10px;">${esc(s)}</td></tr>`).join('');
 
-  const html = `<!doctype html>
+// The frame every customer email shares: dark masthead with the wordmark,
+// eyebrow, headline and lede, the oxblood rule, a white card for `body`, and
+// the footer. `lede` is HTML (callers escape anything inside it); everything
+// else is escaped here.
+function layout({ subject, preheader, reference, eyebrow, title, lede, body, footerNote, siteUrl }) {
+  return `<!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="x-apple-disable-message-reformatting"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
-<title>${esc(copy.subject(o))}</title>
+<title>${esc(subject)}</title>
 <style>
   @media (max-width:620px){
     .container{width:100%!important}
@@ -141,7 +133,7 @@ function receiptEmail({ kind, order: o, items, zoneLabel, siteUrl, imageBase = s
   }
 </style></head>
 <body style="margin:0;padding:0;background:${C.page};-webkit-text-size-adjust:100%;">
-<div style="display:none;max-height:0;overflow:hidden;font-size:1px;line-height:1px;color:${C.page};opacity:0;">${esc(copy.preheader(o))}</div>
+<div style="display:none;max-height:0;overflow:hidden;font-size:1px;line-height:1px;color:${C.page};opacity:0;">${esc(preheader)}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${C.page}" style="background:${C.page};">
 <tr><td align="center" style="padding:24px 12px 32px;">
 <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;">
@@ -149,17 +141,62 @@ function receiptEmail({ kind, order: o, items, zoneLabel, siteUrl, imageBase = s
   <tr><td bgcolor="${C.void}" class="px" style="background:${C.void};padding:28px 40px 44px;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
       <td valign="middle"><a href="${esc(siteUrl)}" style="text-decoration:none;"><img src="${esc(siteUrl)}/assets/brand/email-wordmark.png" width="66" height="40" alt="YnR" style="display:block;border:0;"></a></td>
-      <td valign="middle" align="right" style="font-family:${MONO};font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${C.smoke};">Order ${esc(o.reference)}</td>
+      <td valign="middle" align="right" style="font-family:${MONO};font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${C.smoke};">Order ${esc(reference)}</td>
     </tr></table>
     <div style="height:38px;line-height:38px;font-size:0;">&nbsp;</div>
     <div style="font-family:${MONO};font-size:11px;line-height:16px;letter-spacing:3px;text-transform:uppercase;color:${C.oxblood};">
-      <span style="display:inline-block;width:22px;height:1px;background:${C.oxblood};vertical-align:middle;margin:0 10px 3px 0;"></span>${esc(copy.eyebrow)}</div>
-    <h1 class="h1" style="margin:16px 0 0;font-family:${DISPLAY};font-size:46px;line-height:44px;font-weight:800;letter-spacing:-0.5px;text-transform:uppercase;color:${C.bone};">${esc(copy.title(o))}</h1>
-    <p style="margin:20px 0 0;font-family:${BODY};font-size:15px;line-height:24px;color:${C.boneDim};">${copy.lede(o)}</p>
+      <span style="display:inline-block;width:22px;height:1px;background:${C.oxblood};vertical-align:middle;margin:0 10px 3px 0;"></span>${esc(eyebrow)}</div>
+    <h1 class="h1" style="margin:16px 0 0;font-family:${DISPLAY};font-size:46px;line-height:44px;font-weight:800;letter-spacing:-0.5px;text-transform:uppercase;color:${C.bone};">${esc(title)}</h1>
+    <p style="margin:20px 0 0;font-family:${BODY};font-size:15px;line-height:24px;color:${C.boneDim};">${lede}</p>
   </td></tr>
   <tr><td bgcolor="${C.oxblood}" style="background:${C.oxblood};height:4px;line-height:4px;font-size:0;">&nbsp;</td></tr>
 
-  <tr><td bgcolor="${C.paper}" class="px" style="background:${C.paper};padding:38px 40px 40px;">
+  <tr><td bgcolor="${C.paper}" class="px" style="background:${C.paper};padding:38px 40px 40px;">${body}</td></tr>
+
+  <tr><td class="px" align="center" style="padding:30px 40px 0;font-family:${BODY};font-size:12px;line-height:19px;color:${C.muted};">
+    <b style="color:${C.ink};">YnR — Young &amp; Reckless</b><br>Hand-painted, one-of-one streetwear · Mpape, Abuja<br>
+    <a href="${esc(siteUrl)}/" style="color:${C.muted};">Shop</a> &nbsp;·&nbsp;
+    <a href="${esc(siteUrl)}/shipping-returns.html" style="color:${C.muted};">Shipping &amp; Returns</a> &nbsp;·&nbsp;
+    <a href="${esc(siteUrl)}/privacy.html" style="color:${C.muted};">Privacy</a>
+    <div style="font-family:${MONO};font-size:10.5px;letter-spacing:1px;color:${C.smoke};margin-top:14px;">${esc(footerNote)}</div>
+  </td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
+}
+
+const stepsTable = (steps) => `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${steps.map((s, n) => `<tr>
+      <td valign="top" width="34" style="width:34px;font-family:${MONO};font-size:12px;line-height:22px;color:${C.oxblood};font-weight:600;">0${n + 1}</td>
+      <td valign="top" style="font-family:${BODY};font-size:14px;line-height:22px;color:${C.ink};padding:0 0 10px;">${esc(s)}</td></tr>`).join('')}</table>`;
+
+const ctaButton = (url, text) => `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:26px 0 0;"><tr>
+      <td bgcolor="${C.void}" style="background:${C.void};">
+        <a href="${esc(url)}" style="display:inline-block;padding:16px 28px;font-family:${MONO};font-size:12px;line-height:16px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:${C.bone};text-decoration:none;">${esc(text)} &rarr;</a>
+      </td></tr></table>
+    <p style="margin:16px 0 0;font-family:${BODY};font-size:13px;line-height:20px;color:${C.muted};">Questions? Just reply to this email.</p>`;
+
+function deliveringTo(o, note = '') {
+  const address = [o.address_line, o.city, o.state, o.country].filter(Boolean).map(esc).join(', ');
+  return `${label('Delivering to')}
+    <div style="font-family:${BODY};font-size:14px;line-height:22px;color:${C.ink};">
+      <b>${esc(o.customer_name)}</b><br>${esc(o.customer_phone)}${address ? `<br>${address}` : ''}
+      ${note}
+    </div>`;
+}
+
+const strip = (html) => html.replace(/<[^>]+>/g, '');
+
+/**
+ * Renders the customer's order email. `kind` is 'order_placed' (sent the
+ * moment they check out) or 'payment_received' (their receipt). Every value
+ * that came from a customer is escaped — a name is user input like any other.
+ */
+function receiptEmail({ kind, order: o, items, zoneLabel, siteUrl, imageBase = siteUrl, whatsappUrl }) {
+  const copy = COPY[kind];
+  if (!copy) throw new Error(`Unknown receipt kind: ${kind}`);
+  const paid = o.payment_status === 'paid';
+
+  const body = `
     ${label(items.length > 1 ? 'Your pieces' : 'Your piece')}
     ${itemRows(items, imageBase)}
     ${totalsRows(o, zoneLabel, copy.totalLabel)}
@@ -172,36 +209,23 @@ function receiptEmail({ kind, order: o, items, zoneLabel, siteUrl, imageBase = s
         : esc(paymentLabel(o)))}
     </tr></table>
     ${rule(12, 26)}
-    ${label('Delivering to')}
-    <div style="font-family:${BODY};font-size:14px;line-height:22px;color:${C.ink};">
-      <b>${esc(o.customer_name)}</b><br>${esc(o.customer_phone)}${address ? `<br>${address}` : ''}
-      ${!o.delivery_kobo ? `<br><span style="color:${C.muted}">Delivery cost confirmed with you on WhatsApp before you pay.</span>` : ''}
-    </div>
+    ${deliveringTo(o, !o.delivery_kobo ? `<br><span style="color:${C.muted}">Delivery cost confirmed with you on WhatsApp before you pay.</span>` : '')}
     ${rule()}
     ${label('What happens next')}
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${steps}</table>
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:26px 0 0;"><tr>
-      <td bgcolor="${C.void}" style="background:${C.void};">
-        <a href="${esc(whatsappUrl)}" style="display:inline-block;padding:16px 28px;font-family:${MONO};font-size:12px;line-height:16px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:${C.bone};text-decoration:none;">${esc(copy.cta)} &rarr;</a>
-      </td></tr></table>
-    <p style="margin:16px 0 0;font-family:${BODY};font-size:13px;line-height:20px;color:${C.muted};">Questions? Just reply to this email.</p>
-  </td></tr>
+    ${stepsTable(copy.steps)}
+    ${ctaButton(whatsappUrl, copy.cta)}
+  `;
 
-  <tr><td class="px" align="center" style="padding:30px 40px 0;font-family:${BODY};font-size:12px;line-height:19px;color:${C.muted};">
-    <b style="color:${C.ink};">YnR — Young &amp; Reckless</b><br>Hand-painted, one-of-one streetwear · Mpape, Abuja<br>
-    <a href="${esc(siteUrl)}/" style="color:${C.muted};">Shop</a> &nbsp;·&nbsp;
-    <a href="${esc(siteUrl)}/shipping-returns.html" style="color:${C.muted};">Shipping &amp; Returns</a> &nbsp;·&nbsp;
-    <a href="${esc(siteUrl)}/privacy.html" style="color:${C.muted};">Privacy</a>
-    <div style="font-family:${MONO};font-size:10.5px;letter-spacing:1px;color:${C.smoke};margin-top:14px;">Keep this email as your ${paid ? 'receipt' : 'order record'}.</div>
-  </td></tr>
-</table>
-</td></tr></table>
-</body></html>`;
+  const html = layout({
+    subject: copy.subject(o), preheader: copy.preheader(o), reference: o.reference,
+    eyebrow: copy.eyebrow, title: copy.title(o), lede: copy.lede(o), body, siteUrl,
+    footerNote: `Keep this email as your ${paid ? 'receipt' : 'order record'}.`,
+  });
 
   const text = [
     copy.title(o).toUpperCase(),
     '',
-    copy.lede(o).replace(/<[^>]+>/g, ''),
+    strip(copy.lede(o)),
     '',
     ...items.map((i) => `- ${i.name_snapshot}${i.size ? ` (Size ${i.size})` : ''} — ${formatNaira(i.price_kobo)}`),
     `Subtotal: ${formatNaira(o.subtotal_kobo)}`,
@@ -223,4 +247,122 @@ function receiptEmail({ kind, order: o, items, zoneLabel, siteUrl, imageBase = s
   return { subject: copy.subject(o), html, text };
 }
 
-module.exports = { receiptEmail, esc, paymentLabel };
+// ---------------------------------------------------------------------------
+// Order status updates: sent when admin moves an order along. 'draft',
+// 'pending_confirmation' and 'paid' have none — the first two aren't
+// customer-facing, and 'paid' already has its own receipt.
+// ---------------------------------------------------------------------------
+const TRACKER = ['confirmed', 'in_production', 'shipped', 'delivered'];
+const TRACKER_LABEL = { confirmed: 'Confirmed', in_production: 'Being painted', shipped: 'Shipped', delivered: 'Delivered' };
+const ref = (o) => `<b style="color:${C.bone};white-space:nowrap;">${esc(o.reference)}</b>`;
+
+const STATUS = {
+  confirmed: {
+    eyebrow: 'Order confirmed',
+    title: (o) => `We're on it, ${firstName(o.customer_name)}.`,
+    lede: (o) => `Your order ${ref(o)} is confirmed. We'll email you as it moves along — and you can always reach us on WhatsApp.`,
+    subject: (o) => `Order confirmed — ${o.reference}`,
+    preheader: (o) => `Order ${o.reference} is confirmed.`,
+  },
+  in_production: {
+    eyebrow: 'Being painted',
+    title: () => 'Your piece is being painted.',
+    lede: (o) => `Work has started on your piece for order ${ref(o)}. Every piece is painted by hand, so this is the part that takes the care.`,
+    subject: (o) => `Your piece is being painted — ${o.reference}`,
+    preheader: (o) => `Work has started on your piece — order ${o.reference}.`,
+  },
+  shipped: {
+    eyebrow: 'On its way',
+    title: (o) => `It's on its way, ${firstName(o.customer_name)}.`,
+    lede: (o) => `Order ${ref(o)} has left the studio and is on its way to you.`,
+    subject: (o) => `Order ${o.reference} is on its way`,
+    preheader: (o, t) => `Order ${o.reference} is on its way.${t ? ` Tracking: ${t}` : ''}`,
+  },
+  delivered: {
+    eyebrow: 'Delivered',
+    title: (o) => `It's landed, ${firstName(o.customer_name)}.`,
+    lede: (o) => `Order ${ref(o)} is marked as delivered. We hope you love it — if anything's not right, message us on WhatsApp and we'll sort it.`,
+    subject: (o) => `Order ${o.reference} delivered`,
+    preheader: (o) => `Order ${o.reference} is delivered.`,
+  },
+  cancelled: {
+    eyebrow: 'Order cancelled',
+    title: () => 'Order cancelled.',
+    lede: (o) => `Order ${ref(o)} has been cancelled. If that's a mistake, or you'd like to reorder, message us on WhatsApp.`,
+    subject: (o) => `Order ${o.reference} cancelled`,
+    preheader: (o) => `Order ${o.reference} has been cancelled.`,
+  },
+};
+
+function tracker(status) {
+  const at = TRACKER.indexOf(status);
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>${TRACKER.map((s, n) => `
+      <td width="25%" valign="top" style="width:25%;padding:0 ${n < TRACKER.length - 1 ? 6 : 0}px 0 0;">
+        <div style="height:4px;line-height:4px;font-size:0;background:${n <= at ? C.oxblood : C.line};">&nbsp;</div>
+        <div style="font-family:${MONO};font-size:10px;line-height:14px;letter-spacing:1.5px;text-transform:uppercase;margin-top:9px;color:${n === at ? C.ink : n < at ? C.muted : C.smoke};${n === at ? 'font-weight:600;' : ''}">${TRACKER_LABEL[s]}</div>
+      </td>`).join('')}
+    </tr></table>`;
+}
+
+// A courier link is only made clickable when it really is an http(s) URL —
+// anything else (a javascript: URL included) is shown as plain text.
+const isWebLink = (s) => /^https?:\/\/\S+$/i.test(String(s || '').trim());
+
+function trackingBlock(t) {
+  if (!t) return '';
+  const value = isWebLink(t)
+    ? `<a href="${esc(t.trim())}" style="color:${C.ink};font-weight:600;">Track your parcel &rarr;</a>`
+    : esc(t);
+  return `${rule(4, 26)}
+    ${label('Tracking')}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
+      <td style="border:1px solid ${C.line};padding:14px 16px;font-family:${MONO};font-size:14px;line-height:20px;color:${C.ink};word-break:break-all;">${value}</td>
+    </tr></table>`;
+}
+
+/**
+ * Renders an order-status email for `order.status`, or returns null for a
+ * status that doesn't email the customer. `trackingRef` is shown on 'shipped'.
+ */
+function statusEmail({ order: o, items, trackingRef, siteUrl, imageBase = siteUrl, whatsappUrl }) {
+  const copy = STATUS[o.status];
+  if (!copy) return null;
+  const onTracker = TRACKER.includes(o.status);
+  const showAddress = ['confirmed', 'in_production', 'shipped'].includes(o.status);
+
+  const body = `
+    ${onTracker ? `${label('Order progress')}
+    ${tracker(o.status)}
+    ${rule(30, 26)}` : ''}
+    ${label(items.length > 1 ? 'Your pieces' : 'Your piece')}
+    ${itemRows(items, imageBase)}
+    ${o.status === 'shipped' ? trackingBlock(trackingRef) : ''}
+    ${showAddress ? `${rule(o.status === 'shipped' && trackingRef ? 26 : 10, 26)}
+    ${deliveringTo(o)}` : ''}
+    ${ctaButton(whatsappUrl, 'Message us on WhatsApp')}
+  `;
+
+  const html = layout({
+    subject: copy.subject(o), preheader: copy.preheader(o, trackingRef), reference: o.reference,
+    eyebrow: copy.eyebrow, title: copy.title(o), lede: copy.lede(o), body, siteUrl,
+    footerNote: 'Keep this email for your records.',
+  });
+
+  const text = [
+    copy.title(o).toUpperCase(),
+    '',
+    strip(copy.lede(o)),
+    ...(o.status === 'shipped' && trackingRef ? ['', `Tracking: ${trackingRef}`] : []),
+    '',
+    ...items.map((i) => `- ${i.name_snapshot}${i.size ? ` (Size ${i.size})` : ''}`),
+    '',
+    `WhatsApp: ${whatsappUrl}`,
+    'Questions? Just reply to this email.',
+    '',
+    '— YnR, Young & Reckless',
+  ].join('\n');
+
+  return { subject: copy.subject(o), html, text };
+}
+
+module.exports = { receiptEmail, statusEmail, esc, paymentLabel };
