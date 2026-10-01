@@ -331,6 +331,55 @@ async function req(method, url, body, headers = {}) {
     ok(mailAfterShip.json.mail.some((m) => m.to_addr === 'chidi@example.com' && /on its way/.test(m.subject)),
       'customer is emailed that the order shipped');
 
+    // ---- designed receipt + payment page, end to end ----------------------
+    // A customer's name is free text that lands inside HTML in two places now
+    // (their receipt email and the payment page), and clean() only trims it.
+    const evil = '<img src=x onerror=alert(1)>';
+    const tpl = await req('POST', '/api/orders', {
+      items: [{ slug: 'out-of-this-world', size: 'M' }],
+      name: evil, email: 'receipt@example.com', phone: '08055556666',
+      addressLine: evil, city: 'Abuja', zone: 'abuja', channel: 'paystack',
+    });
+    ok(tpl.status === 201, 'order with a hostile name is accepted (it is just text)', String(tpl.status));
+    const tplRef = tpl.json.order.reference;
+    await req('POST', '/api/payments/init', { reference: tplRef });
+
+    const paidPage = await req('GET', `/api/payments/callback?reference=${tplRef}`);
+    ok(paidPage.status === 200 && paidPage.text.includes('Paid.<span>It&#39;s yours.</span>'),
+      'payment page uses the new design for a confirmed payment');
+    ok(paidPage.text.includes('class="summary"') && paidPage.text.includes('/css/store.css'),
+      "payment page reuses the storefront's own stylesheet and order card");
+    // The page greets by first name, so that's the part of the name it shows.
+    ok(!paidPage.text.includes('<img src=x') && !paidPage.text.includes('Thank you, <img') &&
+       paidPage.text.includes('Thank you, &lt;img'),
+      'payment page escapes the customer-supplied name');
+
+    const tplMail = await req('GET', '/api/admin/mail', undefined, { Cookie: cookie });
+    const toCustomer = tplMail.json.mail.filter((m) => m.to_addr === 'receipt@example.com').map((m) => m.subject);
+    ok(toCustomer.includes(`Your YnR order ${tplRef}`), 'designed order email sent at checkout', JSON.stringify(toCustomer));
+    ok(toCustomer.includes(`Payment received — ${tplRef}`), 'designed receipt sent once the payment confirms', JSON.stringify(toCustomer));
+
+    // The same templates, rendered directly: covers the receipt email's HTML,
+    // which the outbox (text-only) can't show.
+    const { receiptEmail } = require('../src/templates/email');
+    const sample = {
+      reference: 'YNR-TEST01', customer_name: evil, customer_email: 'e@example.com', customer_phone: '080',
+      address_line: evil, subtotal_kobo: 100, delivery_kobo: 0, total_kobo: 100,
+      payment_status: 'paid', channel: 'paystack', created_at: Date.now(), paid_at: Date.now(),
+    };
+    const rendered = receiptEmail({
+      kind: 'payment_received', order: sample, zoneLabel: evil, siteUrl: 'https://shop.test',
+      items: [{ name_snapshot: evil, size: 'M', price_kobo: 100, image: '/uploads/a.jpg' }],
+      whatsappUrl: 'https://wa.me/1',
+    });
+    ok(!rendered.html.includes('<img src=x') && rendered.html.includes('&lt;img src=x'),
+      'receipt email escapes customer-supplied text');
+    ok(rendered.html.includes('https://shop.test/assets/brand/email-wordmark.png') &&
+       rendered.html.includes('https://shop.test/uploads/a.jpg'),
+      'receipt email uses absolute image URLs (email clients have no base URL)');
+    ok(Buffer.byteLength(rendered.html) < 100_000, 'receipt email stays under Gmail\'s ~102KB clipping limit',
+      String(Buffer.byteLength(rendered.html)));
+
     // ---- privacy: lookup and erasure (NDPA) ---------------------------
     const lookupBefore = await req('GET', '/api/admin/privacy/lookup?email=chidi@example.com', undefined, { Cookie: cookie });
     ok(lookupBefore.json.data.orders.length === 1 && lookupBefore.json.data.orders[0].customer_name === 'Chidi Test',

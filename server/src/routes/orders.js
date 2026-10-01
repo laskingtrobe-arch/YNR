@@ -3,7 +3,7 @@ const express = require('express');
 const db = require('../db');
 const { wrap, bad, notFound, conflict, rateLimit, honeypot } = require('../middleware');
 const { id, orderRef, isEmail, clean, formatNaira } = require('../lib/util');
-const { acquireHold, orderMessage, whatsappLink, notifyOwner, sendMail } = require('../services');
+const { acquireHold, orderMessage, whatsappLink, notifyOwner, sendReceipt } = require('../services');
 
 const router = express.Router();
 
@@ -175,12 +175,7 @@ router.post('/orders',
       `New order ${reference} — ${formatNaira(created.total_kobo)}`,
       `${name} (${phone}, ${email})\n\n${waText}`
     );
-    await sendMail(
-      email,
-      `Your YnR order ${reference}`,
-      `Hi ${name},\n\nWe have your order ${reference}.\n\n${waText}\n\n` +
-      `Nothing is charged until we confirm with you.\n\n— YnR`
-    );
+    await sendReceipt('order_placed', created);
 
     res.status(201).json({
       ok: true,

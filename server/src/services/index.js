@@ -2,6 +2,7 @@
 const db = require('../db');
 const config = require('../config');
 const { id, formatNaira } = require('../lib/util');
+const { receiptEmail } = require('../templates/email');
 
 /**
  * Every function below that touches the database takes `exec` as its first
@@ -25,7 +26,9 @@ const { id, formatNaira } = require('../lib/util');
 // ---------------------------------------------------------------------------
 const mailer = require('./mail');
 
-async function sendMail(to, subject, body) {
+// `body` is the plain-text version, and the one the outbox keeps for admin to
+// read; `html`, when given, is what HTML-capable clients like Gmail show.
+async function sendMail(to, subject, body, { html } = {}) {
   const row = { id: id(), to_addr: to, subject, body, sent: 0, error: '', created_at: db.now() };
   await db.run(
     `INSERT INTO mail_outbox (id, to_addr, subject, body, sent, error, created_at)
@@ -38,7 +41,7 @@ async function sendMail(to, subject, body) {
     return { queued: true, delivered: false, id: row.id };
   }
 
-  const result = await mailer.send({ to, subject, text: body });
+  const result = await mailer.send({ to, subject, text: body, html });
   await db.run('UPDATE mail_outbox SET sent = ?, error = ? WHERE id = ?',
     [result.delivered ? 1 : 0, result.error || '', row.id]);
   console.log(result.delivered
@@ -49,6 +52,37 @@ async function sendMail(to, subject, body) {
 
 function notifyOwner(subject, body) {
   return sendMail(config.mail.ownerTo, subject, body);
+}
+
+// What a receipt (email or payment page) shows for an order: its pieces, each
+// with the photo snapshotted when it was ordered, and the delivery area's name.
+async function receiptDetails(order) {
+  const rows = await db.all('SELECT * FROM order_items WHERE order_id = ? ORDER BY seq', [order.id]);
+  const zone = order.zone_code
+    ? await db.get('SELECT label FROM delivery_zones WHERE code = ?', [order.zone_code])
+    : null;
+  return {
+    items: rows.map((r) => ({
+      name_snapshot: r.name_snapshot, size: r.size, price_kobo: r.price_kobo, image: r.image_snapshot || null,
+    })),
+    zoneLabel: zone ? zone.label : null,
+  };
+}
+
+/** Sends the designed customer email: 'order_placed' or 'payment_received'. */
+async function sendReceipt(kind, order) {
+  const { items, zoneLabel } = await receiptDetails(order);
+  const whatsappUrl = whatsappLink(kind === 'order_placed'
+    ? orderMessage(order, items)
+    : `Hi YnR, it's about my paid order ${order.reference}.`);
+  const mail = receiptEmail({
+    kind, order, items, zoneLabel, whatsappUrl,
+    siteUrl: config.siteUrl,
+    // Product photos are served by this server (/uploads), brand assets by the
+    // storefront — the same origin in production, but not necessarily in dev.
+    imageBase: config.apiUrl,
+  });
+  return sendMail(order.customer_email, mail.subject, mail.text, { html: mail.html });
 }
 
 // ---------------------------------------------------------------------------
@@ -158,7 +192,7 @@ async function audit(adminId, action, target = '', detail = '') {
 }
 
 module.exports = {
-  sendMail, notifyOwner,
+  sendMail, notifyOwner, receiptDetails, sendReceipt,
   orderMessage, whatsappLink,
   acquireHold, releaseHold, releaseOrderHolds, markOrderProductsSold,
   releaseExpiredHolds, startHoldSweeper,

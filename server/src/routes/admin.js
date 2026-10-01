@@ -11,7 +11,7 @@ const {
 const {
   id, token, sha256, slugify, clean, isEmail, verifyPassword, hashPassword, formatNaira, toKobo,
 } = require('../lib/util');
-const { audit, releaseOrderHolds, markOrderProductsSold, sendMail, notifyOwner, whatsappLink } = require('../services');
+const { audit, releaseOrderHolds, markOrderProductsSold, sendMail, sendReceipt, notifyOwner } = require('../services');
 const paystack = require('../services/paystack');
 
 const router = express.Router();
@@ -416,12 +416,7 @@ router.patch('/orders/:id', wrap(async (req, res) => {
       `PAID (manual) ${o.reference}`,
       `${o.customer_name} (${o.customer_phone}) — order ${o.reference} marked paid by admin.`
     );
-    await sendMail(
-      o.customer_email,
-      `Payment received — ${o.reference}`,
-      `Hi ${o.customer_name},\n\nWe have received your payment for order ${o.reference}. ` +
-      `Your piece is now reserved for you and we will be in touch about delivery.\n\n— YnR`
-    );
+    await sendReceipt('payment_received', await db.get('SELECT * FROM orders WHERE id=?', [o.id]));
   } else if (req.body.status !== undefined) {
     const mail = statusEmail({ ...o, status: req.body.status }, trackingRef);
     if (mail) await sendMail(o.customer_email, mail.subject, mail.body);

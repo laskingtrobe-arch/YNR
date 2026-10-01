@@ -5,7 +5,8 @@ const config = require('../config');
 const { wrap, bad, notFound, conflict, rateLimit, HttpError } = require('../middleware');
 const { id, formatNaira } = require('../lib/util');
 const paystack = require('../services/paystack');
-const { markOrderProductsSold, notifyOwner, sendMail, whatsappLink } = require('../services');
+const { markOrderProductsSold, notifyOwner, sendReceipt, receiptDetails, whatsappLink } = require('../services');
+const { paymentPage } = require('../templates/paymentPage');
 
 const router = express.Router();
 
@@ -49,13 +50,8 @@ async function fulfil(order, amountKobo, reference) {
     `PAID ${order.reference} — ${formatNaira(amountKobo)}`,
     `${order.customer_name} (${order.customer_phone}) has paid for order ${order.reference}.`
   );
-  await sendMail(
-    order.customer_email,
-    `Payment received — ${order.reference}`,
-    `Hi ${order.customer_name},\n\nWe have received ${formatNaira(amountKobo)} for order ` +
-    `${order.reference}. Your piece is now reserved for you and we will be in touch ` +
-    `about delivery.\n\n— YnR`
-  );
+  // Re-read so the receipt shows what was actually recorded (amount, time).
+  await sendReceipt('payment_received', await db.get('SELECT * FROM orders WHERE id = ?', [order.id]));
   return outcome;
 }
 
@@ -236,38 +232,20 @@ router.get('/payments/callback', wrap(async (req, res) => {
   }
 
   const fresh = await db.get('SELECT * FROM orders WHERE id = ?', [order.id]);
-  const waLink = whatsappLink(
-    `Hi YnR, my payment for order ${fresh.reference} needs a look — could you check it for me?`
-  );
 
   // The DB's payment_status is the source of truth (a webhook may already
   // have marked it paid via a race with this same request), so "paid" wins
   // over whatever this particular verify call returned.
-  if (fresh.payment_status === 'paid') {
-    return res.send(resultPage(
-      'Payment received',
-      `Thank you. Order <b>${fresh.reference}</b> is paid and we are on it.`,
-      'success'
-    ));
-  }
+  const kind = fresh.payment_status === 'paid' ? 'success'
+    : (verifiedStatus === 'failed' || verifiedStatus === 'reversed') ? 'failed'
+    : 'pending';
 
-  if (verifiedStatus === 'failed' || verifiedStatus === 'reversed') {
-    return res.send(resultPage(
-      'Payment failed',
-      `Your payment for order <b>${fresh.reference}</b> did not go through — no charge was made. ` +
-      `You can try again from the shop, or confirm on WhatsApp instead.`,
-      'failed',
-      waLink
-    ));
-  }
+  const { items, zoneLabel } = await receiptDetails(fresh);
+  const whatsappUrl = whatsappLink(kind === 'success'
+    ? `Hi YnR, I've just paid for order ${fresh.reference}.`
+    : `Hi YnR, my payment for order ${fresh.reference} needs a look — could you check it for me?`);
 
-  res.send(resultPage(
-    'Payment pending',
-    `We have not seen confirmation for <b>${fresh.reference}</b> yet. If money left your account, ` +
-    `message us on WhatsApp with this reference and we will sort it.`,
-    'pending',
-    waLink
-  ));
+  res.send(paymentPage({ kind, order: fresh, items, zoneLabel, siteUrl: config.siteUrl, whatsappUrl }));
 }));
 
 // ---------------------------------------------------------------------------

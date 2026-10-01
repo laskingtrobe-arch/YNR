@@ -31,7 +31,7 @@ const enabled = () => Boolean(config.mail.smtpUrl);
  * receives {delivered, error} and decides what, if anything, to do with a
  * failure — services/index.js records it against the outbox row either way.
  */
-async function send({ to, subject, text }) {
+async function send({ to, subject, text, html }) {
   const t = getTransport();
   if (!t) return { delivered: false, error: 'SMTP not configured' };
 
@@ -41,6 +41,7 @@ async function send({ to, subject, text }) {
       to,
       subject,
       text,
+      ...(html ? { html } : {}),
       ...(config.mail.replyTo ? { replyTo: config.mail.replyTo } : {}),
     });
     return { delivered: true, error: null };
