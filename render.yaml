@@ -12,6 +12,14 @@ services:
     runtime: node
     plan: starter          # free instances have no persistent disk
     rootDir: server
+    # rootDir alone only redeploys on changes under server/ — but this
+    # service serves the storefront too, from ../storefront. Without this,
+    # a storefront-only change would never reach the live site.
+    # Paths here are relative to the repo root, not to rootDir.
+    buildFilter:
+      paths:
+        - server/**
+        - storefront/**
     buildCommand: npm ci --omit=dev
     startCommand: npm start
     healthCheckPath: /api/health
