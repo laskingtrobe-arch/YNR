@@ -30,6 +30,16 @@ const KINDS = {
     primary: 'Message us on WhatsApp',
     secondary: 'Back to the shop',
   },
+  refunded: {
+    eyebrow: 'Refunded',
+    title: ['Order', 'refunded.'],
+    pill: 'Refunded',
+    lede: (o) => `Order <b>${esc(o.reference)}</b> has been refunded — the money goes back to the card you
+      paid with. Depending on your bank, it can take a few working days to show.`,
+    steps: null,
+    primary: 'Message us on WhatsApp',
+    secondary: 'Back to the shop',
+  },
   failed: {
     eyebrow: 'Payment failed',
     title: ['Not', 'charged.'],

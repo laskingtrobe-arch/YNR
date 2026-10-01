@@ -23,15 +23,22 @@ const PG_UNIQUE_VIOLATION = '23505';
 // The paid-status flip and the products-sold update happen on one connection
 // inside db.transaction(), so a crash partway through cannot leave an order
 // marked paid with its piece still showing as available, or vice versa.
+//
+// A refunded order is settled too, not merely "not paid": anything that
+// re-verifies the original charge — reopening the payment link, a late
+// webhook — would otherwise flip it back to paid, mark its piece sold again
+// and resend the receipt.
 // ---------------------------------------------------------------------------
+const SETTLED = ['paid', 'refunded'];
+
 async function fulfil(order, amountKobo, reference) {
-  if (order.payment_status === 'paid') {
+  if (SETTLED.includes(order.payment_status)) {
     return { alreadyPaid: true };
   }
 
   const outcome = await db.transaction(async (tx) => {
     const fresh = await tx.get('SELECT * FROM orders WHERE id = ?', [order.id]);
-    if (fresh.payment_status === 'paid') return { alreadyPaid: true };
+    if (SETTLED.includes(fresh.payment_status)) return { alreadyPaid: true };
 
     await tx.run(
       `UPDATE orders
@@ -237,13 +244,15 @@ router.get('/payments/callback', wrap(async (req, res) => {
   // have marked it paid via a race with this same request), so "paid" wins
   // over whatever this particular verify call returned.
   const kind = fresh.payment_status === 'paid' ? 'success'
+    : fresh.payment_status === 'refunded' ? 'refunded'
     : (verifiedStatus === 'failed' || verifiedStatus === 'reversed') ? 'failed'
     : 'pending';
 
   const { items, zoneLabel } = await receiptDetails(fresh);
-  const whatsappUrl = whatsappLink(kind === 'success'
-    ? `Hi YnR, I've just paid for order ${fresh.reference}.`
-    : `Hi YnR, my payment for order ${fresh.reference} needs a look — could you check it for me?`);
+  const whatsappUrl = whatsappLink(
+    kind === 'success' ? `Hi YnR, I've just paid for order ${fresh.reference}.`
+      : kind === 'refunded' ? `Hi YnR, it's about my refunded order ${fresh.reference}.`
+      : `Hi YnR, my payment for order ${fresh.reference} needs a look — could you check it for me?`);
 
   res.send(paymentPage({ kind, order: fresh, items, zoneLabel, siteUrl: config.siteUrl, whatsappUrl }));
 }));
