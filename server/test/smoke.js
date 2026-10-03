@@ -376,6 +376,8 @@ async function req(method, url, body, headers = {}) {
       'payment page uses the new design for a confirmed payment');
     ok(paidPage.text.includes('class="summary"') && paidPage.text.includes('/css/store.css'),
       "payment page reuses the storefront's own stylesheet and order card");
+    ok(paidPage.text.includes('/js/config.js"></script>'),
+      "payment page loads config.js, so it follows the visitor's light/dark choice");
     // The page greets by first name, so that's the part of the name it shows.
     ok(!paidPage.text.includes('<img src=x') && !paidPage.text.includes('Thank you, <img') &&
        paidPage.text.includes('Thank you, &lt;img'),
@@ -441,7 +443,8 @@ async function req(method, url, body, headers = {}) {
 
     // ---- storefront pages -------------------------------------------------
     // Every nav page is its own URL, served without .html, and shares the
-    // one header/footer from layout.js.
+    // one header/footer from layout.js. config.js must sit in <head>: it
+    // applies a saved light-mode choice before the page first paints.
     const PAGES = {
       '/': 'YnR — Young &amp; Reckless', '/shop': 'Shop — YnR', '/story': 'Our Story — YnR',
       '/visit': 'Visit Us — YnR', '/contact': 'Contact — YnR', '/product?p=out-of-this-world': 'YnR',
@@ -451,12 +454,19 @@ async function req(method, url, body, headers = {}) {
     const broken = [];
     for (const [url, title] of Object.entries(PAGES)) {
       const page = await req('GET', url);
+      const head = page.text.slice(0, page.text.indexOf('</head>'));
       if (page.status !== 200 || !page.text.includes(`<title>${title}`) ||
+          !head.includes('<script src="/js/config.js"></script>') ||
           !page.text.includes('<script src="/js/layout.js"></script>') || !page.text.includes('siteFooter()')) {
         broken.push(`${url} (${page.status})`);
       }
     }
     ok(broken.length === 0, 'every storefront page loads at its own URL with the shared header and footer', broken.join(', '));
+
+    const css = await req('GET', '/css/store.css');
+    const layoutJs = await req('GET', '/js/layout.js');
+    ok(css.text.includes(':root[data-theme="light"]') && layoutJs.text.includes('id="themeToggle"'),
+      'light mode: the stylesheet has a light palette and the shared header has the switch');
 
     const deep404 = await req('GET', '/some/broken/link');
     ok(deep404.status === 404 && deep404.text.includes('href="/css/store.css"'),

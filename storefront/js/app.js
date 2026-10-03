@@ -22,6 +22,14 @@ function wireUp() {
     toggle.setAttribute('aria-expanded', String(links.classList.toggle('open')));
   });
 
+  const themeBtn = document.getElementById('themeToggle');
+  themeBtn.addEventListener('click', () => {
+    const theme = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+    setTheme(theme);
+    themeBtn.setAttribute('aria-pressed', String(theme === 'light'));
+    try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* switched, just not remembered */ }
+  });
+
   const modal = document.getElementById('sizeModal');
   if (modal) {
     modal.addEventListener('click', (e) => { if (e.target === modal) toggleSizeGuide(false); });
