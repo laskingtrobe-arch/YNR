@@ -84,17 +84,14 @@ function toggleCart(open) {
   document.getElementById('cartOverlay').classList.toggle('open', open);
 }
 
-/* The bag now leads to a real checkout. It used to jump straight to a
-   WhatsApp message that was never recorded anywhere. */
+/* The bag leads to a real checkout. It used to jump straight to a WhatsApp
+   message that was never recorded anywhere. */
 function goToCheckout() {
   if (!bag.length) {
     toggleCart(true);
     return;
   }
-  toggleCart(false);
-  showView('checkout');
-  renderCheckout();
-  window.scrollTo({ top: 0 });
+  location.href = '/checkout';
 }
 
 /* Direct WhatsApp enquiry about a single piece. Kept because it is how YnR

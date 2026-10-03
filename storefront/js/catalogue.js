@@ -1,8 +1,8 @@
 /* ==========================================================================
    Catalogue
-   The shop grid and the product detail page. Nothing about the pieces is
-   hardcoded here: it all comes from the API, so the owner can add, price and
-   retire pieces from the admin panel without anyone editing code.
+   The shop grid, its category filters, and the product page. Nothing about
+   the pieces is hardcoded here: it all comes from the API, so the owner can
+   add, price and retire pieces from the admin panel without editing code.
    ========================================================================== */
 
 let PRODUCTS = {};        // slug -> product
@@ -11,50 +11,90 @@ let ZONES = [];           // delivery zones
 let currentProduct = null;
 let selectedSize = null;
 
+const productUrl = (slug) => '/product?p=' + encodeURIComponent(slug);
+const categorySlug = (c) => String(c || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
 /* ---------------- grid ---------------- */
+// A real link, so a piece can be opened in a new tab or shared as a URL.
 function productCard(p) {
   const sold = p.isSold;
   const tag = sold ? 'Sold — Repaint' : (p.isReserved ? 'Reserved' : 'One Of One');
   return `
-  <article class="product-card ${sold ? 'is-sold' : ''}" onclick="openProduct('${p.slug}')"
-           tabindex="0" role="button" aria-label="View ${escapeAttr(p.name)}"
-           onkeydown="if(event.key==='Enter')openProduct('${p.slug}')">
+  <a class="product-card ${sold ? 'is-sold' : ''}" href="${productUrl(p.slug)}">
     <div class="product-media">
       <div class="one-tag ${sold ? 'sold-badge' : ''}">${tag}</div>
       <img src="${imgUrl(p.image)}" alt="${escapeAttr(p.name)}, hand-painted by YnR" loading="lazy">
-      <div class="quick-add" onclick="event.stopPropagation(); openProduct('${p.slug}')">
-        ${sold ? 'Ask For A Repaint' : 'View &amp; Order'}
-      </div>
+      <div class="quick-add">${sold ? 'Ask For A Repaint' : 'View &amp; Order'}</div>
     </div>
     <div class="product-info">
       <div><h4>${escapeHtml(p.name)}</h4><div class="pmeta">${escapeHtml(p.category)}</div></div>
       <div class="price">${escapeHtml(p.priceLabel)}</div>
     </div>
-  </article>`;
+  </a>`;
 }
 
 function renderGrid(target, list) {
   if (!target) return;
-  target.innerHTML = list.map(productCard).join('');
+  target.innerHTML = list.length
+    ? list.map(productCard).join('')
+    : '<div class="load-msg">Nothing in this category right now — new pieces are always being painted.</div>';
 }
 
-async function loadCatalogue() {
-  const grid = document.getElementById('shopGrid');
-  if (grid) {
-    grid.innerHTML = Array.from({ length: 6 }, () => '<div class="skeleton"></div>').join('');
-  }
+/* `limit` shows the first N pieces still for sale (the home page);
+   `filters` names the element to build category buttons in (the shop). */
+async function loadCatalogue({ grid: gridId, limit = 0, filters = null } = {}) {
+  const grid = document.getElementById(gridId);
+  if (!grid) return;
+  grid.innerHTML = Array.from({ length: limit || 6 }, () => '<div class="skeleton"></div>').join('');
+
   try {
     const data = await api('GET', '/products');
     PRODUCTS = {};
     SHOP_ORDER = [];
     data.products.forEach((p) => { PRODUCTS[p.slug] = p; SHOP_ORDER.push(p.slug); });
-    renderGrid(grid, data.products);
-  } catch (e) {
-    if (grid) {
-      grid.innerHTML = `<div class="load-msg">${escapeHtml(e.message)}
-        <br><br><button class="btn-outline" onclick="loadCatalogue()">Try again</button></div>`;
+
+    if (filters) {
+      renderFilters(document.getElementById(filters), grid, data.products);
+    } else if (limit) {
+      const forSale = data.products.filter((p) => !p.isSold);
+      renderGrid(grid, (forSale.length ? forSale : data.products).slice(0, limit));
+    } else {
+      renderGrid(grid, data.products);
     }
+  } catch (e) {
+    grid.innerHTML = `<div class="load-msg">${escapeHtml(e.message)}
+      <br><br><button class="btn-outline" onclick="location.reload()">Try again</button></div>`;
   }
+}
+
+/* Category buttons for the shop page. The choice is kept in the URL
+   (/shop?category=tees) so a filtered view can be shared or bookmarked. */
+function renderFilters(host, grid, products) {
+  if (!host) { renderGrid(grid, products); return; }
+  const categories = [...new Set(products.map((p) => p.category).filter(Boolean))];
+  const wanted = new URLSearchParams(location.search).get('category') || '';
+  let active = categories.find((c) => categorySlug(c) === wanted) || '';
+
+  const draw = () => {
+    host.innerHTML = ['', ...categories].map((c) =>
+      `<button type="button" class="filter-chip${c === active ? ' active' : ''}" data-cat="${escapeAttr(c)}"
+               aria-pressed="${c === active}">${c ? escapeHtml(c) : 'All'}</button>`).join('');
+    renderGrid(grid, active ? products.filter((p) => p.category === active) : products);
+  };
+
+  host.addEventListener('click', (e) => {
+    const btn = e.target.closest('.filter-chip');
+    if (!btn) return;
+    active = btn.dataset.cat;
+    const url = new URL(location.href);
+    if (active) url.searchParams.set('category', categorySlug(active));
+    else url.searchParams.delete('category');
+    history.replaceState(null, '', url);
+    draw();
+  });
+
+  host.hidden = categories.length < 2;   // nothing to filter between
+  draw();
 }
 
 async function loadZones() {
@@ -65,11 +105,14 @@ async function loadZones() {
   }
 }
 
-/* ---------------- product detail ---------------- */
-async function openProduct(slug) {
-  showView('product');
-  window.scrollTo({ top: 0 });
+/* ---------------- product page ---------------- */
+function loadProductPage() {
+  const slug = new URLSearchParams(location.search).get('p');
+  if (!slug) { location.replace('/shop'); return; }
+  openProduct(slug);
+}
 
+async function openProduct(slug) {
   try {
     const data = await api('GET', '/products/' + encodeURIComponent(slug));
     const p = data.product;
@@ -78,10 +121,13 @@ async function openProduct(slug) {
     selectedSize = (p.sizes && p.sizes[0]) || '';
     track('product_view', { slug: p.slug });
 
+    document.title = `${p.name} — YnR`;
     document.getElementById('pdpEyebrow').textContent = 'Hand-Painted · ' + p.category;
     document.getElementById('pdpName').textContent = p.name;
     document.getElementById('pdpCrumbName').textContent = p.name;
-    document.getElementById('pdpCategory').textContent = p.category;
+    const crumb = document.getElementById('pdpCategory');
+    crumb.textContent = p.category;
+    crumb.href = '/shop?category=' + encodeURIComponent(categorySlug(p.category));
     document.getElementById('pdpPrice').textContent = p.priceLabel;
     document.getElementById('pdpDesc').textContent = p.description;
     document.getElementById('pdpMainImg').src = imgUrl(p.image);
@@ -97,8 +143,11 @@ async function openProduct(slug) {
     renderPdpActions(p);
     renderGrid(document.getElementById('relatedGrid'), data.related);
   } catch (e) {
+    document.title = 'Piece unavailable — YnR';
     document.getElementById('pdpName').textContent = 'Piece unavailable';
     document.getElementById('pdpDesc').textContent = e.message;
+    document.querySelector('.pdp-actions').innerHTML =
+      '<a class="btn-outline" href="/shop">Back To The Shop</a>';
   }
 }
 

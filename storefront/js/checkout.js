@@ -5,6 +5,21 @@
    exists as a record even if the customer never finishes paying.
    ========================================================================== */
 
+/* The checkout page's own boot: zones have to be loaded before the form can
+   offer them, and an empty bag gets a way back to the shop instead. */
+async function initCheckout() {
+  if (!bag.length) {
+    document.getElementById('checkoutMain').hidden = true;
+    document.getElementById('checkoutEmpty').hidden = false;
+    return;
+  }
+  await loadZones();
+  renderCheckout();
+  document.getElementById('coZone').addEventListener('change', updateCheckoutTotals);
+  document.getElementById('payCardBtn').addEventListener('click', () => placeOrder('paystack'));
+  document.getElementById('payWaBtn').addEventListener('click', () => placeOrder('whatsapp'));
+}
+
 function renderCheckout() {
   const sum = document.getElementById('coSummary');
   sum.innerHTML = bag.map((i) => `
@@ -140,6 +155,7 @@ function showOrderPlaced(order, waUrl) {
      <div class="sum-total" style="font-size:20px;"><span>Total</span><span>${escapeHtml(order.totalLabel)}</span></div>`;
 
   document.getElementById('ordWa').href = waUrl || `https://wa.me/${WA_NUMBER}`;
-  showView('order');
+  document.getElementById('checkoutMain').hidden = true;
+  document.getElementById('orderPlaced').hidden = false;
   window.scrollTo({ top: 0 });
 }

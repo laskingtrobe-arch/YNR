@@ -8,7 +8,8 @@
     "dev": "node --no-warnings --watch src/index.js",
     "seed": "node --no-warnings seed.js",
     "create-admin": "node --no-warnings create-admin.js",
-    "test": "node --no-warnings test/smoke.js"
+    "test": "node --no-warnings test/smoke.js",
+    "demo": "node scripts/demo.js"
   },
   "keywords": [],
   "author": "",

@@ -2,10 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "ynr-store",
-      "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "3020", "--directory", "storefront"],
-      "port": 3020
+      "name": "ynr-shop",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["server/scripts/demo.js"],
+      "port": 4000
     }
   ]
 }

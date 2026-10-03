@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Privacy Policy — YnR</title>
 <meta name="description" content="How YnR collects, uses and protects your information, and how to request access to or deletion of your data.">
-<link rel="icon" type="image/svg+xml" href="assets/brand/favicon.svg">
-<link rel="icon" type="image/png" sizes="32x32" href="assets/brand/favicon-32.png">
+<link rel="icon" type="image/svg+xml" href="/assets/brand/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/brand/favicon-32.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800;900&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/store.css">
+<link rel="stylesheet" href="/css/store.css">
 <style>
   .legal-wrap{max-width:740px; margin:0 auto; padding:70px 24px 120px;}
   .legal-wrap h1{font-size:clamp(32px,6vw,48px); margin:0 0 8px;}
@@ -24,16 +24,11 @@
   .legal-note{border-left:2px solid var(--oxblood-bright); background:rgba(168,24,29,.08); padding:16px 20px; margin:24px 0; font-size:13.5px; color:var(--smoke);}
   .legal-note b{color:var(--bone-dim);}
 </style>
+<script src="/js/config.js"></script>
 </head>
-<body>
+<body data-page="legal">
 
-<div class="grain" aria-hidden="true"></div>
-
-<header class="site-nav">
-  <div class="nav-inner">
-    <a href="/" class="wordmark">Yn<span>R</span></a>
-  </div>
-</header>
+<script src="/js/layout.js"></script>
 
 <main class="legal-wrap">
   <div class="eyebrow">Legal</div>
@@ -122,16 +117,14 @@
   </div>
 </main>
 
-<footer>
-  <div class="wrap">
-    <div class="footer-bottom">
-      <small>© 2026 YnR — Young &amp; Reckless. Hand-painted in Abuja. ·
-        <a href="privacy.html" style="color:inherit;">Privacy</a> ·
-        <a href="terms.html" style="color:inherit;">Terms</a> ·
-        <a href="shipping-returns.html" style="color:inherit;">Shipping &amp; Returns</a></small>
-    </div>
-  </div>
-</footer>
+<script>siteFooter()</script>
+<script src="/js/util.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/catalogue.js"></script>
+<script src="/js/bag.js"></script>
+<script src="/js/checkout.js"></script>
+<script src="/js/forms.js"></script>
+<script src="/js/app.js"></script>
 
 </body>
 </html>

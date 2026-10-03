@@ -436,6 +436,31 @@ async function req(method, url, body, headers = {}) {
     const sitemap = await req('GET', '/sitemap.xml');
     ok(sitemap.status === 200 && sitemap.text.includes('<urlset') && sitemap.text.includes('<loc>https://ynrfashion.com/</loc>'),
       'sitemap.xml lists the shop');
+    ok(['/shop', '/story', '/visit', '/contact'].every((p) => sitemap.text.includes(`<loc>https://ynrfashion.com${p}</loc>`)),
+      'sitemap.xml lists every page in the nav');
+
+    // ---- storefront pages -------------------------------------------------
+    // Every nav page is its own URL, served without .html, and shares the
+    // one header/footer from layout.js.
+    const PAGES = {
+      '/': 'YnR — Young &amp; Reckless', '/shop': 'Shop — YnR', '/story': 'Our Story — YnR',
+      '/visit': 'Visit Us — YnR', '/contact': 'Contact — YnR', '/product?p=out-of-this-world': 'YnR',
+      '/checkout': 'Checkout — YnR', '/privacy': 'Privacy Policy — YnR', '/terms': 'Terms',
+      '/shipping-returns': 'Shipping',
+    };
+    const broken = [];
+    for (const [url, title] of Object.entries(PAGES)) {
+      const page = await req('GET', url);
+      if (page.status !== 200 || !page.text.includes(`<title>${title}`) ||
+          !page.text.includes('<script src="/js/layout.js"></script>') || !page.text.includes('siteFooter()')) {
+        broken.push(`${url} (${page.status})`);
+      }
+    }
+    ok(broken.length === 0, 'every storefront page loads at its own URL with the shared header and footer', broken.join(', '));
+
+    const deep404 = await req('GET', '/some/broken/link');
+    ok(deep404.status === 404 && deep404.text.includes('href="/css/store.css"'),
+      'a broken link deep in the site still gets the styled 404 page (absolute asset paths)');
 
     // ---- privacy: lookup and erasure (NDPA) ---------------------------
     const lookupBefore = await req('GET', '/api/admin/privacy/lookup?email=chidi@example.com', undefined, { Cookie: cookie });

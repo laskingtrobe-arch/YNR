@@ -1,61 +1,35 @@
 /* ==========================================================================
    App
-   View switching, DOM wiring, and boot. Loaded last: every function it wires
-   up is defined by the scripts above it.
+   Per-page boot and DOM wiring. Each page names itself on <body
+   data-page="...">; the pieces every page shares (nav, bag) are wired on all
+   of them. Loaded last: every function it calls is defined above it.
    ========================================================================== */
 
-/* ---------------- views ---------------- */
-function showView(name) {
-  document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
-  const el = document.getElementById('view-' + name);
-  if (el) el.classList.add('active');
-  document.getElementById('navLinks').classList.remove('open');
-  window.scrollTo({ top: 0 });
-  // `path` carries the view name (home, product, checkout, ...) — not
-  // `slug`, which is reserved for an actual product slug. openProduct()
-  // fires the per-piece product_view event separately, once it knows which.
-  track('page_view', { path: '/' + name });
-}
-
-function scrollToId(id) {
-  showView('home');
-  requestAnimationFrame(() => {
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
-}
+const PAGE = document.body.dataset.page || '';
 
 function toggleSizeGuide(open) {
-  document.getElementById('sizeModal').classList.toggle('open', open);
+  const modal = document.getElementById('sizeModal');
+  if (modal) modal.classList.toggle('open', open);
 }
 
 /* ---------------- wiring ----------------
    All DOM listeners live here rather than being scattered through the other
    files, so there is one place to look when something is not responding. */
 function wireUp() {
-  document.querySelectorAll('[data-view]').forEach((el) => {
-    el.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (el.dataset.scroll) scrollToId(el.dataset.scroll);
-      else showView(el.dataset.view);
-    });
+  const toggle = document.getElementById('mobileToggle');
+  const links = document.getElementById('navLinks');
+  toggle.addEventListener('click', () => {
+    toggle.setAttribute('aria-expanded', String(links.classList.toggle('open')));
   });
 
-  document.getElementById('mobileToggle').addEventListener('click', () => {
-    document.getElementById('navLinks').classList.toggle('open');
-  });
-
-  document.getElementById('sizeModal').addEventListener('click', (e) => {
-    if (e.target.id === 'sizeModal') toggleSizeGuide(false);
-  });
+  const modal = document.getElementById('sizeModal');
+  if (modal) {
+    modal.addEventListener('click', (e) => { if (e.target === modal) toggleSizeGuide(false); });
+  }
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { toggleSizeGuide(false); toggleCart(false); }
   });
-
-  document.getElementById('coZone').addEventListener('change', updateCheckoutTotals);
-  document.getElementById('payCardBtn').addEventListener('click', () => placeOrder('paystack'));
-  document.getElementById('payWaBtn').addEventListener('click', () => placeOrder('whatsapp'));
 
   // Delegated rather than attached per-link: catches the floating button,
   // the footer links and every JS-built wa.me URL (checkout, order-now,
@@ -66,14 +40,22 @@ function wireUp() {
   });
 }
 
+/* What each page loads once it's wired up. Pages not listed here (story,
+   visit, contact, legal) are static apart from the shared nav and bag. */
+const PAGE_INIT = {
+  home: () => loadCatalogue({ grid: 'featuredGrid', limit: 3 }),
+  shop: () => loadCatalogue({ grid: 'shopGrid', filters: 'shopFilters' }),
+  product: () => loadProductPage(),
+  checkout: () => initCheckout(),
+};
+
 /* ---------------- boot ---------------- */
 function start() {
   wireUp();
   loadBag();
   renderCart();
-  showView('home');
-  loadCatalogue();
-  loadZones();
+  track('page_view');
+  if (PAGE_INIT[PAGE]) PAGE_INIT[PAGE]();
 }
 
 if (document.readyState === 'loading') {

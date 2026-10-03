@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YnR — Hand-Painted, One-Of-One</title>
+<meta name="description" content="A hand-painted, one-of-one piece from YnR — painted once in Mpape, Abuja, never printed by the thousand.">
+<meta property="og:type" content="product">
+<meta property="og:site_name" content="YnR — Young & Reckless">
+<meta property="og:title" content="A one-of-one piece from YnR">
+<meta property="og:description" content="Hand-painted in Mpape, Abuja. There's only one.">
+<meta property="og:image" content="https://ynrfashion.com/assets/brand/og-image.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://ynrfashion.com/assets/brand/og-image.jpg">
+
+<link rel="icon" type="image/svg+xml" href="/assets/brand/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/brand/favicon-32.png">
+<link rel="apple-touch-icon" href="/assets/brand/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800;900&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Fraunces:ital,opsz,wght@1,9..144,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/store.css">
+<script src="/js/config.js"></script>
+</head>
+<body data-page="product" data-section="shop">
+<script src="/js/layout.js"></script>
+
+<main>
+  <div class="wrap">
+    <div class="breadcrumb">
+      <a href="/shop">Shop</a> / <a href="/shop" id="pdpCategory">…</a> / <span id="pdpCrumbName" style="color:var(--bone-dim);">…</span>
+    </div>
+
+    <div class="pdp">
+      <div class="pdp-shot">
+        <div class="one-tag" id="pdpOneTag">One Of One</div>
+        <img id="pdpMainImg" src="" alt="">
+      </div>
+
+      <div class="pdp-info">
+        <div class="eyebrow" id="pdpEyebrow">Hand-Painted</div>
+        <h1 class="display" id="pdpName">Loading…</h1>
+        <div class="pdp-price-row"><span class="pdp-price" id="pdpPrice"></span></div>
+        <p class="pdp-desc" id="pdpDesc"></p>
+
+        <div class="option-block">
+          <div class="option-label" style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+            <span>Size</span>
+            <button type="button" class="size-guide-link" onclick="toggleSizeGuide(true)">Size guide</button>
+          </div>
+          <div class="size-row" id="sizeRow"></div>
+        </div>
+
+        <div class="pdp-actions"></div>
+
+        <div class="trust-row">
+          <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="10" width="16" height="10" rx="1"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Confirmed On WhatsApp</div>
+          <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m3 11 8-8 8 8"/><path d="M5 10v10h14V10"/></svg>₦2,000 Abuja Delivery</div>
+          <div class="trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>Ships Worldwide</div>
+        </div>
+
+        <div class="accordion" id="pdpAccordion">
+          <div class="accordion-item">
+            <button class="accordion-trigger" onclick="toggleAcc(this)">Fit &amp; Fabric<span class="plus">+</span></button>
+            <div class="accordion-panel"><p>Heavyweight cotton, cut oversized. Hand-painted design — expect small, natural variations in the brushwork since it's painted, not printed.</p></div>
+          </div>
+          <div class="accordion-item">
+            <button class="accordion-trigger" onclick="toggleAcc(this)">Care<span class="plus">+</span></button>
+            <div class="accordion-panel"><p>Hand wash cold or gentle machine wash inside-out. Do not iron or tumble dry directly on the painted design.</p></div>
+          </div>
+          <div class="accordion-item">
+            <button class="accordion-trigger" onclick="toggleAcc(this)">Delivery &amp; Ordering<span class="plus">+</span></button>
+            <div class="accordion-panel"><p>Pick a size and add to bag, or message us directly on WhatsApp. We confirm availability, delivery cost, and payment with you there before anything ships.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="related-head">
+      <div class="eyebrow">More From The Shop</div>
+      <h2 class="display" style="font-size:clamp(24px,3.6vw,36px); margin-top:12px;">You May Also Like</h2>
+    </div>
+    <div class="product-grid" id="relatedGrid" style="margin-bottom:110px;"></div>
+  </div>
+</main>
+
+<div class="modal-overlay" id="sizeModal">
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="sizeModalTitle">
+    <div class="modal-head"><h3 id="sizeModalTitle">Size Guide</h3><button class="modal-close" onclick="toggleSizeGuide(false)" aria-label="Close">✕</button></div>
+    <table class="size-table">
+      <thead><tr><th>Size</th><th>Chest (in)</th><th>Chest (cm)</th><th>Length (in)</th><th>Length (cm)</th></tr></thead>
+      <tbody>
+        <tr><td>S</td><td>37–39</td><td>94–99</td><td>27.5</td><td>70</td></tr>
+        <tr><td>M</td><td>40–42</td><td>102–107</td><td>28.5</td><td>72</td></tr>
+        <tr><td>L</td><td>43–45</td><td>109–114</td><td>29.5</td><td>75</td></tr>
+        <tr><td>XL</td><td>46–48</td><td>117–122</td><td>30.5</td><td>77</td></tr>
+        <tr><td>XXL</td><td>49–51</td><td>124–130</td><td>31.5</td><td>80</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Measurements are garment measurements, laid flat. Pieces are cut oversized. Still unsure of your size? Message us on WhatsApp and we'll help you pick.</p>
+  </div>
+</div>
+
+<script>siteFooter()</script>
+<script src="/js/util.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/catalogue.js"></script>
+<script src="/js/bag.js"></script>
+<script src="/js/checkout.js"></script>
+<script src="/js/forms.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>
