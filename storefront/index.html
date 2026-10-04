@@ -27,7 +27,9 @@
 <link rel="apple-touch-icon" href="/assets/brand/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800;900&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Fraunces:ital,opsz,wght@1,9..144,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@1,125,800..900&family=Big+Shoulders+Display:wght@500;700;800;900&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Fraunces:ital,opsz,wght@1,9..144,400&display=swap" rel="stylesheet">
+<!-- the posters' graffiti: only the letters they use -->
+<link href="https://fonts.googleapis.com/css2?family=Rubik+Wet+Paint&text=RECKLSGAN&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/store.css">
 <script src="/js/config.js"></script>
 </head>
@@ -35,24 +37,57 @@
 <script src="/js/layout.js"></script>
 
 <main>
-  <section class="hero" style="padding:0;">
-    <div class="hero-halftone" aria-hidden="true"></div>
-    <div class="hero-photo"><img src="/assets/products/product-6-young-reckless-jeans.jpg" alt=""></div>
-    <div class="hero-inner">
-      <div class="eyebrow">Hand-Painted in Mpape, Abuja</div>
-      <h1 class="display">ONE PIECE.<br><span class="accent">ONE OF ONE.</span></h1>
-      <div class="hero-scan" aria-hidden="true"></div>
-      <p class="hero-sub">YnR is streetwear that's actually made, not printed by the thousand. Every hoodie, tee and pair of jeans is hand-painted piece by piece — worn by someone who'd rather stand out than fit in.</p>
-      <div class="hero-cta-row">
-        <a class="btn-primary" href="/shop">
-          Shop The Pieces
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-        </a>
-        <a class="btn-outline" href="/story">Our Story</a>
+  <!-- The film: frames from /assets/film/ufo-v1, drawn by js/film.js as the
+       page scrolls. data-beat="from,to" is where in the film (0 = start,
+       1 = end) each block of text shows. -->
+  <section class="film" id="film" data-film="/assets/film/ufo-v1" data-wide="96" data-tall="96" data-gray>
+    <div class="film-stage">
+      <picture class="film-poster">
+        <source media="(orientation: portrait)" srcset="/assets/film/ufo-v1/tall/f001.webp">
+        <img src="/assets/film/ufo-v1/wide/f001.webp" alt="" fetchpriority="high">
+      </picture>
+      <canvas class="film-canvas" aria-hidden="true"></canvas>
+      <div class="film-dim" aria-hidden="true"></div>
+      <div class="film-shade" aria-hidden="true"></div>
+      <script>siteTransmission(1, 'film-tx film-tx-top', '0.1,0.86')</script>
+      <script>siteTransmission(5, 'film-tx film-tx-low', '0.16,0.82')</script>
+      <p class="visually-hidden">A short black-and-white film: a man in hand-painted trousers stands in a field at night, is lifted into a UFO by its beam, and the ship leaves Earth.</p>
+
+      <div class="film-beat film-intro" data-beat="0,0.1">
+        <div class="wrap">
+          <div class="eyebrow">Hand-Painted in Mpape, Abuja</div>
+          <h1 class="display">ONE PIECE.<br><span class="accent">ONE OF ONE.</span></h1>
+          <div class="hero-scan" aria-hidden="true"></div>
+          <p class="hero-sub">YnR is streetwear that's actually made, not printed by the thousand. Every hoodie, tee and pair of jeans is hand-painted piece by piece — worn by someone who'd rather stand out than fit in.</p>
+          <div class="hero-cta-row">
+            <a class="btn-primary" href="/shop">
+              Shop The Pieces
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
+            <a class="btn-outline" href="/story">Our Story</a>
+          </div>
+        </div>
       </div>
+
+      <div class="film-beat" data-beat="0.4,0.53">
+        <div class="wrap"><p class="display film-line">NOT PRINTED.<br><span class="accent">PAINTED.</span></p></div>
+      </div>
+
+      <div class="film-beat film-outro" data-beat="0.88,1">
+        <div class="wrap">
+          <div class="eyebrow">Every Piece Is One-Of-One</div>
+          <h2 class="display film-line">OUT OF THIS<br><span class="accent">WORLD.</span></h2>
+          <a class="btn-primary" href="/shop">
+            Shop The Pieces
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <div class="scroll-cue" data-beat="0,0.04"><span class="line"></span> Scroll</div>
     </div>
-    <div class="scroll-cue"><span class="line"></span> Scroll</div>
   </section>
+  <script>siteTransmission(2)</script>
 
   <!-- A few pieces still for sale; the full catalogue is on /shop -->
   <section id="featured">
@@ -90,19 +125,177 @@
     </div>
   </section>
 
-  <section>
+  <!-- The editorial run: photos off @ynr_multiverse, styled by
+       server/scripts/gallery-fx.js (assets/gallery/fx) and moved by
+       js/editorial.js. data-stage marks a section whose data-depth layers
+       drift with the scroll. -->
+  <section class="split night">
+    <div class="split-media" data-stage>
+      <img src="/assets/gallery/fx/split-stand.webp" width="1600" height="1100" loading="lazy" decoding="async" alt="" data-depth="0.3">
+    </div>
+    <div class="split-copy" data-reveal>
+      <div class="eyebrow">YN<span class="flip-r">R</span> // Young &amp; Reckless</div>
+      <h2 class="display wide">Made For The Ones Who Stand Apart.</h2>
+      <p>YnR started in Mpape, Abuja, with a brush, a blank tee and no interest in looking like everything else on the rack. Four years on, every piece is still painted one at a time — for people who'd rather stand out than fit in.</p>
+      <a class="link-plus" href="/story">Our Story <b>+</b></a>
+    </div>
+  </section>
+
+  <section class="worlds">
     <div class="wrap">
-      <div class="story">
-        <div class="story-visual">
-          <img src="/assets/products/product-1-out-of-this-world-tee.jpg" alt="Hand-painted YnR piece">
+      <div class="section-head" data-reveal>
+        <div><div class="eyebrow">@ynr_multiverse</div><h2 class="display">Pick Your World</h2></div>
+        <p>The drops, the paint, the gang and the shop, straight off the gram. Point at one to see it for real.</p>
+      </div>
+    </div>
+    <div class="worlds-row">
+      <a class="world" href="/gallery?group=alien" data-reveal style="--i:0">
+        <img class="world-fx" src="/assets/gallery/fx/tile-alien.webp" width="900" height="1200" loading="lazy" decoding="async" alt="">
+        <img class="world-real" data-src="/assets/gallery/alien-2026-07-19-da-nzcickxs-7-800.webp" width="800" height="1067" alt="">
+        <span class="world-num" aria-hidden="true">01</span>
+        <span class="world-label wide">Alien Invasion<svg viewBox="0 0 32 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M0 6h30M25 1l5 5-5 5"/></svg></span>
+      </a>
+      <a class="world" href="/gallery?group=painted" data-reveal style="--i:1">
+        <img class="world-fx" src="/assets/gallery/fx/tile-painted.webp" width="900" height="1200" loading="lazy" decoding="async" alt="">
+        <img class="world-real" data-src="/assets/gallery/painted-2025-07-23-dmdvem3ndzc-1-800.webp" width="800" height="800" alt="">
+        <span class="world-num" aria-hidden="true">02</span>
+        <span class="world-label wide">Hand-Painted<svg viewBox="0 0 32 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M0 6h30M25 1l5 5-5 5"/></svg></span>
+      </a>
+      <a class="world" href="/gallery?group=crew" data-reveal style="--i:2">
+        <img class="world-fx" src="/assets/gallery/fx/tile-crew.webp" width="900" height="1200" loading="lazy" decoding="async" alt="">
+        <img class="world-real" data-src="/assets/gallery/events-2025-07-15-dmicjuznsit-1-800.webp" width="800" height="999" alt="">
+        <span class="world-num" aria-hidden="true">03</span>
+        <span class="world-label wide">The Gang<svg viewBox="0 0 32 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M0 6h30M25 1l5 5-5 5"/></svg></span>
+      </a>
+      <a class="world" href="/gallery?group=shop" data-reveal style="--i:3">
+        <img class="world-fx" src="/assets/gallery/fx/tile-shop.webp" width="900" height="1200" loading="lazy" decoding="async" alt="">
+        <img class="world-real" data-src="/assets/gallery/shop-2026-08-09-db1wrkhdz-x-1-800.webp" width="800" height="800" alt="">
+        <span class="world-num" aria-hidden="true">04</span>
+        <span class="world-label wide">The Shop<svg viewBox="0 0 32 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M0 6h30M25 1l5 5-5 5"/></svg></span>
+      </a>
+    </div>
+  </section>
+
+  <!-- The poster: words behind, the cut-out in front of them -->
+  <section class="poster-band" aria-labelledby="posterTitle">
+    <div class="wrap">
+      <div class="poster" data-stage data-inview>
+        <span class="crop tl" aria-hidden="true"></span><span class="crop tr" aria-hidden="true"></span><span class="crop bl" aria-hidden="true"></span><span class="crop br" aria-hidden="true"></span>
+        <div class="poster-kicker" aria-hidden="true">YN<span class="flip-r">R</span> &#10022; Multiverse</div>
+        <div class="poster-note n1" aria-hidden="true">
+          <svg viewBox="0 0 48 34" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14a10 8 0 0 1 20 0"/><ellipse cx="24" cy="16" rx="21" ry="5.5"/><path d="M16 22l-4 9M24 23v9M32 22l4 9"/></svg>
+          Made in<br>Mpape, Abuja
         </div>
-        <div class="story-copy">
-          <div class="eyebrow">Four Years In Abuja</div>
-          <blockquote>We don't fit in.<br>We're not trying to.</blockquote>
-          <p>YnR started in Mpape, Abuja, with a brush, a blank tee, and no interest in looking like everything else on the rack. Four years later, every piece that leaves our hands is still painted piece by piece.</p>
-          <a class="btn-outline" href="/story" style="margin-top:12px;">Read Our Story</a>
+        <div class="poster-note n2" aria-hidden="true">
+          <svg viewBox="0 0 66 30" fill="currentColor"><path d="M0 0h3v30H0zM5 0h1.5v30H5zM8.5 0h3v30h-3zM13.5 0H15v30h-1.5zM17 0h4v30h-4zM23 0h1.5v30H23zM26.5 0h2v30h-2zM30.5 0h3.5v30h-3.5zM36 0h1.5v30H36zM39.5 0h3v30h-3zM44.5 0H46v30h-1.5zM48 0h4v30h-4zM54 0h1.5v30H54zM57.5 0h2v30h-2zM61.5 0h1.5v30h-1.5zM64.5 0H66v30h-1.5z"/></svg>
+          Hand-<br>painted
+        </div>
+        <h2 class="poster-title" id="posterTitle">
+          <span class="poster-back" data-depth="0.35">Young &amp;</span>
+          <span class="poster-tag" data-depth="0.12">Reckless</span>
+        </h2>
+        <img class="poster-figure" src="/assets/gallery/fx/cut-reckless.webp" width="620" height="1070" loading="lazy" decoding="async" data-depth="-0.12"
+          alt="One of the gang, cut out in black and white: legs wide in hand-painted YNR jeans and a The Aliens Are Coming tee">
+        <div class="poster-mark m1" aria-hidden="true"><svg viewBox="0 0 40 46" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 3C10 3 4 10.5 4 19c0 10 8.5 21.5 16 24 7.5-2.5 16-14 16-24C36 10.5 30 3 20 3Z"/><path d="M10 18l7 6M17 18l-7 6M23 18l7 6M30 18l-7 6M16 33h8"/></svg></div>
+        <div class="poster-mark m2" aria-hidden="true"><svg viewBox="0 0 30 44" fill="currentColor"><path d="M18 0 2 26h11l-4 18L28 15H16L22 0z"/></svg></div>
+        <div class="poster-mark m3" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="20" cy="20" r="11"/><path d="M20 2v12M20 26v12M2 20h12M26 20h12"/></svg>Eyes on<br>the art</div>
+        <div class="poster-mark m4" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="20" cy="20" r="16"/><ellipse cx="20" cy="20" rx="7" ry="16"/><path d="M4 20h32M7 12h26M7 28h26"/></svg>Worn<br>worldwide</div>
+        <div class="poster-side left">
+          <svg class="stars" viewBox="0 0 122 22" fill="currentColor" aria-hidden="true"><path d="M11 1.5l2.8 6.1 6.6.7-5 4.5 1.4 6.5L11 16l-5.8 3.3 1.4-6.5-5-4.5 6.6-.7z"/><path transform="translate(25)" d="M11 1.5l2.8 6.1 6.6.7-5 4.5 1.4 6.5L11 16l-5.8 3.3 1.4-6.5-5-4.5 6.6-.7z"/><path transform="translate(50)" d="M11 1.5l2.8 6.1 6.6.7-5 4.5 1.4 6.5L11 16l-5.8 3.3 1.4-6.5-5-4.5 6.6-.7z"/><path transform="translate(75)" d="M11 1.5l2.8 6.1 6.6.7-5 4.5 1.4 6.5L11 16l-5.8 3.3 1.4-6.5-5-4.5 6.6-.7z"/><path transform="translate(100)" d="M11 1.5l2.8 6.1 6.6.7-5 4.5 1.4 6.5L11 16l-5.8 3.3 1.4-6.5-5-4.5 6.6-.7z"/></svg>
+          <b>Skraight out da mud</b><i aria-hidden="true"></i>
+          <p>Painted by hand.<br>Never twice.</p>
+        </div>
+        <div class="poster-side right">
+          <svg class="stars" viewBox="0 0 122 22" fill="currentColor" aria-hidden="true"><path d="M11 1.5l2.8 6.1 6.6.7-5 4.5 1.4 6.5L11 16l-5.8 3.3 1.4-6.5-5-4.5 6.6-.7z"/><path transform="translate(25)" d="M11 1.5l2.8 6.1 6.6.7-5 4.5 1.4 6.5L11 16l-5.8 3.3 1.4-6.5-5-4.5 6.6-.7z"/><path transform="translate(50)" d="M11 1.5l2.8 6.1 6.6.7-5 4.5 1.4 6.5L11 16l-5.8 3.3 1.4-6.5-5-4.5 6.6-.7z"/><path transform="translate(75)" d="M11 1.5l2.8 6.1 6.6.7-5 4.5 1.4 6.5L11 16l-5.8 3.3 1.4-6.5-5-4.5 6.6-.7z"/><path transform="translate(100)" d="M11 1.5l2.8 6.1 6.6.7-5 4.5 1.4 6.5L11 16l-5.8 3.3 1.4-6.5-5-4.5 6.6-.7z"/></svg>
+          <b>The aliens are coming</b><i aria-hidden="true"></i>
+          <p>Stay real<br>n reckless.</p>
+        </div>
+        <div class="poster-foot">
+          <div class="poster-meter" aria-hidden="true">Paint<br>level <span class="bar"></span> 100%</div>
+          <div>
+            <p class="poster-big">One Of One</p>
+            <p class="poster-small">For the ones who stand apart. Every piece is painted once, <br>by hand, in Mpape, Abuja — and worn worldwide.</p>
+            <div class="poster-code" aria-hidden="true">YN<span class="flip-r">R</span> // YNR-2026-RCKLS</div>
+          </div>
+          <div class="poster-meter right" aria-hidden="true">Invasion<br>in progress <span class="hatch"></span></div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- How a piece is made, pinned to one of them -->
+  <section class="anatomy" data-inview aria-labelledby="anatomyTitle">
+    <div class="wrap anatomy-grid">
+      <div class="anatomy-intro" data-reveal>
+        <div class="eyebrow">Anatomy Of A One-Of-One</div>
+        <h2 class="display wide" id="anatomyTitle">Painted,<br>Not Printed.</h2>
+        <p>No screen, no transfer, no factory run. Every line on a YnR piece goes on by hand at the shop in Mpape, so no two ever come out the same — like this jacket, and the jeans hung under it.</p>
+        <a class="link-plus" href="/shop">What's in the shop <b>+</b></a>
+        <div class="commission">
+          <h3>Want one painted for you?</h3>
+          <p class="smoke-text">Bring the idea — a name, a face, a whole story — and we'll paint it onto a piece that's yours alone.</p>
+          <a class="btn-oxblood" href="https://wa.me/2349026947815?text=Hi%20YnR%2C%20I%27d%20like%20a%20piece%20painted%20for%20me" target="_blank" rel="noopener">Message Us On WhatsApp</a>
+        </div>
+      </div>
+      <div class="anatomy-stage">
+        <figure class="anatomy-shot">
+          <img src="/assets/gallery/painted-2021-10-28-cvlpckfskst-1-1280.webp" width="800" height="1000" loading="lazy" decoding="async"
+            alt="A black jacket, hand-painted: #RECKLESS across the shoulders, a red face reading The Weird Club, a skull on each sleeve and a YnR signature, hung over black jeans painted with a UFO">
+          <ul>
+            <li class="callout r" style="--x:56%; --y:11%; --i:0"><span class="pin" aria-hidden="true"></span><span class="line" aria-hidden="true"></span><span class="note">#Reckless<small>Lettered by hand</small></span></li>
+            <li class="callout l" style="--x:44%; --y:43%; --i:1"><span class="pin" aria-hidden="true"></span><span class="line" aria-hidden="true"></span><span class="note">The Weird Club<small>Painted freehand</small></span></li>
+            <li class="callout r" style="--x:71%; --y:62%; --i:2"><span class="pin" aria-hidden="true"></span><span class="line" aria-hidden="true"></span><span class="note">A skull each sleeve<small>Matched by eye</small></span></li>
+            <li class="callout l" style="--x:29%; --y:63.5%; --i:3"><span class="pin" aria-hidden="true"></span><span class="line" aria-hidden="true"></span><span class="note">Signed YnR<small>On every piece</small></span></li>
+            <li class="callout r" style="--x:54%; --y:88%; --i:4"><span class="pin" aria-hidden="true"></span><span class="line" aria-hidden="true"></span><span class="note">UFO on the jeans<small>The invasion, again</small></span></li>
+          </ul>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- Lookbook spread for a piece in the shop -->
+  <section class="lookbook" aria-labelledby="lookbookTitle">
+    <div class="wrap lookbook-grid">
+      <figure class="lookbook-main" data-stage data-reveal>
+        <img src="/assets/gallery/alien-2026-05-18-dye9eafjt-j-4-1280.webp" width="800" height="1040" loading="lazy" decoding="async"
+          alt="Wearing the Alien Invasion Tee: hands clasped, rings and gold chains, a black jacket over one shoulder">
+        <div class="lookbook-mark wide" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="20" cy="20" r="11"/><path d="M20 2v12M20 26v12M2 20h12M26 20h12"/></svg>YN<span class="flip-r">R</span></div>
+        <figure class="lookbook-inset a" data-depth="-0.55"><img src="/assets/gallery/alien-2026-05-18-dye9eafjt-j-1-800.webp" width="800" height="1041" loading="lazy" decoding="async" alt="The tee held up flat: ALIEN INVASION over ships beaming up a city"></figure>
+        <figure class="lookbook-inset b wide" data-depth="-0.3"><img src="/assets/gallery/alien-2026-05-18-dye9eafjt-j-3-800.webp" width="800" height="1040" loading="lazy" decoding="async" alt="The tee worn open-jacketed, a small white dog held up to the camera"></figure>
+        <figure class="lookbook-inset c wide" data-depth="-0.7"><img src="/assets/gallery/alien-2026-05-18-dye9eafjt-j-2-800.webp" width="800" height="1040" loading="lazy" decoding="async" alt="The tee held up in front of a painted wall"></figure>
+      </figure>
+      <div class="lookbook-copy" data-reveal>
+        <div class="eyebrow">Lookbook // Alien Invasion</div>
+        <h2 class="display wide" id="lookbookTitle">The Alien<br>Invasion Tee</h2>
+        <p class="lede">White, oversized and loud: ALIEN INVASION across the chest, with the ships beaming up the city underneath. Worn here with gold, ink and attitude — because the aliens didn't come for the ones who fit in.</p>
+        <dl class="lookbook-specs">
+          <dt>Fit</dt><dd>Oversized</dd>
+          <dt>Colour</dt><dd>White</dd>
+          <dt>Drop</dt><dd>Alien Invasion</dd>
+          <dt>From</dt><dd>Mpape, Abuja</dd>
+        </dl>
+        <div class="lookbook-cta">
+          <a class="btn-primary" href="/product?p=alien-invasion">
+            Shop The Tee
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </a>
+          <a class="link-plus" href="/gallery?group=alien">The whole drop <b>+</b></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Everyone, smeared into one frame -->
+  <section class="banner night" data-stage>
+    <img src="/assets/gallery/fx/banner-reckless.webp" width="2400" height="1000" loading="lazy" decoding="async" alt="" data-depth="0.3">
+    <div class="wrap" data-reveal>
+      <div class="eyebrow">The Gang // Abuja To Everywhere</div>
+      <h2 class="display wide">Stay Real<br>N Reckless.</h2>
+      <p>Crew, customers, friends of the shop: the multiverse is everyone who wears it. See them all in the gallery.</p>
+      <a class="btn-primary" href="/gallery">
+        Enter The Multiverse
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
     </div>
   </section>
 
@@ -143,6 +336,12 @@
 <script src="/js/bag.js"></script>
 <script src="/js/checkout.js"></script>
 <script src="/js/forms.js"></script>
+<script src="/js/film.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/glitch.js"></script>
+<script src="/js/galaxy.js"></script>
+<script src="/js/smooth.js"></script>
+<script src="/js/editorial.js"></script>
 <script src="/js/app.js"></script>
 </body>
 </html>

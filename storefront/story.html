@@ -22,7 +22,7 @@
 <link rel="apple-touch-icon" href="/assets/brand/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800;900&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Fraunces:ital,opsz,wght@1,9..144,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@1,125,800..900&family=Big+Shoulders+Display:wght@500;700;800;900&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Fraunces:ital,opsz,wght@1,9..144,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/store.css">
 <script src="/js/config.js"></script>
 </head>
@@ -30,19 +30,23 @@
 <script src="/js/layout.js"></script>
 
 <main>
-  <section class="page-hero">
+  <section class="page-hero fx-hero night" data-stage>
+    <img class="fx-bg" src="/assets/gallery/fx/hero-story.webp" width="2000" height="900" alt="" fetchpriority="high" data-depth="0.35">
+    <div class="fx-rail" aria-hidden="true"><span>03</span><i></i><i></i><i class="on"></i><i></i><i></i></div>
+    <span class="fx-scroll" aria-hidden="true">Scroll to move</span>
     <div class="wrap">
       <div class="eyebrow">Four Years In Abuja</div>
-      <h1 class="display">Our Story</h1>
+      <h1 class="display wide">Our Story</h1>
       <p>A brush, a blank tee, and no interest in looking like everything else on the rack.</p>
     </div>
   </section>
+  <script>siteTransmission(4)</script>
 
   <section id="story">
     <div class="wrap">
       <div class="story">
         <div class="story-visual">
-          <img src="/assets/products/product-1-out-of-this-world-tee.jpg" alt="Hand-painted YnR piece">
+          <img src="/assets/gallery/painted-2024-04-08-c5gqrjoospu-1-1280.webp" width="800" height="1000" loading="lazy" decoding="async" alt="Close-up of hand-painted denim: a skull tearing out through the cloth, with Let me out written underneath">
         </div>
         <div class="story-copy">
           <div class="eyebrow">Made, Not Printed</div>
@@ -56,6 +60,89 @@
           </div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- Lookbook: the denim made for the pop-up -->
+  <section class="lookbook" aria-labelledby="yuteTitle">
+    <div class="wrap lookbook-grid flip">
+      <figure class="lookbook-main" data-stage data-reveal>
+        <img src="/assets/gallery/painted-2025-07-23-dmdvem3ndzc-1-1280.webp" width="800" height="800" loading="lazy" decoding="async"
+          alt="Pale jeans painted leg to leg: RECKLESS YUTE across the top, money bags, flames, and The money is already printed, you just have to get it">
+        <div class="lookbook-mark wide" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="20" cy="20" r="11"/><path d="M20 2v12M20 26v12M2 20h12M26 20h12"/></svg>Reckless Yute</div>
+        <figure class="lookbook-inset a" data-depth="-0.55"><img src="/assets/gallery/painted-2025-07-23-dmdvw51tyby-1-800.webp" width="800" height="1061" loading="lazy" decoding="async" alt="A red puffer vest lettered Stay Reckless and Work Hard Dream Big"></figure>
+        <figure class="lookbook-inset b wide" data-depth="-0.3"><img src="/assets/gallery/painted-2025-07-23-dmdvnrfnrgk-1-800.webp" width="800" height="1067" loading="lazy" decoding="async" alt="Sand-coloured jeans with a painted figure falling between buildings"></figure>
+        <figure class="lookbook-inset c wide" data-depth="-0.7"><img src="/assets/gallery/painted-2025-07-23-dmdtbmutvoj-1-800.webp" width="800" height="1067" loading="lazy" decoding="async" alt="Dark denim covered in painted cartoon characters"></figure>
+      </figure>
+      <div class="lookbook-copy" data-reveal>
+        <div class="eyebrow">Lookbook // Reckless Yute</div>
+        <h2 class="display wide" id="yuteTitle">Reckless Yute<br>Denim</h2>
+        <p class="lede">Painted for the Reckless Yute pop-up in July 2025: money bags, flames and a few words to live by, scrawled leg to leg. Denim painted by @shibobo_wurld, a vest that says it plainly — stay reckless, work hard, dream big.</p>
+        <dl class="lookbook-specs">
+          <dt>Line</dt><dd>Reckless Yute</dd>
+          <dt>Shown</dt><dd>Pop-up, 27.07.25</dd>
+          <dt>Pieces</dt><dd>One of one, each</dd>
+        </dl>
+        <div class="lookbook-cta">
+          <a class="btn-primary" href="https://wa.me/2349026947815?text=Hi%20YnR%2C%20I%27d%20like%20a%20pair%20of%20jeans%20painted" target="_blank" rel="noopener">Get A Pair Painted</a>
+          <a class="link-plus" href="/gallery?group=painted">All the paint <b>+</b></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- The log: dated moments from the feed, oldest first -->
+  <section class="log" aria-labelledby="logTitle">
+    <div class="wrap">
+      <div class="section-head" data-reveal>
+        <div><div class="eyebrow">2021 &mdash; 2026</div><h2 class="display" id="logTitle">From The Log</h2></div>
+        <p>The feed in eight moments: the first painted shoes, three seasons of invasion, a pop-up and the gang along the way.</p>
+      </div>
+      <div class="log-grid">
+        <a class="log-card" href="https://www.instagram.com/p/CUfWDjgsdqk/" target="_blank" rel="noopener" data-reveal style="--i:0">
+          <img src="/assets/gallery/painted-2021-10-01-cufwdjgsdqk-1-800.webp" width="800" height="800" loading="lazy" decoding="async" alt="">
+          <span class="log-kind">The paint<b>Shoes, by hand</b></span><span class="log-date">01.10.21</span><span class="log-go" aria-hidden="true">&nearr;</span><span class="visually-hidden"> (opens Instagram)</span>
+        </a>
+        <a class="log-card" href="https://www.instagram.com/p/CXwWt2aMLg2/" target="_blank" rel="noopener" data-reveal style="--i:1">
+          <img src="/assets/gallery/crew-2021-12-21-cxwwt2amlg2-1-800.webp" width="800" height="1000" loading="lazy" decoding="async" alt="">
+          <span class="log-kind">The gang<b>Fresher in real life</b></span><span class="log-date">21.12.21</span><span class="log-go" aria-hidden="true">&nearr;</span><span class="visually-hidden"> (opens Instagram)</span>
+        </a>
+        <a class="log-card" href="https://www.instagram.com/p/CmPX14RMz1T/" target="_blank" rel="noopener" data-reveal style="--i:2">
+          <img src="/assets/gallery/painted-2022-12-16-cmpx14rmz1t-1-800.webp" width="800" height="1000" loading="lazy" decoding="async" alt="">
+          <span class="log-kind">Drop<b>Alien Invasion, Season 1</b></span><span class="log-date">16.12.22</span><span class="log-go" aria-hidden="true">&nearr;</span><span class="visually-hidden"> (opens Instagram)</span>
+        </a>
+        <a class="log-card" href="https://www.instagram.com/p/Cu2TCsYou7R/" target="_blank" rel="noopener" data-reveal style="--i:3">
+          <img src="/assets/gallery/crew-2023-07-18-cu2tcsyou7r-1-800.webp" width="800" height="1000" loading="lazy" decoding="async" alt="">
+          <span class="log-kind">On set<b>Ghetto Mafia video shoot</b></span><span class="log-date">18.07.23</span><span class="log-go" aria-hidden="true">&nearr;</span><span class="visually-hidden"> (opens Instagram)</span>
+        </a>
+        <a class="log-card" href="https://www.instagram.com/p/DEsw_jzoi-K/" target="_blank" rel="noopener" data-reveal style="--i:4">
+          <img src="/assets/gallery/crew-2025-01-11-desw-jzoi-k-1-800.webp" width="800" height="1000" loading="lazy" decoding="async" alt="">
+          <span class="log-kind">Collab<b>YNR &times; The Niju Tribe</b></span><span class="log-date">11.01.25</span><span class="log-go" aria-hidden="true">&nearr;</span><span class="visually-hidden"> (opens Instagram)</span>
+        </a>
+        <a class="log-card" href="https://www.instagram.com/p/DL0H-n9tRoQ/" target="_blank" rel="noopener" data-reveal style="--i:5">
+          <img src="/assets/gallery/events-2025-07-07-dl0h-n9troq-1-800.webp" width="800" height="1067" loading="lazy" decoding="async" alt="">
+          <span class="log-kind">Pop-up<b>Reckless Yute exhibition</b></span><span class="log-date">27.07.25</span><span class="log-go" aria-hidden="true">&nearr;</span><span class="visually-hidden"> (opens Instagram)</span>
+        </a>
+        <a class="log-card" href="https://www.instagram.com/p/Da-NZCiCkXS/" target="_blank" rel="noopener" data-reveal style="--i:6">
+          <img src="/assets/gallery/alien-2026-07-19-da-nzcickxs-1-800.webp" width="800" height="1067" loading="lazy" decoding="async" alt="">
+          <span class="log-kind">Drop<b>Alien Invasion, Season III</b></span><span class="log-date">19.07.26</span><span class="log-go" aria-hidden="true">&nearr;</span><span class="visually-hidden"> (opens Instagram)</span>
+        </a>
+        <a class="log-card" href="https://www.instagram.com/p/DdG-TmBDbL-/" target="_blank" rel="noopener" data-reveal style="--i:7">
+          <img src="/assets/gallery/crew-2026-09-10-ddg-tmbdbl--3-800.webp" width="800" height="1067" loading="lazy" decoding="async" alt="">
+          <span class="log-kind">Shoot<b>Skraight out da mud</b></span><span class="log-date">10.09.26</span><span class="log-go" aria-hidden="true">&nearr;</span><span class="visually-hidden"> (opens Instagram)</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Everyone in it -->
+  <section class="gang" aria-labelledby="gangTitle">
+    <div class="wrap">
+      <div class="section-head" data-reveal>
+        <div><div class="eyebrow">Worn In Abuja &amp; Beyond</div><h2 class="display" id="gangTitle">The Gang</h2></div>
+        <p>The crew, the customers and the friends of the shop. Tap any of them to see it bigger.</p>
+      </div>
+      <div class="gallery-wall" data-group="crew" data-count="40"></div>
     </div>
   </section>
 
@@ -97,6 +184,11 @@
 <script src="/js/bag.js"></script>
 <script src="/js/checkout.js"></script>
 <script src="/js/forms.js"></script>
+<script src="/js/gallery.js"></script>
+<script src="/js/glitch.js"></script>
+<script src="/js/galaxy.js"></script>
+<script src="/js/smooth.js"></script>
+<script src="/js/editorial.js"></script>
 <script src="/js/app.js"></script>
 </body>
 </html>

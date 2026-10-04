@@ -63,8 +63,6 @@ function lagosDate(ms) {
  * The page a customer lands on when Paystack sends them back. Links the
  * storefront's own stylesheet so the header, buttons, grain and the order
  * summary card are the same ones they just saw at checkout.
- * Loads the storefront's config.js too, so a visitor who switched the shop
- * to light mode gets this page in light mode.
  */
 function paymentPage({ kind, order: o, items, zoneLabel, siteUrl, imageBase = '', whatsappUrl }) {
   const k = KINDS[kind];
@@ -92,7 +90,6 @@ function paymentPage({ kind, order: o, items, zoneLabel, siteUrl, imageBase = ''
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800;900&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="${esc(siteUrl)}/css/store.css">
-<script src="${esc(siteUrl)}/js/config.js"></script>
 <style>
   .pp-ref{font-family:var(--f-mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--smoke);}
   .pp-grid{display:grid; grid-template-columns:1.1fr .9fr; gap:72px; align-items:start; padding:72px 0 110px;}

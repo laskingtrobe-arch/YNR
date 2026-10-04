@@ -17,18 +17,3 @@ const WA_NUMBER = '2349026947815';
 
 /* How long the bag survives in the browser, and under what key. */
 const BAG_KEY = 'ynr_bag_v1';
-
-/* Light or dark. Dark is the brand and the default; light is a visitor's
-   choice, remembered in their browser. Applied here because this file loads
-   in <head>: the theme is set before anything paints, so a light-mode
-   visitor never sees a flash of the dark site. */
-const THEME_KEY = 'ynr_theme';
-
-function setTheme(theme) {
-  if (theme === 'light') document.documentElement.dataset.theme = 'light';
-  else delete document.documentElement.dataset.theme;
-}
-
-try {
-  setTheme(localStorage.getItem(THEME_KEY));
-} catch (e) { /* storage blocked: stay dark */ }

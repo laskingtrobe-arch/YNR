@@ -92,13 +92,22 @@ app.use('/api', (req, res, next) => next(new HttpError(404, 'No such endpoint.',
 // ---------------------------------------------------------------------------
 const hasStorefront = fs.existsSync(path.join(config.paths.storefront, 'index.html'));
 if (hasStorefront) {
+  // The home page film's frames never change under a given folder name (a
+  // new cut gets a new name: see scripts/film-frames.js), so browsers can
+  // keep them for a year instead of re-checking ~100 files on every visit.
+  app.use('/assets/film', express.static(path.join(config.paths.storefront, 'assets', 'film'), {
+    maxAge: '365d',
+    immutable: true,
+  }));
+
   // express.static already serves index.html for "/" itself (its default
-  // `index` option), so anything reaching the handler below is a path that
-  // matched no real file — a genuinely broken or unknown URL. The storefront
-  // has no client-side router reading the path to pick a view (navigation is
-  // in-page JS state, not distinct URLs), so there is no SPA-routing reason
-  // to answer those with the homepage: that would tell both the visitor and
-  // search engines a broken link works, with a 200 status on top of it.
+  // `index` option), and `extensions` maps /shop to shop.html and so on, so
+  // anything reaching the handler below is a path that matched no real file
+  // — a genuinely broken or unknown URL. Every page is its own HTML file, with
+  // no client-side router reading the path to pick a view, so there is no
+  // SPA-routing reason to answer those with the homepage: that would tell
+  // both the visitor and search engines a broken link works, with a 200
+  // status on top of it.
   app.use(express.static(config.paths.storefront, { extensions: ['html'] }));
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) return next();

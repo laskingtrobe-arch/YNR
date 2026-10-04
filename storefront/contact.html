@@ -22,7 +22,9 @@
 <link rel="apple-touch-icon" href="/assets/brand/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800;900&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Fraunces:ital,opsz,wght@1,9..144,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@1,125,800..900&family=Big+Shoulders+Display:wght@500;700;800;900&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Fraunces:ital,opsz,wght@1,9..144,400&display=swap" rel="stylesheet">
+<!-- the posters' graffiti: only the letters they use -->
+<link href="https://fonts.googleapis.com/css2?family=Rubik+Wet+Paint&text=RECKLSGAN&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/store.css">
 <script src="/js/config.js"></script>
 </head>
@@ -30,13 +32,17 @@
 <script src="/js/layout.js"></script>
 
 <main>
-  <section class="page-hero">
+  <section class="page-hero fx-hero night" data-stage>
+    <img class="fx-bg" src="/assets/gallery/fx/hero-contact.webp" width="2000" height="900" alt="" fetchpriority="high" data-depth="0.35">
+    <div class="fx-rail" aria-hidden="true"><span>05</span><i></i><i></i><i></i><i></i><i class="on"></i></div>
+    <span class="fx-scroll" aria-hidden="true">Scroll to move</span>
     <div class="wrap">
       <div class="eyebrow">We're Listening</div>
-      <h1 class="display">Get In<br>Touch</h1>
+      <h1 class="display wide">Get In<br>Touch</h1>
       <p>Questions about a piece, sizing, or an order — reach us directly. WhatsApp is the fastest way to get a reply.</p>
     </div>
   </section>
+  <script>siteTransmission(6)</script>
 
   <div class="wrap">
     <div class="contact-grid">
@@ -74,6 +80,53 @@
       </div>
     </div>
   </div>
+
+  <!-- The second poster: the gang's recruiting -->
+  <section class="poster-band" aria-labelledby="gangPosterTitle">
+    <div class="wrap">
+      <div class="poster short-tag" data-stage data-inview>
+        <span class="crop tl" aria-hidden="true"></span><span class="crop tr" aria-hidden="true"></span><span class="crop bl" aria-hidden="true"></span><span class="crop br" aria-hidden="true"></span>
+        <div class="poster-kicker" aria-hidden="true">YN<span class="flip-r">R</span> &#10022; Now Recruiting</div>
+        <div class="poster-note n1" aria-hidden="true">
+          <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="20" cy="20" r="16"/><ellipse cx="20" cy="20" rx="7" ry="16"/><path d="M4 20h32M7 12h26M7 28h26"/></svg>
+          Abuja to<br>everywhere
+        </div>
+        <div class="poster-note n2" aria-hidden="true">
+          <svg viewBox="0 0 66 30" fill="currentColor"><path d="M0 0h3v30H0zM5 0h1.5v30H5zM8.5 0h3v30h-3zM13.5 0H15v30h-1.5zM17 0h4v30h-4zM23 0h1.5v30H23zM26.5 0h2v30h-2zM30.5 0h3.5v30h-3.5zM36 0h1.5v30H36zM39.5 0h3v30h-3zM44.5 0H46v30h-1.5zM48 0h4v30h-4zM54 0h1.5v30H54zM57.5 0h2v30h-2zM61.5 0h1.5v30h-1.5zM64.5 0H66v30h-1.5z"/></svg>
+          No fit-ins<br>allowed
+        </div>
+        <h2 class="poster-title" id="gangPosterTitle">
+          <span class="poster-back" data-depth="0.35">Join The</span>
+          <span class="poster-tag" data-depth="0.12">Gang</span>
+        </h2>
+        <img class="poster-figure" src="/assets/gallery/fx/cut-gang.webp" width="696" height="1226" loading="lazy" decoding="async" data-depth="-0.12"
+          alt="One of the gang, cut out in black and white, in a white Join The Gang tee">
+        <div class="poster-mark m1" aria-hidden="true"><svg viewBox="0 0 48 34" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14a10 8 0 0 1 20 0"/><ellipse cx="24" cy="16" rx="21" ry="5.5"/><path d="M16 22l-4 9M24 23v9M32 22l4 9"/></svg></div>
+        <div class="poster-mark m2" aria-hidden="true"><svg viewBox="0 0 30 44" fill="currentColor"><path d="M18 0 2 26h11l-4 18L28 15H16L22 0z"/></svg></div>
+        <div class="poster-mark m3" aria-hidden="true"><svg viewBox="0 0 40 46" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 3C10 3 4 10.5 4 19c0 10 8.5 21.5 16 24 7.5-2.5 16-14 16-24C36 10.5 30 3 20 3Z"/><path d="M10 18l7 6M17 18l-7 6M23 18l7 6M30 18l-7 6M16 33h8"/></svg>Stay<br>wicked</div>
+        <div class="poster-mark m4" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="20" cy="20" r="11"/><path d="M20 2v12M20 26v12M2 20h12M26 20h12"/></svg>Pull up<br>Suite 302</div>
+        <div class="poster-side left">
+          <svg class="stars" viewBox="0 0 122 22" fill="currentColor" aria-hidden="true"><path d="M11 1.5l2.8 6.1 6.6.7-5 4.5 1.4 6.5L11 16l-5.8 3.3 1.4-6.5-5-4.5 6.6-.7z"/><path transform="translate(25)" d="M11 1.5l2.8 6.1 6.6.7-5 4.5 1.4 6.5L11 16l-5.8 3.3 1.4-6.5-5-4.5 6.6-.7z"/><path transform="translate(50)" d="M11 1.5l2.8 6.1 6.6.7-5 4.5 1.4 6.5L11 16l-5.8 3.3 1.4-6.5-5-4.5 6.6-.7z"/><path transform="translate(75)" d="M11 1.5l2.8 6.1 6.6.7-5 4.5 1.4 6.5L11 16l-5.8 3.3 1.4-6.5-5-4.5 6.6-.7z"/><path transform="translate(100)" d="M11 1.5l2.8 6.1 6.6.7-5 4.5 1.4 6.5L11 16l-5.8 3.3 1.4-6.5-5-4.5 6.6-.7z"/></svg>
+          <b>Recruiting new soldiers</b><i aria-hidden="true"></i>
+          <p>Slide in the DMs.<br>Pull up to the shop.</p>
+        </div>
+        <div class="poster-side right">
+          <svg class="stars" viewBox="0 0 122 22" fill="currentColor" aria-hidden="true"><path d="M11 1.5l2.8 6.1 6.6.7-5 4.5 1.4 6.5L11 16l-5.8 3.3 1.4-6.5-5-4.5 6.6-.7z"/><path transform="translate(25)" d="M11 1.5l2.8 6.1 6.6.7-5 4.5 1.4 6.5L11 16l-5.8 3.3 1.4-6.5-5-4.5 6.6-.7z"/><path transform="translate(50)" d="M11 1.5l2.8 6.1 6.6.7-5 4.5 1.4 6.5L11 16l-5.8 3.3 1.4-6.5-5-4.5 6.6-.7z"/><path transform="translate(75)" d="M11 1.5l2.8 6.1 6.6.7-5 4.5 1.4 6.5L11 16l-5.8 3.3 1.4-6.5-5-4.5 6.6-.7z"/><path transform="translate(100)" d="M11 1.5l2.8 6.1 6.6.7-5 4.5 1.4 6.5L11 16l-5.8 3.3 1.4-6.5-5-4.5 6.6-.7z"/></svg>
+          <b>The YNR gang</b><i aria-hidden="true"></i>
+          <p>Young &amp; reckless.<br>Real, never basic.</p>
+        </div>
+        <div class="poster-foot">
+          <div class="poster-meter" aria-hidden="true">Signal<br>strength <span class="bar"></span> 100%</div>
+          <div>
+            <p class="poster-big">Link Up</p>
+            <p class="poster-small">WhatsApp 0902 694 7815 &middot; Instagram @ynr_multiverse <br>Suite 302, Aula Plaza, Mpape, Abuja</p>
+            <div class="poster-code" aria-hidden="true">YN<span class="flip-r">R</span> // YNR-GANG-0001</div>
+          </div>
+          <div class="poster-meter right" aria-hidden="true">Members<br>incoming <span class="hatch"></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
 </main>
 
 <script>siteFooter()</script>
@@ -83,6 +136,10 @@
 <script src="/js/bag.js"></script>
 <script src="/js/checkout.js"></script>
 <script src="/js/forms.js"></script>
+<script src="/js/glitch.js"></script>
+<script src="/js/galaxy.js"></script>
+<script src="/js/smooth.js"></script>
+<script src="/js/editorial.js"></script>
 <script src="/js/app.js"></script>
 </body>
 </html>

@@ -9,10 +9,8 @@
   --smoke:#8f8b84; --smoke-dark:#5c5952;
   --oxblood:#7c1015; --oxblood-bright:#a8181d;
   --hairline:rgba(242,239,233,0.12); --hairline-strong:rgba(242,239,233,0.22);
-  --on-accent:#f2efe9; /* text on oxblood: light in both themes */
+  --on-accent:#f2efe9; /* text on oxblood */
   --header-bg:rgba(10,10,10,.88);
-  --hero-glow:#1c1c1c; --halftone:rgba(242,239,233,.5);
-  --veil:10,10,10; /* the page colour as r,g,b, for fading photos into it */
   --void-deep:#000;
   --err-text:#ffb3b6;
   /* .on-bone: a band in the opposite colour to the page */
@@ -22,24 +20,6 @@
   --f-mono:'IBM Plex Mono', monospace;
   --f-serif:'Fraunces', serif;
   --ease:cubic-bezier(.16,.8,.24,1);
-}
-/* Light theme: the visitor's choice, from the switch in the header (dark is
-   the brand default; config.js applies a saved choice before first paint).
-   It swaps the palette rather than restyling components, so here --void is
-   the light page colour and --bone the dark text: read them as "page" and
-   "ink" whichever theme is on. */
-:root[data-theme="light"]{
-  color-scheme:light;
-  --void:#f2efe9; --void-2:#fbfaf7; --ink:#e4e0d8;
-  --bone:#141414; --bone-dim:#3d3a35;
-  --smoke:#5f5b54; --smoke-dark:#7d7971;
-  --hairline:rgba(20,20,20,0.12); --hairline-strong:rgba(20,20,20,0.24);
-  --header-bg:rgba(242,239,233,.88);
-  --hero-glow:#fdfcfa; --halftone:rgba(20,20,20,.4);
-  --veil:242,239,233;
-  --void-deep:#e8e4dc;
-  --err-text:#8f1419;
-  --band-accent:var(--oxblood-bright); --band-muted:#8f8b84; --band-line:rgba(242,239,233,0.14);
 }
 *,*::before,*::after{box-sizing:border-box;}
 html{scroll-behavior:smooth;}
@@ -73,9 +53,6 @@ header.site-nav{position:sticky; top:0; z-index:500; background:var(--header-bg)
 .nav-actions{display:flex; align-items:center; gap:20px;}
 .icon-btn{background:none; border:none; color:var(--bone); position:relative; display:flex;}
 .icon-btn svg{width:19px; height:19px;}
-/* theme switch: a sun on the dark site, a moon on the light one */
-.theme-toggle .i-moon, :root[data-theme="light"] .theme-toggle .i-sun{display:none;}
-:root[data-theme="light"] .theme-toggle .i-moon{display:block;}
 .bag-count{position:absolute; top:-6px; right:-8px; background:var(--oxblood-bright); color:var(--on-accent); font-family:var(--f-mono); font-size:9px; width:15px; height:15px; border-radius:50%; display:flex; align-items:center; justify-content:center;}
 .mobile-toggle{display:none; background:none; border:none; color:var(--bone); padding:8px; margin-right:-8px;}
 .mobile-toggle svg{width:24px; height:24px;}
@@ -99,20 +76,7 @@ header.site-nav{position:sticky; top:0; z-index:500; background:var(--header-bg)
 .ticker span{font-family:var(--f-mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; padding:9px 26px; color:var(--on-accent); display:inline-flex; align-items:center; gap:26px;}
 .ticker span::after{content:'◆'; font-size:8px; color:rgba(242,239,233,.5);}
 
-/* hero */
-.hero{position:relative; min-height:96svh; display:flex; flex-direction:column; justify-content:flex-end; overflow:hidden; border-bottom:1px solid var(--hairline);
-  background:radial-gradient(120% 90% at 50% 0%, var(--hero-glow) 0%, var(--void) 58%), repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0px, rgba(255,255,255,.025) 1px, transparent 1px, transparent 3px);}
-.hero-halftone{position:absolute; right:-10%; top:4%; width:60%; height:88%; opacity:.45; background-image:radial-gradient(var(--halftone) 1px, transparent 1.4px); background-size:14px 14px;
-  -webkit-mask-image:radial-gradient(ellipse 60% 60% at 60% 40%, black 0%, transparent 72%); mask-image:radial-gradient(ellipse 60% 60% at 60% 40%, black 0%, transparent 72%);}
-.hero-photo{position:absolute; right:0; bottom:0; height:100%; width:46%; overflow:hidden;}
-@media (max-width:900px){ .hero-photo{width:100%; opacity:.28;} }
-.hero-photo img{width:100%; height:100%; object-fit:cover; filter:grayscale(1) contrast(1.15) brightness(.85);}
-.hero-photo::after{content:''; position:absolute; inset:0; background:linear-gradient(90deg, var(--void) 0%, rgba(var(--veil),.15) 35%, rgba(var(--veil),.55) 100%);}
-@media (max-width:900px){ .hero-photo::after{background:linear-gradient(0deg, var(--void) 10%, rgba(var(--veil),.3) 60%);} }
-.hero-inner{position:relative; z-index:2; padding:150px 40px 76px; max-width:1360px; margin:0 auto; width:100%;}
-@media (max-width:720px){ .hero-inner{padding:120px 20px 56px;} }
-.hero h1{font-size:clamp(50px, 10vw, 140px); color:var(--bone); margin:22px 0 0;}
-.hero h1 .accent{color:var(--oxblood-bright);}
+/* home: the opening text, on the film (styled further down) */
 .hero-scan{width:min(560px,60vw); height:3px; background:var(--oxblood-bright); margin:26px 0 30px; position:relative; overflow:hidden;}
 .hero-scan::after{content:''; position:absolute; inset:0; background:var(--bone); width:40%; animation:scan 3.2s var(--ease) infinite;}
 @keyframes scan{ 0%{transform:translateX(-120%);} 60%,100%{transform:translateX(260%);} }
@@ -128,6 +92,177 @@ header.site-nav{position:sticky; top:0; z-index:500; background:var(--header-bg)
 @media (max-width:720px){ .scroll-cue{left:20px;} }
 .scroll-cue .line{width:1px; height:38px; background:linear-gradient(var(--smoke), transparent); animation:cue 2s infinite;}
 @keyframes cue{ 0%{opacity:.2;} 50%{opacity:1;} 100%{opacity:.2;} }
+
+/* home: the scroll film (js/film.js), black and white with the text on top */
+.film{--film-travel:520vh; position:relative; padding:0; background:#050505; color:var(--bone);}
+/* the header's height, which the film sits just under: film.js measures
+   the real one, these are close starting values */
+:root{--nav-h:110px;}
+@media (max-width:720px){ :root{--nav-h:98px;} }
+.film-stage{position:relative; overflow:hidden; height:calc(100vh - var(--nav-h)); height:calc(100svh - var(--nav-h));}
+/* with the film running, the section grows by --film-travel: that much
+   scrolling plays it start to end, while the stage stays pinned */
+.film.is-live{height:calc(100vh - var(--nav-h) + var(--film-travel)); height:calc(100svh - var(--nav-h) + var(--film-travel));}
+.film.is-live .film-stage{position:sticky; top:var(--nav-h);}
+.film-poster img, .film-canvas{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;}
+.film-canvas{display:none;}
+.film.is-live .film-canvas{display:block;}
+.film-dim{position:absolute; inset:0; background:rgba(5,5,5,.5);}
+.film-shade{position:absolute; inset:0; background:linear-gradient(0deg, rgba(5,5,5,.9) 0%, rgba(5,5,5,.45) 32%, rgba(5,5,5,0) 58%);}
+/* The stage is exactly one screen tall, so the opening text has to fit in
+   it: sizes and gaps shrink with the screen's height as well as its width. */
+.film-beat{position:absolute; left:0; right:0; bottom:0; z-index:2; padding-bottom:76px;}
+@media (max-width:720px){ .film-beat{padding-bottom:56px;} .film .scroll-cue{bottom:14px;} }
+.film-beat:not(.film-intro){display:none;}
+.film.is-live .film-beat{display:block;}
+.film.is-live .film-beat:not(.film-intro){opacity:0; visibility:hidden;}
+.film h1{font-size:clamp(50px, min(10vw, 14vh), 140px); color:var(--bone); margin:min(22px, 2.5vh) 0 0;}
+.film .hero-scan{margin:min(26px, 3vh) 0 min(30px, 3.5vh);}
+.film .hero-sub{margin-bottom:min(40px, 4vh);}
+/* a short screen (a phone on its side) has no room for the paragraph or
+   the scroll cue under the buttons */
+@media (max-height:560px){
+  .film .hero-sub, .film .scroll-cue{display:none;}
+  .film-beat{padding-bottom:24px;}
+}
+.film .accent{color:var(--oxblood-bright);}
+.film-line{font-size:clamp(46px, min(9vw, 14vh), 120px); margin:16px 0 0;}
+.film-outro .btn-primary{margin-top:min(30px, 3.5vh);}
+
+/* transmissions: strips of alien code and intercepted messages
+   (layout.js), sped up and run backwards by the scroll (js/glitch.js) */
+.transmission{overflow:hidden; padding:14px 0; border-top:1px solid var(--hairline); border-bottom:1px solid var(--hairline); font-family:var(--f-mono); text-transform:uppercase; user-select:none; pointer-events:none;}
+.tx-row{white-space:nowrap; line-height:2; transition:transform .2s var(--ease);}
+.tx-track{display:inline-flex; animation:tx 80s linear infinite; will-change:transform;}
+.tx-code .tx-track{animation-duration:110s; animation-direction:reverse;}
+@keyframes tx{ from{transform:translateX(0);} to{transform:translateX(-50%);} }
+.tx-msg{font-size:12px; letter-spacing:.22em; color:var(--bone-dim); padding-right:64px;}
+.tx-msg b{color:var(--oxblood-bright); margin-right:14px; font-weight:600;}
+.tx-code span{font-size:11px; letter-spacing:.32em; color:var(--smoke-dark); padding-right:44px;}
+/* over the film: no rules, and lit up against the footage */
+.film-tx{position:absolute; left:0; right:0; z-index:1; padding:0; border:0; mix-blend-mode:screen;}
+.film-tx-top{top:6%;}
+.film-tx-low{top:50%;}
+.film-tx .tx-msg{color:var(--bone);}
+.film-tx .tx-code span{color:var(--smoke);}
+.film:not(.is-live) .film-tx{display:none;}
+
+/* glitch (js/glitch.js): a red/cyan split that jumps between offsets,
+   on headings and strips while the page scrolls fast or a heading
+   twitches on its own */
+@keyframes glitch-split{
+  0%{text-shadow:2px 0 rgba(225,29,46,.85), -2px 0 rgba(36,214,255,.6);}
+  25%{text-shadow:-3px 1px rgba(225,29,46,.85), 3px -1px rgba(36,214,255,.6);}
+  50%{text-shadow:1px -1px rgba(225,29,46,.85), -1px 2px rgba(36,214,255,.6);}
+  75%{text-shadow:-2px 0 rgba(225,29,46,.85), 3px 0 rgba(36,214,255,.6);}
+  100%{text-shadow:2px 1px rgba(225,29,46,.85), -3px -1px rgba(36,214,255,.6);}
+}
+/* Only a glyph flicker splits like this, never a heading for the length
+   of a fast scroll: redrawing big headings' shadows 25 times a second,
+   on top of the scroll and the film, made a fast flick drop a third of
+   its frames. Likewise the strips and the ticker don't split or tilt;
+   they already speed up and run backwards with the scroll. */
+/* while a heading's letters play through glyphs: its own text goes
+   transparent (still there for screen readers) under a moving copy */
+.is-glitching{position:relative; -webkit-text-fill-color:transparent;}
+.glitch-copy{position:absolute; inset:0; -webkit-text-fill-color:currentcolor; pointer-events:none; animation:glitch-split .16s steps(1) infinite;}
+.grain{transition:opacity .25s;}
+html.glitch-on .grain{opacity:.08;}
+html.glitch-hard .grain{opacity:.13;}
+/* a faint red/cyan fringe on headings all the time, so the glitch never
+   quite leaves */
+.display{text-shadow:.014em 0 rgba(225,29,46,.4), -.014em 0 rgba(36,214,255,.3);}
+
+/* bursts of glitch (js/glitch.js): short dashes of colour against the left
+   and right edges of the screen, and hairline tears that invert whatever
+   is under them. (Colour-filtering what's under the dashes too cost the
+   graphics chip a dropped frame or two each burst, for a barely visible
+   difference on dashes this small; the tears are thin enough to keep it.) */
+.glitch-veil{position:fixed; inset:0; z-index:9000; pointer-events:none; overflow:hidden; visibility:hidden;}
+.glitch-veil.on{visibility:visible;}
+.glitch-veil i{position:absolute;}
+.glitch-veil .red{background:rgba(225,29,46,.6);}
+.glitch-veil .cyan{background:rgba(36,214,255,.5);}
+.glitch-veil .green{background:rgba(60,255,120,.4);}
+.glitch-veil .white{background:rgba(242,239,233,.6);}
+.glitch-veil .tear{-webkit-backdrop-filter:invert(1); backdrop-filter:invert(1);}
+
+/* the living galaxy behind every page (js/galaxy.js): star tiles painted
+   once, then only slid and faded (which costs the graphics chip next to
+   nothing), a drifting dust cloud and a shooting star */
+.galaxy{position:fixed; inset:0; z-index:-1; overflow:hidden; pointer-events:none; background:#050506; opacity:0; transition:opacity 1.2s ease;}
+.galaxy.is-lit{opacity:1;}
+.galaxy-layer{position:absolute; left:0; right:0; top:0; height:calc(100% + 1024px); will-change:transform;}
+.galaxy-stars{position:absolute; top:0; bottom:0; left:0; width:calc(100% + 1024px); background-size:1024px 1024px; animation:galaxy-drift 420s linear infinite;}
+.galaxy-layer:nth-child(3) .galaxy-stars{animation-duration:300s;}
+.galaxy-layer:nth-child(4) .galaxy-stars{animation-duration:200s;}
+.galaxy-stars.twinkle{animation:galaxy-drift 300s linear infinite, galaxy-twinkle 3.2s ease-in-out infinite alternate;}
+@keyframes galaxy-drift{ from{transform:translateX(0);} to{transform:translateX(-1024px);} }
+@keyframes galaxy-twinkle{ from{opacity:.1;} to{opacity:1;} }
+.galaxy-dust{position:absolute; inset:-25%; will-change:transform; animation:galaxy-dust 90s ease-in-out infinite alternate; background:
+  radial-gradient(38% 30% at 72% 30%, rgba(124,16,21,.34), transparent 70%),
+  radial-gradient(30% 26% at 22% 72%, rgba(124,16,21,.22), transparent 70%),
+  radial-gradient(45% 35% at 40% 42%, rgba(242,239,233,.05), transparent 70%),
+  radial-gradient(28% 22% at 85% 82%, rgba(242,239,233,.04), transparent 70%);}
+@keyframes galaxy-dust{ from{transform:translate(0, 0) scale(1);} to{transform:translate(-6%, 4%) scale(1.12);} }
+/* a streak flying down and to the left, for a moment out of every 13s */
+.galaxy-shooting{position:absolute; width:220px; height:1px; opacity:0; transform-origin:left center; background:linear-gradient(90deg, rgba(242,239,233,0), rgba(242,239,233,.95)); animation:galaxy-shoot 13s linear 4s infinite;}
+@keyframes galaxy-shoot{
+  0%{opacity:0; transform:rotate(155deg) translateX(0);}
+  1%{opacity:1;}
+  6%, 100%{opacity:0; transform:rotate(155deg) translateX(620px);}
+}
+/* hidden outright while the home page film fills the screen (film.js) */
+.film-covers .galaxy{visibility:hidden;}
+@media (prefers-reduced-motion: reduce){ .galaxy *{animation:none !important;} }
+/* sections that had a backdrop of their own let the sky through */
+html.has-galaxy .signup{background:none;}
+
+/* ---------- gallery (js/gallery.js) ---------- */
+.page-hero-cta{margin-top:30px;}
+.gallery-section{padding-top:56px;}
+/* A masonry wall: columns the tiles pour into, each keeping its own shape. */
+.gallery-grid{column-count:4; column-gap:12px;}
+@media (max-width:1100px){ .gallery-grid{column-count:3;} }
+@media (max-width:640px){ .gallery-grid{column-count:2; column-gap:8px;} }
+.gallery-tile{display:block; position:relative; width:100%; margin:0 0 12px; padding:0; border:1px solid var(--hairline); background:var(--ink); overflow:hidden; break-inside:avoid; cursor:zoom-in;}
+@media (max-width:640px){ .gallery-tile{margin-bottom:8px;} }
+.gallery-tile img{width:100%; height:auto; transition:transform .5s var(--ease), filter .3s;}
+/* pointed at: a nudge in, and the picture splits red and cyan */
+.gallery-tile:hover img, .gallery-tile:focus-visible img{transform:scale(1.04); filter:drop-shadow(4px 0 rgba(225,29,46,.75)) drop-shadow(-4px 0 rgba(36,214,255,.6));}
+.gallery-tile.is-video{cursor:pointer;}
+.tile-play{position:absolute; left:10px; bottom:10px; font-family:var(--f-mono); font-size:11px; letter-spacing:.08em; color:var(--on-accent); background:var(--oxblood); padding:5px 8px;}
+/* a row of the latest few, on other pages */
+.gallery-strip{display:grid; grid-template-columns:repeat(6, 1fr); gap:10px;}
+.gallery-strip[data-count="4"]{grid-template-columns:repeat(4, 1fr);}
+@media (max-width:900px){ .gallery-strip, .gallery-strip[data-count="4"]{grid-template-columns:repeat(2, 1fr);} }
+.gallery-strip .gallery-tile{margin:0; aspect-ratio:4/5; cursor:pointer;}
+.gallery-strip .gallery-tile img{height:100%; object-fit:cover;}
+.gallery-teaser .center-cta{margin-top:40px;}
+/* the enlarged view */
+.lightbox{width:100vw; max-width:none; height:100vh; max-height:none; margin:0; padding:0; border:0; background:transparent; color:var(--on-accent);}
+.lightbox::backdrop{background:rgba(3,3,4,.94);}
+.lightbox[open]{display:flex; align-items:center; justify-content:center;}
+.lightbox-figure{margin:0; display:flex; flex-direction:column; align-items:center; gap:14px; max-width:min(92vw, 1100px);}
+.lightbox-media img, .lightbox-media video{display:block; max-width:min(92vw, 1100px); max-height:78vh; width:auto; height:auto; object-fit:contain;}
+.lightbox-caption{display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center; max-width:640px; font-size:14px; line-height:1.6;}
+.lightbox-meta{display:flex; gap:18px; font-family:var(--f-mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:#8f8b84;}
+.lightbox-meta a{color:#d8d4cb; text-decoration:underline; text-underline-offset:3px;}
+.lightbox-close, .lightbox-step{position:fixed; background:rgba(10,10,10,.6); border:1px solid rgba(242,239,233,.22); color:#f2efe9; width:44px; height:44px; font-size:20px; display:flex; align-items:center; justify-content:center;}
+.lightbox-close{top:18px; right:18px;}
+.lightbox-step{top:50%; transform:translateY(-50%);}
+.lightbox-step.prev{left:18px;}
+.lightbox-step.next{right:18px;}
+@media (max-width:640px){ .lightbox-step{top:auto; bottom:18px; transform:none;} }
+/* The header's frosted blur would have to be redone every frame the sky
+   moves behind it; its background is nearly opaque anyway. */
+html.has-galaxy header.site-nav{-webkit-backdrop-filter:none; backdrop-filter:none;}
+/* Reduced motion shortens every animation to almost nothing (top of this
+   file), which would leave a looping marquee flickering between random
+   positions: stop these outright instead. */
+@media (prefers-reduced-motion: reduce){
+  .ticker-track, .tx-track, .hero-scan::after, .scroll-cue .line{animation:none !important;}
+}
 
 section{padding:110px 0;}
 @media (max-width:720px){ section{padding:70px 0;} }
@@ -371,3 +506,269 @@ table.size-table th{color:var(--oxblood-bright); letter-spacing:.05em; text-tran
 .ord-box{max-width:620px; margin:0 auto; padding:90px 0 120px; text-align:center;}
 .ord-ref{font-family:var(--f-mono); font-size:23px; letter-spacing:.14em; color:var(--oxblood-bright); margin:22px 0;}
 .ord-items{text-align:left; border:1px solid var(--hairline-strong); padding:24px; margin:30px 0;}
+
+/* ==========================================================================
+   Editorial sections: the photos from @ynr_multiverse, styled after three
+   references — a denim lookbook spread, a streetwear poster and a sportswear
+   site's smeared blue photos (made by server/scripts/gallery-fx.js, moved
+   by js/editorial.js).
+   ========================================================================== */
+:root{
+  --f-wide:'Archivo', var(--f-display);       /* expanded italic, for the loud lines */
+  --f-tag:'Rubik Wet Paint', var(--f-display); /* graffiti, on the posters */
+  --alien:#b6ff2e;                              /* the posters' alien green */
+  --paper:#e7e4dc; --paper-ink:#121212;
+  --night:#04060e;
+}
+/* Sections built on the night-blue photos: deep navy instead of the black
+   page, with the greys lifted a little so they still read on it. */
+.night{--smoke:#9a968f; --smoke-dark:#6b6861; --hairline-strong:rgba(242,239,233,0.24);
+  background:var(--night); color:var(--bone);}
+.night .eyebrow{color:#ef3a40;}
+.night .eyebrow::before{background:#ef3a40;}
+.night .link-plus b{color:#ef3a40;}
+.wide{font-family:var(--f-wide); font-style:italic; font-stretch:125%; font-weight:900; letter-spacing:-.015em; line-height:.92; text-transform:uppercase;}
+/* YNЯ, the way the brand writes it on Instagram: the R turned round */
+.flip-r{display:inline-block; transform:scaleX(-1); letter-spacing:0;}
+/* the arrow-and-plus link from the sportswear reference */
+.link-plus{display:inline-flex; align-items:center; gap:14px; min-height:44px; font-family:var(--f-mono); font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--bone); border-bottom:1px solid var(--hairline-strong); transition:gap .25s var(--ease), border-color .25s;}
+.link-plus b{color:var(--oxblood-bright); font-size:17px; font-weight:500;}
+.link-plus:hover, .link-plus:focus-visible{gap:22px; border-color:var(--bone);}
+
+/* things that slide in the first time they're seen (editorial.js adds
+   has-reveal, so without the script nothing is hidden) */
+.has-reveal [data-reveal]{opacity:0; transform:translate3d(0, 28px, 0); transition:opacity .8s var(--ease), transform .8s var(--ease); transition-delay:calc(var(--i, 0) * 70ms);}
+.has-reveal [data-reveal].is-in{opacity:1; transform:none;}
+
+/* ---------- page headers: a smeared photo trailing off to the left ---------- */
+.page-hero.fx-hero{position:relative; isolation:isolate; overflow:hidden; border-bottom:0; display:flex; flex-direction:column; justify-content:flex-end; min-height:min(76vh, 700px); padding:150px 0 clamp(54px, 8vh, 90px);}
+.fx-bg{position:absolute; left:0; top:-6%; z-index:-2; width:100%; height:112%; max-width:none; object-fit:cover; object-position:80% 40%; will-change:translate;}
+.fx-hero::before{content:''; position:absolute; inset:0; z-index:-1; background:
+  linear-gradient(90deg, rgba(4,6,14,.94) 0%, rgba(4,6,14,.66) 36%, rgba(4,6,14,.08) 70%),
+  linear-gradient(0deg, rgba(4,6,14,.9) 0%, rgba(4,6,14,0) 46%);}
+.fx-hero h1.wide{font-size:clamp(38px, 8.4vw, 128px); margin:18px 0 0; text-shadow:.012em 0 rgba(225,29,46,.45), -.012em 0 rgba(36,214,255,.35);}
+.fx-hero p{color:var(--bone-dim);}
+/* the numbered rail down the right-hand side */
+.fx-rail{position:absolute; right:clamp(16px, 3vw, 40px); top:50%; transform:translateY(-50%); display:flex; flex-direction:column; align-items:center; gap:12px; font-family:var(--f-mono); font-size:11px; letter-spacing:.14em; color:var(--bone-dim);}
+.fx-rail i{width:5px; height:5px; border:1px solid var(--bone-dim); border-radius:50%;}
+.fx-rail i.on{background:var(--oxblood-bright); border-color:var(--oxblood-bright);}
+.fx-rail::after{content:''; width:1px; height:56px; background:linear-gradient(var(--bone-dim), transparent);}
+.fx-scroll{position:absolute; left:clamp(16px, 3vw, 40px); bottom:28px; writing-mode:vertical-rl; transform:rotate(180deg); font-family:var(--f-mono); font-size:10px; letter-spacing:.24em; text-transform:uppercase; color:var(--smoke);}
+@media (max-width:720px){
+  .page-hero.fx-hero{min-height:min(70vh, 560px); padding-top:120px;}
+  .fx-bg{object-position:88% 40%;}
+  .fx-hero::before{background:linear-gradient(0deg, rgba(4,6,14,.95) 0%, rgba(4,6,14,.55) 55%, rgba(4,6,14,.2) 100%);}
+  .fx-rail, .fx-scroll{display:none;}
+}
+
+/* ---------- home: the statement beside a smeared photo ---------- */
+.split{display:grid; grid-template-columns:1.25fr 1fr; align-items:stretch; padding:0; min-height:min(90vh, 820px);}
+.split-media{position:relative; overflow:hidden; min-height:440px;}
+.split-media img{position:absolute; left:0; top:-6%; width:100%; height:112%; max-width:none; object-fit:cover; object-position:72% 50%; will-change:translate;}
+.split-copy{display:flex; flex-direction:column; justify-content:center; align-items:flex-start; padding:90px clamp(24px, 6vw, 96px);}
+.split-copy h2{font-size:clamp(34px, 4.3vw, 66px); margin:20px 0 24px;}
+.split-copy p{color:var(--bone-dim); max-width:430px; font-size:15.5px; line-height:1.75; margin:0 0 30px;}
+@media (max-width:900px){
+  .split{grid-template-columns:1fr;}
+  .split-media{min-height:58vh;}
+  .split-copy{padding:56px 20px 70px;}
+}
+
+/* ---------- home: four worlds to step into ---------- */
+.worlds{padding-bottom:0;}
+.worlds .section-head{margin-bottom:36px;}
+.worlds-row{display:grid; grid-template-columns:repeat(4, 1fr); gap:3px;}
+@media (max-width:860px){ .worlds-row{grid-template-columns:repeat(2, 1fr);} }
+.world{position:relative; display:block; aspect-ratio:3/4; overflow:hidden; isolation:isolate; background:var(--night);}
+.world img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;}
+.world-fx{transition:transform .9s var(--ease);}
+/* pointed at, the real photo scans in over the smear */
+.world-real{visibility:hidden;}
+.world:hover .world-real, .world:focus-visible .world-real{visibility:visible; animation:world-scan .42s steps(7, end) both;}
+@keyframes world-scan{ from{clip-path:inset(0 0 100% 0);} to{clip-path:inset(0);} }
+.world:hover .world-fx{transform:scale(1.05);}
+.world::after{content:''; position:absolute; inset:0; z-index:1; pointer-events:none; background:linear-gradient(0deg, rgba(4,6,14,.82) 0%, rgba(4,6,14,0) 48%);}
+.world-num{position:absolute; top:16px; left:18px; z-index:2; font-family:var(--f-mono); font-size:11px; letter-spacing:.2em; color:rgba(242,239,233,.75);}
+.world-label{position:absolute; left:12px; right:12px; bottom:8%; z-index:2; display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center; color:#f2efe9; font-size:clamp(17px, 2.1vw, 30px);}
+.world-label svg{width:22px; transition:transform .3s var(--ease);}
+.world:hover .world-label svg, .world:focus-visible .world-label svg{transform:translateX(7px);}
+.world:focus-visible{outline-offset:-4px;}
+
+/* ---------- the poster: paper, a cut-out, graffiti ---------- */
+.poster-band{padding:clamp(70px, 10vw, 130px) 0;}
+.poster{container-type:inline-size; position:relative; isolation:isolate; overflow:hidden; max-width:1280px; margin:0 auto; aspect-ratio:4/3; background:
+  radial-gradient(120% 90% at 50% 40%, transparent 55%, rgba(0,0,0,.09)),
+  var(--paper); color:var(--paper-ink); box-shadow:0 40px 90px -30px rgba(0,0,0,.6);}
+.poster .crop{position:absolute; width:3.4cqw; height:3.4cqw; border:solid var(--paper-ink); border-width:0;}
+.poster .crop.tl{top:2.6cqw; left:2.6cqw; border-top-width:2px; border-left-width:2px;}
+.poster .crop.tr{top:2.6cqw; right:2.6cqw; border-top-width:2px; border-right-width:2px;}
+.poster .crop.bl{bottom:2.6cqw; left:2.6cqw; border-bottom-width:2px; border-left-width:2px;}
+.poster .crop.br{bottom:2.6cqw; right:2.6cqw; border-bottom-width:2px; border-right-width:2px;}
+.poster-kicker{position:absolute; top:3.2cqw; left:0; right:0; text-align:center; font-family:var(--f-mono); font-weight:600; font-size:max(10px, 1.05cqw); letter-spacing:.3em; text-transform:uppercase;}
+.poster-kicker::after{content:''; display:block; width:5cqw; height:2px; margin:.7cqw auto 0; background:var(--paper-ink);}
+.poster-title{margin:0; font-weight:400;}
+.poster-back{position:absolute; left:0; right:0; top:4.6cqw; z-index:1; text-align:center; font-family:var(--f-display); font-weight:900; font-size:19cqw; line-height:.8; letter-spacing:-.01em; text-transform:uppercase; color:var(--paper-ink); will-change:translate;}
+.poster-tag{position:absolute; left:0; right:0; top:19.5cqw; z-index:2; text-align:center; font-family:var(--f-tag); font-size:14.5cqw; line-height:1; color:var(--alien); -webkit-text-stroke:.045em var(--paper-ink); paint-order:stroke fill; text-shadow:.03em .045em 0 var(--paper-ink), .045em .07em 0 var(--paper-ink); text-transform:uppercase; transform:rotate(-4deg); will-change:translate;}
+/* a short word (GANG) set bigger, so the figure in front can't hide half of it */
+.poster.short-tag .poster-tag{font-size:21cqw; top:17.5cqw;}
+.has-reveal .poster-tag{clip-path:inset(-20% 100% -20% 0); transition:clip-path 1.1s steps(18, end) .25s;}
+.has-reveal .poster.is-in .poster-tag{clip-path:inset(-20% -5% -40% -5%);}
+.poster-figure{position:absolute; left:50%; bottom:15cqw; z-index:3; height:54cqw; width:auto; max-width:none; transform:translateX(-50%); filter:drop-shadow(0 1.4cqw 1.2cqw rgba(0,0,0,.28)); will-change:translate;}
+.poster-note{position:absolute; z-index:4; display:flex; flex-direction:column; gap:.6cqw; font-family:var(--f-mono); font-weight:600; font-size:max(10px, .95cqw); line-height:1.35; letter-spacing:.08em; text-transform:uppercase;}
+.poster-note svg{width:max(20px, 2.6cqw); height:auto;}
+.poster-note.n1{top:7cqw; left:7cqw;}
+.poster-note.n2{top:7cqw; right:7cqw; align-items:flex-end; text-align:right;}
+.poster-side{position:absolute; z-index:4; top:42cqw; width:21cqw; display:flex; flex-direction:column; align-items:center; text-align:center; gap:.9cqw;}
+.poster-side.left{left:6cqw;}
+.poster-side.right{right:6cqw;}
+.poster-side .stars{width:max(64px, 8.5cqw); height:auto;}
+.poster-side b{font-family:var(--f-display); font-weight:900; font-size:max(15px, 2.6cqw); line-height:.95; text-transform:uppercase;}
+.poster-side i{display:block; width:3.4cqw; height:2px; background:var(--paper-ink);}
+.poster-side p{margin:0; font-family:var(--f-mono); font-weight:600; font-size:max(10px, .95cqw); line-height:1.5; letter-spacing:.06em; text-transform:uppercase;}
+.poster-mark{position:absolute; z-index:4; display:flex; flex-direction:column; align-items:center; gap:.5cqw; font-family:var(--f-mono); font-weight:600; font-size:max(9px, .8cqw); letter-spacing:.1em; text-transform:uppercase; text-align:center;}
+.poster-mark svg{width:max(22px, 3.4cqw); height:auto;}
+.poster-mark.m1{left:9cqw; top:36.5cqw;}
+.poster-mark.m2{right:9cqw; top:36.5cqw;}
+.poster-mark.m3{left:14cqw; top:57cqw;}
+.poster-mark.m4{right:14cqw; top:57cqw;}
+.poster-foot{position:absolute; z-index:4; left:7cqw; right:7cqw; bottom:3.6cqw; display:grid; grid-template-columns:1fr auto 1fr; align-items:end; gap:2cqw;}
+.poster-big{margin:0; font-family:var(--f-display); font-weight:900; font-size:6.4cqw; line-height:.82; text-transform:uppercase; text-align:center;}
+.poster-small{margin:.9cqw 0 0; font-family:var(--f-mono); font-size:max(10px, .85cqw); line-height:1.55; letter-spacing:.04em; text-align:center;}
+.poster-code{margin-top:.8cqw; font-family:var(--f-mono); font-weight:600; font-size:max(9px, .75cqw); letter-spacing:.24em; text-align:center;}
+.poster-meter{display:flex; align-items:center; gap:.8cqw; padding:.7cqw .9cqw; border:2px solid var(--paper-ink); font-family:var(--f-mono); font-weight:600; font-size:max(9px, .8cqw); letter-spacing:.08em; text-transform:uppercase; line-height:1.3; justify-self:start;}
+.poster-meter.right{justify-self:end;}
+.poster-meter .bar{width:6cqw; height:1.1cqw; background:repeating-linear-gradient(90deg, var(--paper-ink) 0 2px, transparent 2px 4px);}
+.poster-meter .hatch{width:5cqw; height:1.6cqw; background:repeating-linear-gradient(135deg, var(--paper-ink) 0 2px, transparent 2px 5px);}
+/* a phone held upright: the sheet turns portrait, the figure stands in the
+   middle and the two notes move underneath it */
+@media (max-width:760px){
+  .poster{aspect-ratio:100/190;}
+  .poster-back{top:8cqw; font-size:25cqw;}
+  .poster-tag{top:27cqw; font-size:16.5cqw;}
+  .poster.short-tag .poster-tag{top:25cqw; font-size:27cqw;}
+  .poster-figure{height:92cqw; bottom:76cqw;}
+  .poster-kicker, .poster-note, .poster-mark, .poster-foot .poster-meter{display:none;}
+  .poster-side{top:118cqw; width:40cqw; gap:1.8cqw;}
+  .poster-side.left{left:6cqw;}
+  .poster-side.right{right:6cqw;}
+  .poster-side b{font-size:max(15px, 4.6cqw);}
+  .poster-foot{left:5cqw; right:5cqw; bottom:6cqw; grid-template-columns:1fr; justify-items:center; gap:3cqw;}
+  .poster-big{font-size:15cqw;}
+  .poster-small br{display:none;}
+  .poster .crop{width:5cqw; height:5cqw;}
+}
+
+/* ---------- anatomy of a piece: notes pinned to the photo ---------- */
+.anatomy-grid{display:grid; grid-template-columns:.7fr 1.3fr; gap:clamp(30px, 5vw, 80px); align-items:center;}
+.anatomy-intro h2{font-size:clamp(34px, 4.4vw, 66px); margin:18px 0 24px;}
+.anatomy-intro p{color:var(--bone-dim); font-size:15px; line-height:1.75; max-width:440px; margin:0 0 28px;}
+.commission{margin-top:40px; padding:26px 28px; border:1px solid var(--hairline-strong); background:linear-gradient(135deg, rgba(124,16,21,.22), rgba(124,16,21,0) 60%);}
+.commission h3{margin:0 0 10px; font-size:19px;}
+.commission p{margin:0 0 18px; font-size:14px;}
+.anatomy-stage{position:relative; padding:0 clamp(150px, 13vw, 200px);}
+.anatomy-shot{position:relative; margin:0;}
+.anatomy-shot img{width:100%; height:auto; border:1px solid var(--hairline);}
+.anatomy-shot ul{margin:0; padding:0;}
+.callout{position:absolute; left:0; right:0; top:var(--y); height:0; list-style:none; font-family:var(--f-mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--bone);}
+.callout .pin{position:absolute; left:var(--x); top:-6px; width:12px; height:12px; margin-left:-6px; border-radius:50%; background:var(--bone); box-shadow:0 0 0 4px rgba(242,239,233,.25), 0 0 0 1px rgba(0,0,0,.4); font-size:0;}
+.callout .line{position:absolute; top:0; height:1px; background:var(--bone); box-shadow:0 0 0 .5px rgba(0,0,0,.35);}
+.callout.l .line{left:-34px; width:calc(var(--x) + 34px); transform-origin:right;}
+.callout.r .line{left:var(--x); right:-34px; transform-origin:left;}
+.callout .note{position:absolute; top:-.75em; white-space:nowrap; line-height:1.5;}
+.callout.l .note{right:calc(100% + 44px); text-align:right;}
+.callout.r .note{left:calc(100% + 44px);}
+.callout .note small{display:block; color:var(--smoke); letter-spacing:.06em; text-transform:none; font-size:12px;}
+.has-reveal .anatomy .callout .line{transform:scaleX(0); transition:transform .7s var(--ease); transition-delay:calc(.25s + var(--i, 0) * 140ms);}
+.has-reveal .anatomy .callout .note{opacity:0; transition:opacity .5s ease; transition-delay:calc(.6s + var(--i, 0) * 140ms);}
+.has-reveal .anatomy.is-in .callout .line{transform:none;}
+.has-reveal .anatomy.is-in .callout .note{opacity:1;}
+/* no room either side of the photo: each note sits on it, above its line,
+   against the photo's edge */
+@media (max-width:1180px){
+  .anatomy-grid{grid-template-columns:1fr;}
+  .anatomy-stage{padding:0; max-width:600px;}
+  .callout.l .line{left:10px; width:calc(var(--x) - 10px);}
+  .callout.r .line{left:var(--x); right:10px;}
+  .callout .note{top:auto; bottom:6px; padding:5px 8px; background:rgba(4,6,14,.8); font-size:10.5px; line-height:1.4;}
+  .callout.l .note{right:auto; left:10px; text-align:left;}
+  .callout.r .note{left:auto; right:10px; text-align:right;}
+  .callout .note small{font-size:11px;}
+}
+
+/* ---------- lookbook spread: a big photo, smaller ones pinned over it ---------- */
+.lookbook-grid{display:grid; grid-template-columns:1.2fr 1fr; gap:clamp(40px, 7vw, 120px); align-items:center;}
+.lookbook-grid.flip{grid-template-columns:1fr 1.2fr;}
+.lookbook-grid.flip .lookbook-main{order:2;}
+.lookbook-main{position:relative; margin:0 clamp(0px, 4vw, 60px) 0 0;}
+.lookbook-grid.flip .lookbook-main{margin:0 0 0 clamp(0px, 4vw, 60px);}
+.lookbook-main > img{width:100%; height:auto; aspect-ratio:4/5; object-fit:cover; border-radius:6px;}
+.lookbook-main::after{content:''; position:absolute; inset:0; border-radius:6px; pointer-events:none; background:linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,0) 22%, rgba(0,0,0,0) 70%, rgba(0,0,0,.3));}
+.lookbook-mark{position:absolute; top:4.5%; left:0; right:0; z-index:2; display:flex; align-items:center; justify-content:center; gap:10px; color:#f4f1ea; font-size:clamp(18px, 2vw, 28px); text-shadow:0 2px 14px rgba(0,0,0,.45);}
+.lookbook-mark svg{width:1.6em; height:1.6em;}
+.lookbook-mark.wide{font-style:normal;} /* upright, so the turned R reads */
+.lookbook-inset{position:absolute; z-index:3; margin:0; width:36%; border:6px solid #f4f1ea; border-radius:18px; overflow:hidden; background:#f4f1ea; box-shadow:0 22px 44px -12px rgba(0,0,0,.55); will-change:translate;}
+.lookbook-inset img{width:100%; height:auto; aspect-ratio:3/4; object-fit:cover;}
+.lookbook-inset.wide img{aspect-ratio:4/3;}
+.lookbook-inset.a{right:-12%; top:9%;}
+.lookbook-inset.b{left:-7%; bottom:24%; width:33%;}
+.lookbook-inset.c{left:-7%; bottom:-5%; width:33%;}
+.lookbook-grid.flip .lookbook-inset.a{right:auto; left:-12%;}
+.lookbook-grid.flip .lookbook-inset.b, .lookbook-grid.flip .lookbook-inset.c{left:auto; right:-7%;}
+.lookbook-copy h2{font-size:clamp(32px, 4vw, 60px); margin:18px 0 26px;}
+.lookbook-copy .lede{font-size:13.5px; line-height:1.6; text-align:justify; hyphens:auto; color:var(--bone-dim); max-width:400px; margin:0 0 26px;}
+.lookbook-specs{display:grid; grid-template-columns:auto 1fr; gap:10px 22px; margin:0 0 32px; padding:20px 0 0; border-top:1px solid var(--hairline); font-family:var(--f-mono); font-size:12px; letter-spacing:.06em; text-transform:uppercase; max-width:400px;}
+.lookbook-specs dt{color:var(--smoke);}
+.lookbook-specs dd{margin:0; color:var(--bone);}
+.lookbook-cta{display:flex; gap:14px; flex-wrap:wrap; align-items:center;}
+@media (max-width:900px){
+  .lookbook-grid, .lookbook-grid.flip{grid-template-columns:1fr; gap:64px;}
+  .lookbook-grid.flip .lookbook-main{order:0;}
+  .lookbook-main, .lookbook-grid.flip .lookbook-main{margin:0 0 40px;}
+  .lookbook-inset.a, .lookbook-grid.flip .lookbook-inset.a{right:-2%; left:auto; top:8%; width:34%;}
+  .lookbook-inset.b, .lookbook-inset.c, .lookbook-grid.flip .lookbook-inset.b, .lookbook-grid.flip .lookbook-inset.c{left:-2%; right:auto; width:31%;}
+  .lookbook-inset{border-width:4px; border-radius:12px;}
+  .lookbook-copy .lede{text-align:left; font-size:15px;}
+}
+
+/* ---------- the banner: everyone smeared into one frame ---------- */
+.banner{position:relative; isolation:isolate; overflow:hidden; display:grid; place-items:center; text-align:center; min-height:min(84vh, 760px); padding:120px 0;}
+.banner > img{position:absolute; left:0; top:-7%; z-index:-2; width:100%; height:114%; max-width:none; object-fit:cover; will-change:translate;}
+.banner::before{content:''; position:absolute; inset:0; z-index:-1; background:radial-gradient(ellipse 70% 60% at 50% 50%, rgba(4,6,14,.45), rgba(4,6,14,.82));}
+.banner h2{font-size:clamp(34px, 6.4vw, 104px); margin:20px 0 30px;}
+.banner p{color:var(--bone-dim); max-width:460px; margin:0 auto 30px; line-height:1.7;}
+.banner .eyebrow{justify-content:center;}
+
+/* ---------- the log: dated cards from the feed ---------- */
+.log-grid{display:grid; grid-template-columns:repeat(4, 1fr); gap:14px;}
+@media (max-width:1000px){ .log-grid{grid-template-columns:repeat(2, 1fr);} }
+.log-card{position:relative; display:block; aspect-ratio:4/5; overflow:hidden; isolation:isolate; background:var(--ink); border:1px solid var(--hairline);}
+.log-card img{position:absolute; inset:0; z-index:-2; width:100%; height:100%; object-fit:cover; filter:saturate(.75) contrast(1.05); transition:transform .7s var(--ease), filter .4s;}
+.log-card::before{content:''; position:absolute; inset:0; z-index:-1; background:linear-gradient(180deg, rgba(4,6,14,.82) 0%, rgba(4,6,14,.1) 42%, rgba(4,6,14,.2) 62%, rgba(4,6,14,.88) 100%);}
+.log-card:hover img, .log-card:focus-visible img{transform:scale(1.05); filter:none;}
+.log-kind{position:absolute; top:16px; left:18px; right:18px; font-family:var(--f-mono); font-size:10.5px; letter-spacing:.18em; text-transform:uppercase; color:#f2efe9;}
+.log-kind b{display:block; margin-top:8px; font-family:var(--f-wide); font-style:italic; font-stretch:125%; font-weight:900; font-size:clamp(15px, 1.5vw, 20px); letter-spacing:-.01em; line-height:1.05;}
+.log-date{position:absolute; left:18px; bottom:16px; font-family:var(--f-mono); font-size:11px; letter-spacing:.14em; color:rgba(242,239,233,.8);}
+.log-go{position:absolute; right:18px; bottom:14px; font-family:var(--f-mono); font-size:17px; color:var(--oxblood-bright);}
+
+/* ---------- walls of photos (gallery.js), smaller than the gallery's ---------- */
+.gallery-wall{column-count:5; column-gap:10px;}
+@media (max-width:1100px){ .gallery-wall{column-count:4;} }
+@media (max-width:760px){ .gallery-wall{column-count:2; column-gap:8px;} }
+.gallery-wall.cols-3{column-count:3;}
+@media (max-width:760px){ .gallery-wall.cols-3{column-count:2;} }
+.gallery-wall .gallery-tile{margin-bottom:10px;}
+.section-head p a{color:var(--bone); text-decoration:underline; text-underline-offset:3px;}
+.wall-foot{display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap; margin-top:36px;}
+.wall-foot p{margin:0; color:var(--smoke); font-size:14px; max-width:520px; line-height:1.6;}
+
+/* ---------- 404: lost in the multiverse ---------- */
+.nf-wrap.night{position:relative; isolation:isolate; overflow:hidden;}
+.nf-wrap .fx-bg{object-position:50% 30%;}
+.nf-wrap .nf-title.wide{font-size:clamp(30px, 8vw, 104px); line-height:.95;}
+.nf-wrap::before{content:''; position:absolute; inset:0; z-index:-1; background:radial-gradient(ellipse at center, rgba(4,6,14,.55), rgba(4,6,14,.92) 75%);}
+
+@media (prefers-reduced-motion: reduce){
+  .fx-bg, .split-media img, .banner > img, .poster-back, .lookbook-inset{transform:none !important;}
+  .poster-figure{transform:translateX(-50%) !important;}
+  .poster-tag{transform:rotate(-4deg) !important;}
+}

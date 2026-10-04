@@ -22,14 +22,6 @@ function wireUp() {
     toggle.setAttribute('aria-expanded', String(links.classList.toggle('open')));
   });
 
-  const themeBtn = document.getElementById('themeToggle');
-  themeBtn.addEventListener('click', () => {
-    const theme = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
-    setTheme(theme);
-    themeBtn.setAttribute('aria-pressed', String(theme === 'light'));
-    try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* switched, just not remembered */ }
-  });
-
   const modal = document.getElementById('sizeModal');
   if (modal) {
     modal.addEventListener('click', (e) => { if (e.target === modal) toggleSizeGuide(false); });
@@ -49,9 +41,11 @@ function wireUp() {
 }
 
 /* What each page loads once it's wired up. Pages not listed here (story,
-   visit, contact, legal) are static apart from the shared nav and bag. */
+   contact, legal) are static apart from the shared nav and bag, and the
+   gallery photos and editorial sections, which start on every page that
+   has them. */
 const PAGE_INIT = {
-  home: () => loadCatalogue({ grid: 'featuredGrid', limit: 3 }),
+  home: () => { initFilm(); loadCatalogue({ grid: 'featuredGrid', limit: 3 }); },
   shop: () => loadCatalogue({ grid: 'shopGrid', filters: 'shopFilters' }),
   product: () => loadProductPage(),
   checkout: () => initCheckout(),
@@ -60,10 +54,15 @@ const PAGE_INIT = {
 /* ---------------- boot ---------------- */
 function start() {
   wireUp();
+  initSmoothScroll();
+  initGlitch(); // before the page's own init: it listens for the film's captions
+  initGalaxy();
   loadBag();
   renderCart();
   track('page_view');
   if (PAGE_INIT[PAGE]) PAGE_INIT[PAGE]();
+  if (typeof initGallery === 'function') initGallery(); // only pages with gallery.js
+  initEditorial();
 }
 
 if (document.readyState === 'loading') {

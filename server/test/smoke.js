@@ -376,8 +376,6 @@ async function req(method, url, body, headers = {}) {
       'payment page uses the new design for a confirmed payment');
     ok(paidPage.text.includes('class="summary"') && paidPage.text.includes('/css/store.css'),
       "payment page reuses the storefront's own stylesheet and order card");
-    ok(paidPage.text.includes('/js/config.js"></script>'),
-      "payment page loads config.js, so it follows the visitor's light/dark choice");
     // The page greets by first name, so that's the part of the name it shows.
     ok(!paidPage.text.includes('<img src=x') && !paidPage.text.includes('Thank you, <img') &&
        paidPage.text.includes('Thank you, &lt;img'),
@@ -438,15 +436,15 @@ async function req(method, url, body, headers = {}) {
     const sitemap = await req('GET', '/sitemap.xml');
     ok(sitemap.status === 200 && sitemap.text.includes('<urlset') && sitemap.text.includes('<loc>https://ynrfashion.com/</loc>'),
       'sitemap.xml lists the shop');
-    ok(['/shop', '/story', '/visit', '/contact'].every((p) => sitemap.text.includes(`<loc>https://ynrfashion.com${p}</loc>`)),
+    ok(['/shop', '/gallery', '/story', '/visit', '/contact'].every((p) => sitemap.text.includes(`<loc>https://ynrfashion.com${p}</loc>`)),
       'sitemap.xml lists every page in the nav');
 
     // ---- storefront pages -------------------------------------------------
     // Every nav page is its own URL, served without .html, and shares the
-    // one header/footer from layout.js. config.js must sit in <head>: it
-    // applies a saved light-mode choice before the page first paints.
+    // one header/footer from layout.js. config.js loads first, in <head>:
+    // the other scripts read their settings from it.
     const PAGES = {
-      '/': 'YnR — Young &amp; Reckless', '/shop': 'Shop — YnR', '/story': 'Our Story — YnR',
+      '/': 'YnR — Young &amp; Reckless', '/shop': 'Shop — YnR', '/gallery': 'Gallery — YnR', '/story': 'Our Story — YnR',
       '/visit': 'Visit Us — YnR', '/contact': 'Contact — YnR', '/product?p=out-of-this-world': 'YnR',
       '/checkout': 'Checkout — YnR', '/privacy': 'Privacy Policy — YnR', '/terms': 'Terms',
       '/shipping-returns': 'Shipping',
@@ -457,16 +455,64 @@ async function req(method, url, body, headers = {}) {
       const head = page.text.slice(0, page.text.indexOf('</head>'));
       if (page.status !== 200 || !page.text.includes(`<title>${title}`) ||
           !head.includes('<script src="/js/config.js"></script>') ||
-          !page.text.includes('<script src="/js/layout.js"></script>') || !page.text.includes('siteFooter()')) {
+          !page.text.includes('<script src="/js/layout.js"></script>') || !page.text.includes('siteFooter()') ||
+          !page.text.includes('<script src="/js/glitch.js"></script>') ||
+          !page.text.includes('<script src="/js/galaxy.js"></script>') ||
+          !page.text.includes('<script src="/js/smooth.js"></script>') ||
+          !page.text.includes('<script src="/js/editorial.js"></script>')) {
         broken.push(`${url} (${page.status})`);
       }
     }
     ok(broken.length === 0, 'every storefront page loads at its own URL with the shared header and footer', broken.join(', '));
 
-    const css = await req('GET', '/css/store.css');
-    const layoutJs = await req('GET', '/js/layout.js');
-    ok(css.text.includes(':root[data-theme="light"]') && layoutJs.text.includes('id="themeToggle"'),
-      'light mode: the stylesheet has a light palette and the shared header has the switch');
+    // ---- editorial sections -------------------------------------------------
+    // Every gallery photo a page shows must exist: the styled ones in
+    // /assets/gallery/fx (gallery-fx.js) and the real photos the home page's
+    // tiles load when pointed at.
+    const pictured = new Set();
+    for (const url of [...Object.keys(PAGES), '/some/broken/link']) {
+      const page = await req('GET', url);
+      for (const m of page.text.matchAll(/(?:src|data-src)="(\/assets\/gallery\/[^"]+)"/g)) pictured.add(m[1]);
+    }
+    const unpictured = [];
+    for (const src of pictured) if ((await req('GET', src)).status !== 200) unpictured.push(src);
+    ok(pictured.size >= 30 && unpictured.length === 0,
+      `every gallery photo the pages show exists (${pictured.size} of them)`, unpictured.join(', '));
+
+    // ---- home page film ---------------------------------------------------
+    // The page says where the frames are and how many there are of each cut;
+    // the server must have exactly those, cacheable for good (a new film
+    // gets a new folder name, so a cached frame is never stale).
+    const home = await req('GET', '/');
+    const film = home.text.match(/data-film="([^"]+)" data-wide="(\d+)" data-tall="(\d+)"/);
+    ok(film && home.text.includes('<script src="/js/film.js"></script>'), 'home page carries the scroll film');
+    if (film) {
+      const [, base, wide, tall] = film;
+      const frame = (cut, n) => `${base}/${cut}/f${String(n).padStart(3, '0')}.webp`;
+      const ends = await Promise.all([frame('wide', 1), frame('wide', wide), frame('tall', 1), frame('tall', tall)]
+        .map((u) => req('GET', u)));
+      const past = await Promise.all([frame('wide', +wide + 1), frame('tall', +tall + 1)].map((u) => req('GET', u)));
+      ok(ends.every((r) => r.status === 200) && past.every((r) => r.status === 404),
+        'every film frame the home page asks for exists, and no more',
+        [...ends, ...past].map((r) => r.status).join(','));
+      const cache = ends[0].headers.get('cache-control') || '';
+      ok(/max-age=31536000/.test(cache) && /immutable/.test(cache), 'film frames are cached for a year', cache);
+    }
+
+    // ---- gallery ------------------------------------------------------------
+    // Every file the gallery list names must be there: a photo's two sizes,
+    // a video and its poster.
+    const gallery = await req('GET', '/assets/gallery/gallery.json');
+    ok(gallery.status === 200 && Array.isArray(gallery.json) && gallery.json.length > 0, 'the gallery list is served');
+    if (Array.isArray(gallery.json)) {
+      const wanted = gallery.json.flatMap((g) => (g.type === 'video'
+        ? [`${g.id}.mp4`, `${g.id}-poster-800.webp`, `${g.id}-poster-1280.webp`]
+        : [`${g.id}-800.webp`, `${g.id}-1280.webp`]));
+      const missing = wanted.filter((f) => !fs.existsSync(path.join(__dirname, '..', '..', 'storefront', 'assets', 'gallery', f)));
+      ok(missing.length === 0, 'every photo and video the gallery lists exists', missing.slice(0, 5).join(', '));
+      ok(gallery.json.every((g) => !/\+?\d[\d\s-]{8,}\d|₦\s?\d/.test(g.caption)),
+        'gallery captions carry no phone numbers or prices (old posts quote stale ones)');
+    }
 
     const deep404 = await req('GET', '/some/broken/link');
     ok(deep404.status === 404 && deep404.text.includes('href="/css/store.css"'),
