@@ -62,7 +62,9 @@ function start() {
   track('page_view');
   if (PAGE_INIT[PAGE]) PAGE_INIT[PAGE]();
   if (typeof initGallery === 'function') initGallery(); // only pages with gallery.js
+  if (typeof initField === 'function') initField(); // only pages with field.js
   initEditorial();
+  initFloat();
 }
 
 if (document.readyState === 'loading') {

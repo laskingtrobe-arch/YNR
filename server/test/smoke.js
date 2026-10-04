@@ -459,7 +459,8 @@ async function req(method, url, body, headers = {}) {
           !page.text.includes('<script src="/js/glitch.js"></script>') ||
           !page.text.includes('<script src="/js/galaxy.js"></script>') ||
           !page.text.includes('<script src="/js/smooth.js"></script>') ||
-          !page.text.includes('<script src="/js/editorial.js"></script>')) {
+          !page.text.includes('<script src="/js/editorial.js"></script>') ||
+          !page.text.includes('<script src="/js/float.js"></script>')) {
         broken.push(`${url} (${page.status})`);
       }
     }
@@ -510,9 +511,22 @@ async function req(method, url, body, headers = {}) {
         : [`${g.id}-800.webp`, `${g.id}-1280.webp`]));
       const missing = wanted.filter((f) => !fs.existsSync(path.join(__dirname, '..', '..', 'storefront', 'assets', 'gallery', f)));
       ok(missing.length === 0, 'every photo and video the gallery lists exists', missing.slice(0, 5).join(', '));
+      // The asteroid fields show far-off photos as tiny blurred copies.
+      const tiny = gallery.json.filter((g) => !fs.existsSync(path.join(__dirname, '..', '..', 'storefront', 'assets', 'gallery', 'fx', 'tiny', `${g.id}.webp`)));
+      ok(tiny.length === 0, 'every gallery item has its tiny copy for the asteroid fields', tiny.slice(0, 5).map((g) => g.id).join(', '));
       ok(gallery.json.every((g) => !/\+?\d[\d\s-]{8,}\d|₦\s?\d/.test(g.caption)),
         'gallery captions carry no phone numbers or prices (old posts quote stale ones)');
     }
+
+    // The asteroid field: on the gallery, Our Story and Visit Us, each
+    // loading field.js straight after gallery.js, which it reads its photos from.
+    const fieldless = [];
+    for (const url of ['/gallery', '/story', '/visit']) {
+      const page = await req('GET', url);
+      if (!page.text.includes('data-field') ||
+          !/<script src="\/js\/gallery\.js"><\/script>\s*<script src="\/js\/field\.js"><\/script>/.test(page.text)) fieldless.push(url);
+    }
+    ok(fieldless.length === 0, 'the gallery, Our Story and Visit Us pages carry the asteroid field', fieldless.join(', '));
 
     const deep404 = await req('GET', '/some/broken/link');
     ok(deep404.status === 404 && deep404.text.includes('href="/css/store.css"'),

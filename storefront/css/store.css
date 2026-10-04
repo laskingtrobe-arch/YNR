@@ -772,3 +772,273 @@ table.size-table th{color:var(--oxblood-bright); letter-spacing:.05em; text-tran
   .poster-figure{transform:translateX(-50%) !important;}
   .poster-tag{transform:rotate(-4deg) !important;}
 }
+
+/* ---------- home: the moments — a drop, a pop-up, a collab, a shoot ---------- */
+/* Four big cards in a staggered magazine grid: the wide ones down the left,
+   the narrow ones stepped down on the right. The kind and the date sit over
+   the top of each photo and the title over its foot, each on its own shade
+   so they read on any picture; the words about it sit underneath. The link
+   at each card's foot stretches over the whole card, so the photo clicks
+   through too without a second link for screen readers to wade through. */
+.moments .section-head p{max-width:420px;}
+.moments-grid{display:grid; grid-template-columns:repeat(12, minmax(0, 1fr)); column-gap:clamp(20px, 3vw, 44px); row-gap:clamp(56px, 7vw, 110px); align-items:start;}
+.moment{position:relative; grid-column:1 / span 7;}
+.moment.is-narrow{grid-column:9 / span 4; margin-top:clamp(60px, 10vw, 170px);}
+.moment-shot{position:relative;}
+/* The photo is laid absolutely inside a box shaped by aspect-ratio (an
+   in-flow photo of another shape would stretch the box to its own). The cap
+   on the height keeps the big ones inside a laptop screen: past it the box
+   just crops wider, and object-position keeps the people in frame. */
+.moment-frame{position:relative; overflow:hidden; isolation:isolate; aspect-ratio:4/5; max-height:min(86vh, 860px); background:var(--night); border:1px solid var(--hairline);}
+.moment.is-narrow .moment-frame{aspect-ratio:3/4;}
+.moment-frame img{position:absolute; inset:0; z-index:-1; width:100%; height:100%; object-fit:cover; transition:scale .9s var(--ease);}
+.moment-frame::after{content:''; position:absolute; inset:0; z-index:0; pointer-events:none; background:linear-gradient(180deg, rgba(4,6,14,.72) 0%, rgba(4,6,14,0) 24%, rgba(4,6,14,0) 50%, rgba(4,6,14,.9) 100%);}
+.m-drop .moment-frame img{object-position:50% 70%;}
+.m-collab .moment-frame{aspect-ratio:4/3;}
+.m-collab .moment-frame img{object-position:50% 76%;}
+.moment-meta{position:absolute; top:0; left:0; right:0; z-index:1; display:flex; justify-content:space-between; align-items:center; gap:12px; padding:18px 20px; font-family:var(--f-mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:#f2efe9;}
+.moment-num{margin-right:12px; color:#ef3a40;}
+.moment-meta time{display:inline-flex; align-items:center; gap:10px; letter-spacing:.14em;}
+.moment-meta time::before{content:''; width:18px; height:1px; background:currentColor; opacity:.6;}
+.moment-title{position:absolute; left:0; right:0; bottom:0; z-index:1; margin:0; padding:0 20px 20px; color:#f2efe9; font-size:clamp(24px, 2.6vw, 38px); overflow-wrap:break-word;
+  text-shadow:.012em 0 rgba(225,29,46,.45), -.012em 0 rgba(36,214,255,.35), 0 2px 22px rgba(4,6,14,.5);}
+.moment.is-wide .moment-title{padding:0 28px 26px; font-size:clamp(30px, 3.6vw, 54px);}
+/* the pop-up's own poster, pinned over the edge of the photo like a flyer
+   on a wall (rotate, not transform, so a transform added later can't undo it) */
+.moment-flyer{position:absolute; z-index:2; left:-6%; top:30%; width:34%; height:auto; border:5px solid #f4f1ea; border-radius:4px; background:#f4f1ea; rotate:-5deg; box-shadow:0 22px 44px -12px rgba(0,0,0,.6);}
+.moment-body{display:flex; flex-direction:column; align-items:flex-start; gap:16px; padding-top:22px;}
+.moment-body p{margin:0; color:var(--bone-dim); font-size:15px; line-height:1.7; max-width:46ch;}
+.moment.is-wide .moment-body{flex-direction:row; justify-content:space-between; align-items:flex-end; gap:32px;}
+.moment-link{flex-shrink:0; white-space:nowrap;}
+/* The stretch reaches the card only while nothing between the link and the
+   card moves: a translate or rotate on the link (or the body around it)
+   would make that the box it stretches over. So the links are marked
+   data-float="off", and only the picture block above them floats. */
+.moment-link::after{content:''; position:absolute; inset:0; z-index:3;}
+.moment:hover .moment-frame img, .moment:focus-within .moment-frame img{scale:1.04;}
+.moment:hover .moment-link{gap:22px; border-color:var(--bone);}
+/* the card is the link, so it shows the focus ring, not just the words */
+.moment:has(.moment-link:focus-visible) .moment-frame{outline:2px solid var(--oxblood-bright); outline-offset:4px;}
+.moments-foot{display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap; margin-top:clamp(56px, 7vw, 100px); padding-top:26px; border-top:1px solid var(--hairline);}
+.moments-foot p{margin:0; color:var(--smoke); font-size:14px; line-height:1.6;}
+/* two to a row: the right-hand card still steps down, and the collab goes
+   square so the crew isn't a thin strip across a half-width card */
+@media (max-width:1100px){
+  .moments-grid{grid-template-columns:repeat(2, minmax(0, 1fr));}
+  .moment, .moment.is-narrow{grid-column:auto;}
+  .moment.is-narrow{margin-top:clamp(48px, 9vw, 96px);}
+  .moment.is-wide .moment-body{flex-direction:column; align-items:flex-start; gap:16px;}
+  .moment.is-wide .moment-title{padding:0 20px 20px; font-size:clamp(26px, 4vw, 44px);}
+  .m-collab .moment-frame{aspect-ratio:1/1;}
+  .moment-flyer{left:-3%;} /* the gap beside it is narrower now */
+}
+/* one to a row on a phone, every card the same width */
+@media (max-width:700px){
+  .moments-grid{grid-template-columns:minmax(0, 1fr);}
+  .moment.is-narrow{margin-top:0;}
+  .moment-title, .moment.is-wide .moment-title{font-size:clamp(26px, 8vw, 40px);}
+  .moment-flyer{width:32%; border-width:4px;}
+}
+@media (prefers-reduced-motion: reduce){
+  .moment:hover .moment-frame img, .moment:focus-within .moment-frame img{scale:none;}
+}
+/* The moments as a rail (editorial.js adds .is-rail): the section pins
+   under the header and the scroll slides the four moments in from the
+   left, one at a time, before the page moves on. The track is laid out
+   right to left (the first moment rightmost, in view), so moving it right
+   brings each next one in from the left. Without the script, or with
+   reduced motion, it stays the grid above. */
+.rail-count{display:none;}
+.moments:not(.is-rail) .rail-window{max-width:1360px; margin:0 auto; padding:0 40px;}
+@media (max-width:720px){ .moments:not(.is-rail) .rail-window{padding:0 20px;} }
+.moments.is-rail{padding:0;}
+.is-rail .rail-stage{position:sticky; top:var(--nav-h); height:calc(100vh - var(--nav-h)); height:calc(100svh - var(--nav-h)); overflow:hidden; display:flex; flex-direction:column; padding:clamp(18px, 4vh, 48px) 0 clamp(14px, 3vh, 30px);}
+.is-rail .rail-top{display:flex; justify-content:space-between; align-items:flex-end; gap:24px; width:100%;}
+.is-rail .section-head{margin-bottom:clamp(14px, 3vh, 30px);}
+.is-rail .section-head h2{font-size:clamp(30px, min(5vw, 7vh), 54px);}
+.is-rail .rail-count{display:flex; align-items:center; gap:10px; flex:none; margin-bottom:clamp(14px, 3vh, 30px); font-family:var(--f-mono); font-size:12px; letter-spacing:.16em; color:var(--smoke);}
+.rail-now{color:var(--bone); font-weight:600;}
+.rail-dots{display:flex; gap:8px; margin-left:10px;}
+.rail-dots i{width:6px; height:6px; border:1px solid var(--smoke); border-radius:50%; transition:background .3s, border-color .3s;}
+.rail-dots i.on{background:#ef3a40; border-color:#ef3a40;}
+.is-rail .rail-window{position:relative; flex:1; min-height:0;}
+.is-rail .rail-track{--slide-w:min(1120px, 82vw); position:absolute; top:0; bottom:0; right:calc((100% - var(--slide-w)) / 2); display:flex; flex-direction:row-reverse; gap:clamp(24px, 4vw, 64px); will-change:transform;}
+.is-rail .moment, .is-rail .moment.is-narrow{flex:none; width:var(--slide-w); height:100%; margin:0; display:grid; grid-template-columns:minmax(0, 1.15fr) minmax(0, 1fr); gap:clamp(24px, 3.5vw, 56px); align-items:center;}
+.is-rail .moment-shot{height:100%;}
+.is-rail .moment-frame, .is-rail .moment.is-narrow .moment-frame, .is-rail .m-collab .moment-frame{aspect-ratio:auto; height:100%; max-height:none;}
+.is-rail .moment-body, .is-rail .moment.is-wide .moment-body{flex-direction:column; align-items:flex-start; gap:22px; padding-top:0;}
+.is-rail .moment-body p{font-size:clamp(15px, 1.25vw, 18px);}
+.is-rail .moment-flyer{left:auto; right:-7%; top:auto; bottom:14%; width:30%;}
+.is-rail .moments-foot{margin-top:clamp(12px, 2.5vh, 26px); padding-top:clamp(12px, 2vh, 20px);}
+/* a phone: each moment is the photo over a few lines, the intro and the
+   follow link make room */
+@media (max-width:860px){
+  .is-rail .rail-track{--slide-w:84vw; gap:16px;}
+  .is-rail .moment, .is-rail .moment.is-narrow{grid-template-columns:minmax(0, 1fr); grid-template-rows:minmax(0, 1fr) auto; gap:14px; align-items:stretch;}
+  .is-rail .moment-body{gap:10px;}
+  .is-rail .moment-body p{display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; font-size:14px; line-height:1.55;}
+  .is-rail .rail-top{flex-direction:column; align-items:flex-start; gap:0;}
+  .is-rail .section-head p, .is-rail .moments-foot{display:none;}
+  .is-rail .moment-title, .is-rail .moment.is-wide .moment-title{font-size:clamp(24px, 7vw, 34px); padding:0 16px 16px;}
+  .is-rail .moment-flyer{right:-3%; bottom:18%; width:28%;}
+}
+
+/* ==========================================================================
+   The asteroid field (js/field.js): photos floating in space that the page
+   flies you through. The field is a tall track; inside it a stage the
+   height of the screen stays pinned under the header while the track
+   scrolls past, and the photos fly about in that. The stage is see-through,
+   so the galaxy behind every page is the space they float in.
+   (Its class is astro-field, not field: store.css styles .field as a form
+   field on the contact and checkout pages.)
+   ========================================================================== */
+.field-band{padding-bottom:0;}
+.field-band .section-head{margin-bottom:28px;}
+.astro-field{position:relative; margin:0;}
+/* (field.js sends focus here, unseen, when a held photo is put back as the
+   field scrolls away) */
+.astro-field:focus{outline:none;}
+/* the track: one screen, plus --field-run (a plain number of svh, set by
+   field.js from how deep the field is) of scrolling to fly through it */
+.astro-field.is-flying{--field-nav:var(--nav-h);
+  height:calc(100vh - var(--field-nav) + var(--field-run, 200) * 1vh);
+  height:calc(100svh - var(--field-nav) + var(--field-run, 200) * 1svh);}
+.field-stage{position:sticky; top:var(--field-nav); overflow:hidden; isolation:isolate;
+  height:calc(100vh - var(--field-nav)); height:calc(100svh - var(--field-nav));}
+/* the edges fade into the dark, so a photo flying out of frame goes
+   softly, not cut off by a line */
+.field-stage::before{content:''; position:absolute; inset:0; z-index:920; pointer-events:none; background:
+  linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,0) 14%, rgba(0,0,0,0) 86%, rgba(0,0,0,.55)),
+  radial-gradient(ellipse 80% 75% at 50% 50%, rgba(0,0,0,0) 60%, rgba(0,0,0,.45));}
+.field-space{position:absolute; inset:0;}
+.field-space:focus{outline:none;}
+/* off screen: nothing drawn (and nothing drifting, below) */
+.field-stage.is-away .field-space{visibility:hidden;}
+
+/* ---------- the photos ---------- */
+.field-rock{position:absolute; left:0; top:0; padding:0; border:0; background:none; color:inherit; opacity:0; cursor:zoom-in;
+  transform-origin:50% 50%; will-change:transform, opacity; -webkit-tap-highlight-color:transparent;}
+.field-rock.is-off{visibility:hidden; will-change:auto;}
+/* Only photos in view drift; a hidden one has no animation at all, and
+   none do while the field is off screen. (Pausing isn't enough: field.js
+   used to set the animation inline, which overrode a pause, and the
+   browser can't hand an animation on a hidden photo to the graphics chip,
+   so it worked every one out on every frame.) Same weight, so the second
+   rule wins. */
+.field-rock:not(.is-off) .field-drift{animation:var(--drift);}
+.field-stage.is-away .field-drift{animation:none;}
+/* pulled forward: above the dark edges (920), under a held photo's scrim */
+.field-rock.is-up{z-index:930 !important;}
+.field-rock.is-held{pointer-events:none;}
+.field-rock:focus-visible{outline:2px solid var(--oxblood-bright); outline-offset:4px;}
+.field-drift{position:relative; display:block; width:100%; height:100%;}
+/* never dragged off as a picture, nor (on iPhone) a press-and-hold to save */
+.field-rock img, .field-held img{-webkit-user-drag:none; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;}
+.field-drift img{display:block; width:100%; height:100%; object-fit:cover; background:var(--ink); border:1px solid rgba(242,239,233,.14);}
+.field-play{position:absolute; left:7%; bottom:5%; padding:3px 6px; font-family:var(--f-mono); font-size:10px; line-height:1; color:var(--on-accent); background:var(--oxblood);}
+/* tumbling slowly, each on its own clock (field.js picks one of these, a
+   length and a start for every photo) */
+@keyframes field-drift-0{ from{transform:translate(-3%, 2%) rotate(-4deg);} to{transform:translate(4%, -3%) rotate(3deg);} }
+@keyframes field-drift-1{ from{transform:translate(3%, 3%) rotate(5deg);} to{transform:translate(-2%, -4%) rotate(-2deg);} }
+@keyframes field-drift-2{ from{transform:translate(-4%, -2%) rotate(2deg);} to{transform:translate(2%, 4%) rotate(-5deg);} }
+@keyframes field-drift-3{ from{transform:translate(2%, -3%) rotate(-6deg);} to{transform:translate(-3%, 2%) rotate(1deg);} }
+
+/* ---------- one held at the front ---------- */
+.field-scrim{position:absolute; inset:0; z-index:940; pointer-events:none; opacity:0; transition:opacity .6s ease;
+  background:radial-gradient(ellipse 70% 80% at 50% 50%, rgba(2,3,8,.82), rgba(2,3,8,.45));}
+.field-stage.is-holding .field-scrim{opacity:1;}
+.field-held{position:absolute; z-index:950; margin:0; transform-origin:50% 50%; cursor:zoom-out;}
+.field-held.is-moving{will-change:transform, opacity;}
+.field-held.is-moving .field-held-media{will-change:transform;}
+.field-held.is-falling{pointer-events:none;}
+.field-held-media{position:absolute; inset:0; overflow:hidden; background:var(--ink); border:1px solid var(--hairline-strong); box-shadow:0 30px 80px -24px rgba(0,0,0,.85);}
+.field-held-media img, .field-held-media video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;}
+.field-held ul{position:absolute; inset:0; margin:0; padding:0; pointer-events:none;}
+/* the notes (store.css .callout, as on the home page's jacket) draw in
+   once it has arrived, one after another, and go at once when let go */
+.field-held .callout .pin{opacity:0; transition:opacity .3s ease; transition-delay:calc(var(--i, 0) * 120ms);}
+.field-held .callout .line{transform:scaleX(0); transition:transform .6s var(--ease); transition-delay:calc(.1s + var(--i, 0) * 120ms);}
+.field-held .callout .note{opacity:0; transition:opacity .45s ease; transition-delay:calc(.4s + var(--i, 0) * 120ms);}
+.field-held.is-labelled .callout .pin, .field-held.is-labelled .callout .note{opacity:1;}
+.field-held.is-labelled .callout .line{transform:none;}
+.field-held.is-falling .callout *{transition-duration:.15s; transition-delay:0s;}
+.field-held .note.is-caption{white-space:normal; width:max-content; max-width:min(280px, 22vw); text-transform:none; letter-spacing:.02em; font-size:12px; line-height:1.55;}
+.field-held a.note{pointer-events:auto; color:var(--bone);}
+.field-held a.note u{text-underline-offset:3px;}
+.field-held a.note::after{content:''; position:absolute; inset:-14px -10px;} /* a bigger target than the words */
+.field-letgo{position:absolute; left:50%; top:calc(100% + 14px); transform:translateX(-50%); min-height:44px; padding:0 18px; white-space:nowrap;
+  background:rgba(4,6,14,.72); border:1px solid var(--hairline-strong); color:var(--bone); font-family:var(--f-mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+  opacity:0; transition:opacity .4s ease .5s, border-color .2s;}
+.field-letgo:hover{border-color:var(--bone);}
+.field-held.is-labelled .field-letgo, .field-letgo:focus-visible{opacity:1;}
+.field-held.is-falling .field-letgo{opacity:0; transition-delay:0s; transition-duration:.15s;}
+/* too small for notes (a phone on its side): the Instagram link on one
+   side of the photo, the let-go button on the other, and no chips over it */
+.field-ig{position:absolute; right:calc(100% + 14px); bottom:0; display:inline-flex; align-items:center; min-height:44px; padding:0 16px; white-space:nowrap;
+  background:rgba(4,6,14,.72); border:1px solid var(--hairline-strong); color:var(--bone); font-family:var(--f-mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; text-decoration:none;
+  opacity:0; transition:opacity .4s ease .5s, border-color .2s;}
+.field-ig:hover{border-color:var(--bone);}
+.field-held.is-labelled .field-ig, .field-ig:focus-visible{opacity:1;}
+.field-held.is-falling .field-ig{opacity:0; transition-delay:0s; transition-duration:.15s;}
+.field-held.is-bare .field-letgo{top:auto; bottom:0; left:calc(100% + 14px); transform:none;}
+.field-stage.is-short.is-holding .field-chips{opacity:0; visibility:hidden;}
+/* no room beside the photo: the notes sit on it, as chips (store.css
+   moves .callout notes onto the photo at this width) */
+@media (max-width:1180px){
+  .field-held .note.is-caption{max-width:calc(100% - 20px); font-size:11px; line-height:1.45;}
+  .field-held .callout .note{white-space:normal; max-width:calc(100% - 20px);}
+  /* two lines at most, so a long caption can't grow up over the note
+     above it (the whole caption is read out, and on Instagram) */
+  .field-held .note.is-caption .cap{display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+}
+
+/* ---------- chips, hint, progress ---------- */
+.field-chips{position:absolute; z-index:980; top:14px; left:0; right:0; display:flex; gap:8px; padding:0 40px; overflow-x:auto; scrollbar-width:none; transition:opacity .3s ease, visibility .3s;}
+.field-chips::-webkit-scrollbar{display:none;}
+.field-chips .filter-chip{flex:none; min-height:44px; background:rgba(10,10,10,.6);}
+.field-chips .filter-chip.active{background:var(--bone);}
+.field-hint{position:absolute; z-index:960; left:0; right:0; bottom:22px; margin:0; padding:0 20px; text-align:center; pointer-events:none;
+  font-family:var(--f-mono); font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--bone-dim); transition:opacity .5s ease;}
+.field-hint span{display:block; margin-top:8px; font-size:10px; letter-spacing:.12em; color:var(--smoke);}
+.field-hint.is-gone{opacity:0;}
+.field-meter{position:absolute; z-index:960; right:clamp(14px, 3vw, 40px); top:50%; width:1px; height:120px; margin-top:-60px; background:var(--hairline-strong); pointer-events:none;}
+.field-meter i{display:block; height:100%; background:var(--oxblood-bright); transform:scaleY(0); transform-origin:top;}
+@media (max-width:720px){
+  .field-chips{padding:0 20px;}
+  .field-meter{height:80px; margin-top:-40px;}
+}
+
+/* ---------- reduced motion: the photos in a still wall ---------- */
+.astro-field.is-still .filter-row{margin-bottom:28px;}
+.astro-field.is-still{padding-bottom:clamp(60px, 9vw, 110px);}
+
+/* ==========================================================================
+   Float (js/float.js): zero gravity. Photos, cards, icons, buttons and
+   headings drift a few pixels and rock a fraction of a degree, each on its
+   own, like things floating in space.
+
+   The motion lives in float.js, as one animation per piece of plain
+   numbers on the `translate` and `rotate` properties, which the graphics
+   chip runs by itself and which add to the hover effects (buttons lifting,
+   photos scaling up) instead of replacing them. float.js marks each piece
+   it moves with .fl, and data-float="<kind>".
+
+   Authors: data-float="photo" (or any kind listed in float.js) makes
+   something float; data-float="off" keeps it, and all inside it, still.
+   ========================================================================== */
+
+/* An SVG icon floats in a span float.js wraps round it, never by itself
+   (the browser only hands an SVG's movement to the graphics chip at
+   exactly 100% zoom). The span lays out as the icon did: a block like
+   every svg on the site (store.css), or inline if the icon was, and never
+   squeezed narrower in a row, so the icon keeps its size. */
+.fl-svg{display:flex; flex:none;}
+.fl-svg.is-inline{display:inline-flex;}
+
+/* float.js doesn't start with reduced motion on, and stops everything if
+   the setting is switched on with the page open; this settles every piece
+   at rest at once, before the script gets to it. (!important, because an
+   animation outranks the page's ordinary styles.) */
+@media (prefers-reduced-motion: reduce){
+  .fl{translate:none !important; rotate:none !important;}
+}

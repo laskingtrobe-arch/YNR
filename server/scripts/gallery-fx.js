@@ -8,8 +8,12 @@
 //   banner  several photos side by side, smeared into one another
 //   cutout  the person cut out of the photo, in black and white (posters)
 //   mono    the photo in grainy black and white (insets on the posters)
+//   tiny    every gallery photo and video poster at 48px wide, softly
+//           blurred, about a kilobyte each (fx/tiny/<id>.webp): the
+//           far-off photos in the asteroid field (js/field.js) show these,
+//           which gives the field its depth without blurring in the browser
 //
-//   node scripts/gallery-fx.js [name …]
+//   node scripts/gallery-fx.js [name …]     (name "tiny" makes the tiny set)
 //
 // Reads the gallery's own photos (assets/gallery/<id>-1280.webp, made by
 // gallery-build.js), so it works from a fresh checkout. Writes
@@ -319,10 +323,32 @@ const LOOKS = {
   },
 };
 
+/* ---------------- tiny: the far-off photos in the field ---------------- */
+
+const TINY_WIDTH = 48;
+
+// One per item in gallery.json, from its 800px photo (or a video's poster).
+// Shown up to a few hundred px wide, so it's blurred a touch first: soft
+// like something out of focus, not blocky like a thumbnail blown up.
+async function makeTiny() {
+  const dir = path.join(OUT, 'tiny');
+  fs.mkdirSync(dir, { recursive: true });
+  const items = JSON.parse(fs.readFileSync(path.join(GALLERY, 'gallery.json'), 'utf8'));
+  let total = 0;
+  for (const item of items) {
+    const src = path.join(GALLERY, `${item.id}${item.type === 'video' ? '-poster' : ''}-800.webp`);
+    const file = path.join(dir, `${item.id}.webp`);
+    await sharp(src).resize(TINY_WIDTH).blur(0.6).webp({ quality: 50 }).toFile(file);
+    total += fs.statSync(file).size;
+  }
+  console.log(`tiny  ${items.length} files, ${(total / 1024).toFixed(0)} KB`);
+}
+
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
   const names = process.argv.slice(2);
-  for (const name of names.length ? names : Object.keys(FX)) {
+  for (const name of names.length ? names : [...Object.keys(FX), 'tiny']) {
+    if (name === 'tiny') { await makeTiny(); continue; }
     const fx = FX[name];
     if (!fx) throw new Error(`no such fx: ${name}`);
     const file = await LOOKS[fx.look](name, fx);
