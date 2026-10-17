@@ -45,7 +45,7 @@ function wireUp() {
    gallery photos and editorial sections, which start on every page that
    has them. */
 const PAGE_INIT = {
-  home: () => { initFilm(); loadCatalogue({ grid: 'featuredGrid', limit: 3 }); },
+  home: () => loadCatalogue({ grid: 'featuredGrid', limit: 9 }),
   shop: () => loadCatalogue({ grid: 'shopGrid', filters: 'shopFilters' }),
   product: () => loadProductPage(),
   checkout: () => initCheckout(),

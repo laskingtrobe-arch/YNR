@@ -51,6 +51,21 @@ const PRODUCTS = [
     file: 'product-6-young-reckless-jeans.jpg', sizes: ['30', '32', '34', '36'],
     description: 'Dark wash denim, hand-painted front and back with a falling angel figure and "Young Reckless" hand-lettered across the thigh. Every pair is painted individually, so the exact placement is never identical twice.',
   },
+  {
+    slug: 'stay-reckless-vest', name: 'Stay Reckless Hand-Painted Puffer Vest', category: 'hoodies', price: 65000,
+    file: 'product-7-stay-reckless-vest.webp', sizes: ['M', 'L', 'XL'],
+    description: 'Oxblood zip puffer vest, hand-painted across both panels with "STAY RECKLESS // WORK HARD DREAM BIG" and a custom GTA-inspired 5-star HUD on the chest. One-of-one piece signed by YnR.',
+  },
+  {
+    slug: 'money-already-printed-jeans', name: 'Money Already Printed Hand-Painted Jeans', category: 'denim', price: 45000,
+    file: 'product-8-money-printed-jeans.webp', sizes: ['30', '32', '34', '36'],
+    description: 'Light wash denim hand-painted with flaming "RECKLESS YHUTE" lettering, cash bags, and "THE MONEY IS ALREADY PRINTED — YOU JUST HAVE TO GET IT" across both legs.',
+  },
+  {
+    slug: 'let-me-out-skull-jeans', name: 'Let Me Out Skull Hand-Painted Jeans', category: 'denim', price: 45000,
+    file: 'product-9-let-me-out-jeans.webp', sizes: ['30', '32', '34', '36'],
+    description: 'Light wash denim featuring a freehand skull tearing through red-rimmed slashes on the thigh with "Let me out" hand-lettered underneath. Painted piece by piece in Mpape, Abuja.',
+  },
 ];
 
 // Mirrors the storefront's Delivery table. A NULL fee means the price is

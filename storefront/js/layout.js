@@ -77,13 +77,16 @@ function transmissionHtml(start = 0, extra = '', beat = '') {
 </div>`;
 }
 
-function siteHeaderHtml(section) {
+function tickerHtml() {
   const items = TICKER.concat(TICKER).map((t) => `<span>${t.toUpperCase().replace('YNR', 'YnR')}</span>`).join('');
+  return `<div class="ticker" aria-hidden="true"><div class="ticker-track">${items}</div></div>`;
+}
+
+function siteHeaderHtml(section) {
   const links = NAV.map((n) =>
     `<a href="${n.href}"${n.section === section ? ' aria-current="page"' : ''}>${n.label}</a>`).join('');
   return `<div class="grain" aria-hidden="true"></div>
 <header class="site-nav">
-  <div class="ticker" aria-hidden="true"><div class="ticker-track">${items}</div></div>
   <div class="nav-inner">
     <a href="/" class="wordmark" aria-label="YnR home">Yn<span>R</span></a>
     <nav class="nav-links" id="navLinks" aria-label="Main">${links}</nav>
@@ -159,4 +162,9 @@ function siteFooter() {
 // A transmission strip, right where it's called from (see transmissionHtml).
 function siteTransmission(start, extra, beat) {
   document.currentScript.insertAdjacentHTML('afterend', transmissionHtml(start, extra, beat));
+}
+
+// The sliding ticker banner, placed below the hero section.
+function siteTicker() {
+  document.currentScript.insertAdjacentHTML('afterend', tickerHtml());
 }

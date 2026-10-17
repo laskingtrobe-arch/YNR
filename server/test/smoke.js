@@ -92,7 +92,7 @@ async function req(method, url, body, headers = {}) {
   try {
     // ---- catalogue -------------------------------------------------------
     const products = await req('GET', '/api/products');
-    ok(products.json.products.length === 6, 'catalogue returns 6 seeded pieces');
+    ok(products.json.products.length === 9, 'catalogue returns 9 seeded pieces');
     const hoodie = products.json.products.find((p) => p.slug === 'ynr-icon-hoodie');
     ok(hoodie && hoodie.priceKobo === 7500000, 'price stored in kobo (₦75,000 = 7500000)',
       hoodie && String(hoodie.priceKobo));
