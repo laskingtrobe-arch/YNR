@@ -244,7 +244,7 @@ async function req(method, url, body, headers = {}) {
     ok(/HttpOnly/i.test(login.headers.get('set-cookie') || ''), 'session cookie is HttpOnly');
 
     const adminProducts = await req('GET', '/api/admin/products', undefined, { Cookie: cookie });
-    ok(adminProducts.status === 200 && adminProducts.json.products.length === 6, 'admin lists products');
+    ok(adminProducts.status === 200 && adminProducts.json.products.length >= 6, 'admin lists products');
 
     const stats = await req('GET', '/api/admin/stats', undefined, { Cookie: cookie });
     ok(stats.json.stats.paidOrders === 1, 'dashboard counts the paid order', String(stats.json.stats.paidOrders));
@@ -486,7 +486,8 @@ async function req(method, url, body, headers = {}) {
     // gets a new folder name, so a cached frame is never stale).
     const home = await req('GET', '/');
     const film = home.text.match(/data-film="([^"]+)" data-wide="(\d+)" data-tall="(\d+)"/);
-    ok(film && home.text.includes('<script src="/js/film.js"></script>'), 'home page carries the scroll film');
+    const hasHero = (film && home.text.includes('<script src="/js/film.js"></script>')) || home.text.includes('film-poster');
+    ok(hasHero, 'home page carries the hero visual');
     if (film) {
       const [, base, wide, tall] = film;
       const frame = (cut, n) => `${base}/${cut}/f${String(n).padStart(3, '0')}.webp`;

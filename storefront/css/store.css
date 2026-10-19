@@ -120,75 +120,11 @@ header.site-nav{position:sticky; top:0; z-index:500; background:var(--header-bg)
 .film-beat:not(.film-intro){display:none;}
 .film.is-live .film-beat{display:block;}
 .film.is-live .film-beat:not(.film-intro){opacity:0; visibility:hidden;}
-.film h1{font-size:clamp(38px, min(6.5vw, 9.5vh), 88px); color:var(--bone); margin:12px 0 0; text-shadow:0 6px 28px rgba(0,0,0,.7), .014em 0 rgba(225,29,46,.45), -.014em 0 rgba(36,214,255,.35);}
+.film h1{font-size:clamp(38px, min(6.5vw, 9.5vh), 88px); color:var(--bone); margin:12px 0 0; text-shadow:0 6px 28px rgba(0,0,0,.7);}
 .film .hero-scan{width:min(380px, 50vw); margin:16px auto 18px;}
 .film .hero-sub{max-width:420px; font-size:14.5px; line-height:1.55; margin:0 auto 24px; text-shadow:0 2px 14px rgba(0,0,0,.85);}
 .film .hero-cta-row{justify-content:center; gap:18px;}
 .film .btn-primary, .film .btn-outline{padding:14px 26px; font-size:12px;}
-/* alien radar / telemetry HUD in hero (red theme) */
-.alien-radar{display:inline-flex; align-items:center; gap:12px; padding:6px 14px 6px 8px; margin-bottom:14px; border:1px solid rgba(239,58,64,.48); background:rgba(14,4,5,.58); backdrop-filter:blur(6px); font-family:var(--f-mono); text-align:left; color:#ef3a40; box-shadow:0 0 26px rgba(239,58,64,.18), inset 0 0 14px rgba(239,58,64,.08);}
-.radar-scope{position:relative; width:34px; height:34px; flex-shrink:0; border-radius:50%; overflow:hidden; color:#ef3a40;}
-.radar-scope svg{width:100%; height:100%;}
-.radar-sweep{position:absolute; inset:0; border-radius:50%; background:conic-gradient(from 0deg, rgba(239,58,64,0) 0deg, rgba(239,58,64,.52) 65deg, rgba(239,58,64,0) 70deg); animation:radar-spin 2.8s linear infinite;}
-.radar-blip{animation:radar-pulse 1.4s ease-in-out infinite alternate;}
-@keyframes radar-spin{ to{transform:rotate(360deg);} }
-@keyframes radar-pulse{ from{opacity:.25;} to{opacity:1;} }
-.radar-readout{display:flex; flex-direction:column; gap:4px;}
-.radar-line{display:flex; align-items:center; gap:8px; font-size:10.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--bone);}
-.radar-dot{display:inline-block; width:6px; height:6px; border-radius:50%; background:#ef3a40; box-shadow:0 0 8px #ef3a40; animation:radar-pulse .9s ease-in-out infinite alternate;}
-.radar-sub{display:flex; align-items:center; gap:12px; font-size:9.5px; letter-spacing:.2em; color:#ef3a40; opacity:.95;}
-.radar-bars{display:inline-flex; align-items:flex-end; gap:2px; height:10px;}
-.radar-bars i{width:2px; background:#ef3a40; animation:radar-bar .8s ease-in-out infinite alternate;}
-.radar-bars i:nth-child(1){height:40%; animation-delay:0s;}
-.radar-bars i:nth-child(2){height:85%; animation-delay:.15s;}
-.radar-bars i:nth-child(3){height:55%; animation-delay:.3s;}
-.radar-bars i:nth-child(4){height:100%; animation-delay:.45s;}
-.radar-bars i:nth-child(5){height:65%; animation-delay:.6s;}
-@keyframes radar-bar{ from{transform:scaleY(.35); opacity:.5;} to{transform:scaleY(1); opacity:1;} }
-
-/* Corner target brackets & left/right side alien HUD rails */
-.hero-corner{position:absolute; z-index:2; width:26px; height:26px; border:solid rgba(239,58,64,.65); border-width:0; pointer-events:none;}
-.hero-corner.tl{top:22px; left:24px; border-top-width:2px; border-left-width:2px;}
-.hero-corner.tr{top:22px; right:24px; border-top-width:2px; border-right-width:2px;}
-.hero-corner.bl{bottom:22px; left:24px; border-bottom-width:2px; border-left-width:2px;}
-.hero-corner.br{bottom:22px; right:24px; border-bottom-width:2px; border-right-width:2px;}
-
-.hero-side-hud{position:absolute; top:50%; transform:translateY(-50%); z-index:2; display:flex; flex-direction:column; align-items:center; gap:14px; font-family:var(--f-mono); color:#ef3a40; pointer-events:none; user-select:none;}
-.hero-side-hud.left{left:clamp(14px, 2.2vw, 34px);}
-.hero-side-hud.right{right:clamp(14px, 2.2vw, 34px);}
-.side-hud-box{display:flex; flex-direction:column; align-items:center; gap:5px; padding:8px 7px; border:1px solid rgba(239,58,64,.42); background:rgba(14,4,5,.55); backdrop-filter:blur(4px); font-size:8.5px; letter-spacing:.16em; color:var(--bone);}
-.side-hud-box svg{width:24px; height:24px; color:#ef3a40;}
-.side-hud-line{width:1px; height:36px; background:linear-gradient(180deg, rgba(239,58,64,.75), rgba(239,58,64,.12));}
-.side-hud-vert{writing-mode:vertical-rl; transform:rotate(180deg); display:inline-flex; align-items:center; gap:8px; font-size:9.5px; letter-spacing:.22em; text-transform:uppercase; color:var(--bone-dim); text-shadow:0 1px 8px rgba(0,0,0,.85);}
-.hero-side-hud.right .side-hud-vert{transform:none;}
-.side-hud-ticks{display:flex; flex-direction:column; gap:4px; align-items:center;}
-.side-hud-ticks i{display:block; height:1.5px; background:#ef3a40; animation:radar-pulse 1.1s ease-in-out infinite alternate;}
-.side-hud-ticks i:nth-child(odd){width:12px;}
-.side-hud-ticks i:nth-child(even){width:6px; opacity:.6;}
-.side-hud-ticks i:nth-child(2){animation-delay:.2s;}
-.side-hud-ticks i:nth-child(3){animation-delay:.4s;}
-.side-hud-ticks i:nth-child(4){animation-delay:.6s;}
-.side-hud-ticks i:nth-child(5){animation-delay:.8s;}
-.side-hud-chip{padding:4px 7px; border:1px solid rgba(239,58,64,.45); background:rgba(124,16,21,.32); font-size:8.5px; letter-spacing:.16em; color:var(--bone); white-space:nowrap;}
-@media (max-width:900px){
-  .side-hud-chip{display:none;}
-}
-@media (max-width:640px){
-  .alien-radar{padding:6px 12px 6px 8px; gap:10px;}
-  .radar-line{font-size:9px; letter-spacing:.12em;}
-  .radar-sub{font-size:8.5px; gap:8px;}
-  .hero-side-hud{gap:10px; opacity:.85;}
-  .hero-side-hud.left{left:8px;}
-  .hero-side-hud.right{right:8px;}
-  .side-hud-box{padding:5px 4px; font-size:7.5px;}
-  .side-hud-box svg{width:18px; height:18px;}
-  .side-hud-vert{font-size:8px; letter-spacing:.16em;}
-  .hero-corner{width:18px; height:18px;}
-  .hero-corner.tl, .hero-corner.tr{top:12px;}
-  .hero-corner.bl, .hero-corner.br{bottom:12px;}
-  .hero-corner.tl, .hero-corner.bl{left:10px;}
-  .hero-corner.tr, .hero-corner.br{right:10px;}
-}
 /* a short screen (a phone on its side) has no room for the paragraph or
    the scroll cue under the buttons */
 @media (max-height:560px){
@@ -199,62 +135,7 @@ header.site-nav{position:sticky; top:0; z-index:500; background:var(--header-bg)
 .film-line{font-size:clamp(46px, min(9vw, 14vh), 120px); margin:16px 0 0;}
 .film-outro .btn-primary{margin-top:min(30px, 3.5vh);}
 
-/* transmissions: strips of alien code and intercepted messages
-   (layout.js), sped up and run backwards by the scroll (js/glitch.js) */
-.transmission{overflow:hidden; padding:14px 0; border-top:1px solid var(--hairline); border-bottom:1px solid var(--hairline); font-family:var(--f-mono); text-transform:uppercase; user-select:none; pointer-events:none;}
-.tx-row{white-space:nowrap; line-height:2; transition:transform .2s var(--ease);}
-.tx-track{display:inline-flex; animation:tx 80s linear infinite; will-change:transform;}
-.tx-code .tx-track{animation-duration:110s; animation-direction:reverse;}
-@keyframes tx{ from{transform:translateX(0);} to{transform:translateX(-50%);} }
-.tx-msg{font-size:12px; letter-spacing:.22em; color:var(--bone-dim); padding-right:64px;}
-.tx-msg b{color:var(--oxblood-bright); margin-right:14px; font-weight:600;}
-.tx-code span{font-size:11px; letter-spacing:.32em; color:var(--smoke-dark); padding-right:44px;}
-/* over the film: no rules, and lit up against the footage */
-.film-tx{position:absolute; left:0; right:0; z-index:1; padding:0; border:0; mix-blend-mode:screen; opacity:.85;}
-.film-tx-top{top:2%;}
-.film-tx-low{bottom:10%; top:auto;}
-.film-tx .tx-msg{color:var(--bone);}
-.film-tx .tx-code span{color:#ef3a40; opacity:.82;}
-
-/* glitch (js/glitch.js): a red/cyan split that jumps between offsets,
-   on headings and strips while the page scrolls fast or a heading
-   twitches on its own */
-@keyframes glitch-split{
-  0%{text-shadow:2px 0 rgba(225,29,46,.85), -2px 0 rgba(36,214,255,.6);}
-  25%{text-shadow:-3px 1px rgba(225,29,46,.85), 3px -1px rgba(36,214,255,.6);}
-  50%{text-shadow:1px -1px rgba(225,29,46,.85), -1px 2px rgba(36,214,255,.6);}
-  75%{text-shadow:-2px 0 rgba(225,29,46,.85), 3px 0 rgba(36,214,255,.6);}
-  100%{text-shadow:2px 1px rgba(225,29,46,.85), -3px -1px rgba(36,214,255,.6);}
-}
-/* Only a glyph flicker splits like this, never a heading for the length
-   of a fast scroll: redrawing big headings' shadows 25 times a second,
-   on top of the scroll and the film, made a fast flick drop a third of
-   its frames. Likewise the strips and the ticker don't split or tilt;
-   they already speed up and run backwards with the scroll. */
-/* while a heading's letters play through glyphs: its own text goes
-   transparent (still there for screen readers) under a moving copy */
-.is-glitching{position:relative; -webkit-text-fill-color:transparent;}
-.glitch-copy{position:absolute; inset:0; -webkit-text-fill-color:currentcolor; pointer-events:none; animation:glitch-split .16s steps(1) infinite;}
-.grain{transition:opacity .25s;}
-html.glitch-on .grain{opacity:.08;}
-html.glitch-hard .grain{opacity:.13;}
-/* a faint red/cyan fringe on headings all the time, so the glitch never
-   quite leaves */
-.display{text-shadow:.014em 0 rgba(225,29,46,.4), -.014em 0 rgba(36,214,255,.3);}
-
-/* bursts of glitch (js/glitch.js): short dashes of colour against the left
-   and right edges of the screen, and hairline tears that invert whatever
-   is under them. (Colour-filtering what's under the dashes too cost the
-   graphics chip a dropped frame or two each burst, for a barely visible
-   difference on dashes this small; the tears are thin enough to keep it.) */
-.glitch-veil{position:fixed; inset:0; z-index:9000; pointer-events:none; overflow:hidden; visibility:hidden;}
-.glitch-veil.on{visibility:visible;}
-.glitch-veil i{position:absolute;}
-.glitch-veil .red{background:rgba(225,29,46,.6);}
-.glitch-veil .cyan{background:rgba(36,214,255,.5);}
-.glitch-veil .green{background:rgba(60,255,120,.4);}
-.glitch-veil .white{background:rgba(242,239,233,.6);}
-.glitch-veil .tear{-webkit-backdrop-filter:invert(1); backdrop-filter:invert(1);}
+.display{text-shadow:none;}
 
 /* the living galaxy behind every page (js/galaxy.js): star tiles painted
    once, then only slid and faded (which costs the graphics chip next to
@@ -297,8 +178,8 @@ html.has-galaxy .signup{background:none;}
 .gallery-tile{display:block; position:relative; width:100%; margin:0 0 12px; padding:0; border:1px solid var(--hairline); background:var(--ink); overflow:hidden; break-inside:avoid; cursor:zoom-in;}
 @media (max-width:640px){ .gallery-tile{margin-bottom:8px;} }
 .gallery-tile img{width:100%; height:auto; transition:transform .5s var(--ease), filter .3s;}
-/* pointed at: a nudge in, and the picture splits red and cyan */
-.gallery-tile:hover img, .gallery-tile:focus-visible img{transform:scale(1.04); filter:drop-shadow(4px 0 rgba(225,29,46,.75)) drop-shadow(-4px 0 rgba(36,214,255,.6));}
+/* pointed at: a nudge in */
+.gallery-tile:hover img, .gallery-tile:focus-visible img{transform:scale(1.04);}
 .gallery-tile.is-video{cursor:pointer;}
 .tile-play{position:absolute; left:10px; bottom:10px; font-family:var(--f-mono); font-size:11px; letter-spacing:.08em; color:var(--on-accent); background:var(--oxblood); padding:5px 8px;}
 /* a row of the latest few, on other pages */
@@ -615,7 +496,7 @@ table.size-table th{color:var(--oxblood-bright); letter-spacing:.05em; text-tran
 .fx-hero::before{content:''; position:absolute; inset:0; z-index:-1; background:
   linear-gradient(90deg, rgba(4,6,14,.94) 0%, rgba(4,6,14,.66) 36%, rgba(4,6,14,.08) 70%),
   linear-gradient(0deg, rgba(4,6,14,.9) 0%, rgba(4,6,14,0) 46%);}
-.fx-hero h1.wide{font-size:clamp(38px, 8.4vw, 128px); margin:18px 0 0; text-shadow:.012em 0 rgba(225,29,46,.45), -.012em 0 rgba(36,214,255,.35);}
+.fx-hero h1.wide{font-size:clamp(38px, 8.4vw, 128px); margin:18px 0 0;}
 .fx-hero p{color:var(--bone-dim);}
 /* the numbered rail down the right-hand side */
 .fx-rail{position:absolute; right:clamp(16px, 3vw, 40px); top:50%; transform:translateY(-50%); display:flex; flex-direction:column; align-items:center; gap:12px; font-family:var(--f-mono); font-size:11px; letter-spacing:.14em; color:var(--bone-dim);}
@@ -870,7 +751,7 @@ table.size-table th{color:var(--oxblood-bright); letter-spacing:.05em; text-tran
 .moment-meta time{display:inline-flex; align-items:center; gap:10px; letter-spacing:.14em;}
 .moment-meta time::before{content:''; width:18px; height:1px; background:currentColor; opacity:.6;}
 .moment-title{position:absolute; left:0; right:0; bottom:0; z-index:1; margin:0; padding:0 20px 20px; color:#f2efe9; font-size:clamp(24px, 2.6vw, 38px); overflow-wrap:break-word;
-  text-shadow:.012em 0 rgba(225,29,46,.45), -.012em 0 rgba(36,214,255,.35), 0 2px 22px rgba(4,6,14,.5);}
+  text-shadow:0 2px 22px rgba(4,6,14,.5);}
 .moment.is-wide .moment-title{padding:0 28px 26px; font-size:clamp(30px, 3.6vw, 54px);}
 /* the pop-up's own poster, pinned over the edge of the photo like a flyer
    on a wall (rotate, not transform, so a transform added later can't undo it) */

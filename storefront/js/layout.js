@@ -67,14 +67,8 @@ function txCode(seed, count) {
 // each written out twice so its loop joins up seamlessly. `start` picks
 // which message leads, so strips on the same page differ; `extra` adds
 // classes and `beat` makes it one of the film's timed layers.
-function transmissionHtml(start = 0, extra = '', beat = '') {
-  const msgs = TRANSMISSIONS.map((_, i) => TRANSMISSIONS[(i + start) % TRANSMISSIONS.length])
-    .map((m) => `<span class="tx-msg"><b>//</b>${m}</span>`).join('');
-  const code = txCode(start + 7, 16).map((c) => `<span>${c}</span>`).join('');
-  return `<div class="transmission${extra ? ` ${extra}` : ''}" aria-hidden="true"${beat ? ` data-beat="${beat}"` : ''}>
-  <div class="tx-row"><div class="tx-track">${msgs}${msgs}</div></div>
-  <div class="tx-row tx-code"><div class="tx-track">${code}${code}</div></div>
-</div>`;
+function transmissionHtml() {
+  return '';
 }
 
 function tickerHtml() {
@@ -100,8 +94,7 @@ function siteHeaderHtml(section) {
 
 function siteFooterHtml() {
   const wa = `https://wa.me/${WA_NUMBER}`;
-  return `${transmissionHtml(3)}
-<footer>
+  return `<footer>
   <div class="wrap">
     <div class="footer-top">
       <div class="footer-brand">
@@ -159,10 +152,8 @@ function siteFooter() {
   document.currentScript.insertAdjacentHTML('afterend', siteFooterHtml());
 }
 
-// A transmission strip, right where it's called from (see transmissionHtml).
-function siteTransmission(start, extra, beat) {
-  document.currentScript.insertAdjacentHTML('afterend', transmissionHtml(start, extra, beat));
-}
+// A transmission strip stub
+function siteTransmission() {}
 
 // The sliding ticker banner, placed below the hero section.
 function siteTicker() {

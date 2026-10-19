@@ -55,7 +55,6 @@ const PAGE_INIT = {
 function start() {
   wireUp();
   initSmoothScroll();
-  initGlitch(); // before the page's own init: it listens for the film's captions
   initGalaxy();
   loadBag();
   renderCart();
