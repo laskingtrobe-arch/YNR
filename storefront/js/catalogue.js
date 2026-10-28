@@ -18,13 +18,13 @@ const categorySlug = (c) => String(c || '').toLowerCase().replace(/[^a-z0-9]+/g,
 // A real link, so a piece can be opened in a new tab or shared as a URL.
 function productCard(p) {
   const sold = p.isSold;
-  const tag = sold ? 'Sold — Repaint' : (p.isReserved ? 'Reserved' : 'One Of One');
+  const tag = sold ? 'Sold — Order Custom' : (p.isReserved ? 'Reserved' : 'One Of One');
   return `
   <a class="product-card ${sold ? 'is-sold' : ''}" href="${productUrl(p.slug)}">
     <div class="product-media">
       <div class="one-tag ${sold ? 'sold-badge' : ''}">${tag}</div>
-      <img src="${imgUrl(p.image)}" alt="${escapeAttr(p.name)}, hand-painted by YnR" loading="lazy">
-      <div class="quick-add">${sold ? 'Ask For A Repaint' : 'View &amp; Order'}</div>
+      <img src="${imgUrl(p.image)}" alt="${escapeAttr(p.name)}, one-of-one by YnR" loading="lazy">
+      <div class="quick-add">${sold ? 'Order Custom' : 'View &amp; Order'}</div>
     </div>
     <div class="product-info">
       <div><h4>${escapeHtml(p.name)}</h4><div class="pmeta">${escapeHtml(p.category)}</div></div>
@@ -122,7 +122,7 @@ async function openProduct(slug) {
     track('product_view', { slug: p.slug });
 
     document.title = `${p.name} — YnR`;
-    document.getElementById('pdpEyebrow').textContent = 'Hand-Painted · ' + p.category;
+    document.getElementById('pdpEyebrow').textContent = 'One Of One · ' + p.category;
     document.getElementById('pdpName').textContent = p.name;
     document.getElementById('pdpCrumbName').textContent = p.name;
     const crumb = document.getElementById('pdpCategory');

@@ -29,42 +29,42 @@ const PRODUCTS = [
   {
     slug: 'out-of-this-world', name: 'Out Of This World Tee', category: 'tees', price: 49999,
     file: 'product-1-out-of-this-world-tee.jpg', sizes: ['S', 'M', 'L', 'XL'],
-    description: 'Navy oversized tee, hand-painted end to end — a UFO beaming down over a lone figure, with "Out Of This World" hand-lettered in ice-blue across the chest. No two brush strokes are the same, so this exact piece exists once.',
+    description: 'Navy oversized tee — a UFO beaming down over a lone figure, with "Out Of This World" lettering in ice-blue across the chest. This exact piece exists once.',
   },
   {
     slug: 'aliens-are-coming', name: 'Aliens Are Coming Long Sleeve', category: 'long-sleeves', price: 59999,
     file: 'product-4-aliens-are-coming-longsleeve.jpg', sizes: ['M', 'L', 'XL'],
-    description: 'Charcoal layered-sleeve long sleeve with a distressed finish and a hand-signed "Young and Reckless" tag. Bold green "The Aliens Are Coming" graphic across the chest, finished with a small hand-drawn alien detail.',
+    description: 'Charcoal layered-sleeve long sleeve with a distressed finish and a "Young and Reckless" tag. Bold green "The Aliens Are Coming" graphic across the chest, finished with custom alien artwork.',
   },
   {
     slug: 'alien-invasion', name: 'Alien Invasion Tee', category: 'tees', price: 49999,
     file: 'product-3-alien-invasion-tee.jpg', sizes: ['S', 'M', 'L', 'XL'],
-    description: 'White oversized tee with a full-chest "Alien Invasion" graphic — chaos, awakening, and a new world order, hand-detailed over a printed base. Every piece gets its own hand-finishing pass before it leaves the shop.',
+    description: 'White oversized tee with a full-chest "Alien Invasion" graphic — chaos, awakening, and a new world order. Every piece gets its own custom finishing pass before it leaves the shop.',
   },
   {
     slug: 'reckless-yute', name: 'Reckless Yute Limited Edition Tee', category: 'tees', price: 49999,
     file: 'product-5-reckless-yute-tee.jpg', sizes: ['S', 'M', 'L', 'XL'],
-    description: 'Black oversized tee, custom "Reckless Yute" wordmark in red and white with an original character illustration across the chest. One of the more requested pieces — once it\'s gone, we repaint the next.',
+    description: 'Black oversized tee, custom "Reckless Yute" wordmark in red and white with an original character illustration across the chest. One of the more requested pieces — once it\'s gone, we craft the next.',
   },
   {
-    slug: 'young-reckless-jeans', name: 'Young Reckless Hand-Painted Jeans', category: 'denim', price: 35000,
+    slug: 'young-reckless-jeans', name: 'Young Reckless Custom Jeans', category: 'denim', price: 35000,
     file: 'product-6-young-reckless-jeans.jpg', sizes: ['30', '32', '34', '36'],
-    description: 'Dark wash denim, hand-painted front and back with a falling angel figure and "Young Reckless" hand-lettered across the thigh. Every pair is painted individually, so the exact placement is never identical twice.',
+    description: 'Dark wash denim with a falling angel figure and "Young Reckless" lettering across the thigh. Every pair is crafted individually, so the exact placement is never identical twice.',
   },
   {
-    slug: 'stay-reckless-vest', name: 'Stay Reckless Hand-Painted Puffer Vest', category: 'hoodies', price: 65000,
+    slug: 'stay-reckless-vest', name: 'Stay Reckless Custom Puffer Vest', category: 'hoodies', price: 65000,
     file: 'product-7-stay-reckless-vest.webp', sizes: ['M', 'L', 'XL'],
-    description: 'Oxblood zip puffer vest, hand-painted across both panels with "STAY RECKLESS // WORK HARD DREAM BIG" and a custom GTA-inspired 5-star HUD on the chest. One-of-one piece signed by YnR.',
+    description: 'Oxblood zip puffer vest across both panels with "STAY RECKLESS // WORK HARD DREAM BIG" and a custom GTA-inspired 5-star HUD on the chest. One-of-one piece signed by YnR.',
   },
   {
-    slug: 'money-already-printed-jeans', name: 'Money Already Printed Hand-Painted Jeans', category: 'denim', price: 45000,
+    slug: 'money-already-printed-jeans', name: 'Money Already Printed Custom Jeans', category: 'denim', price: 45000,
     file: 'product-8-money-printed-jeans.webp', sizes: ['30', '32', '34', '36'],
-    description: 'Light wash denim hand-painted with flaming "RECKLESS YHUTE" lettering, cash bags, and "THE MONEY IS ALREADY PRINTED — YOU JUST HAVE TO GET IT" across both legs.',
+    description: 'Light wash denim with flaming "RECKLESS YHUTE" lettering, cash bags, and "THE MONEY IS ALREADY PRINTED — YOU JUST HAVE TO GET IT" across both legs.',
   },
   {
-    slug: 'let-me-out-skull-jeans', name: 'Let Me Out Skull Hand-Painted Jeans', category: 'denim', price: 45000,
+    slug: 'let-me-out-skull-jeans', name: 'Let Me Out Skull Custom Jeans', category: 'denim', price: 45000,
     file: 'product-9-let-me-out-jeans.webp', sizes: ['30', '32', '34', '36'],
-    description: 'Light wash denim featuring a freehand skull tearing through red-rimmed slashes on the thigh with "Let me out" hand-lettered underneath. Painted piece by piece in Mpape, Abuja.',
+    description: 'Light wash denim featuring a skull tearing through red-rimmed slashes on the thigh with "Let me out" lettering underneath. Crafted piece by piece in Mpape, Abuja.',
   },
 ];
 
@@ -126,7 +126,7 @@ async function run() {
     const url = copyImage(p.file);
     if (url) {
       await db.run('INSERT INTO product_images (id, product_id, url, alt, sort) VALUES (?,?,?,?,0)',
-        [id(), pid, url, `${p.name}, hand-painted by YnR`]);
+        [id(), pid, url, `${p.name}, one-of-one by YnR`]);
     }
     added++;
   }

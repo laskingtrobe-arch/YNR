@@ -17,7 +17,7 @@
 const GALLERY_GROUPS = {
   all: 'All',
   alien: 'Alien Invasion',
-  painted: 'Hand-painted',
+  painted: 'The Archive',
   crew: 'The crew',
   shop: 'The shop',
   events: 'Events',

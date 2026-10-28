@@ -28,7 +28,7 @@ const ICON = {
   instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg>',
 };
 
-const TICKER = ['Hand-painted in Abuja', 'Every piece is one-of-one', '4 years of YnR', 'Worldwide delivery'];
+const TICKER = ['Made in Abuja', 'Every piece is one-of-one', '4 years of YnR', 'Worldwide delivery'];
 
 /* Intercepted transmissions: strips of alien code and messages that drift
    side to side across the site (js/glitch.js speeds them up as the page
@@ -38,7 +38,7 @@ const TRANSMISSIONS = [
   'Incoming transmission',
   'Signal locked // Mpape, Abuja // 9.13°N 7.49°E',
   'They came for the one-of-one',
-  'Subject acquired: hand-painted, not printed',
+  'Subject acquired: one-of-one, not printed',
   'Abduction in progress',
   'Earth style detected // extracting',
   'Young &amp; Reckless // cleared for take-off',
@@ -99,7 +99,7 @@ function siteFooterHtml() {
     <div class="footer-top">
       <div class="footer-brand">
         <a href="/" class="wordmark">Yn<span>R</span></a>
-        <p>Hand-painted, one-of-one streetwear out of Mpape, Abuja. Four years of making pieces that don't come off a factory line.</p>
+        <p>One-of-one streetwear out of Mpape, Abuja. Four years of making pieces that don't come off a factory line.</p>
         <div class="foot-social">
           <a href="${wa}" target="_blank" rel="noopener" aria-label="WhatsApp">${ICON.waLine}</a>
           <a href="https://www.instagram.com/ynr_multiverse/" target="_blank" rel="noopener" aria-label="Instagram: @ynr_multiverse">${ICON.instagram}</a>
@@ -126,7 +126,7 @@ function siteFooterHtml() {
       </div>
     </div>
     <div class="footer-bottom">
-      <small>© ${new Date().getFullYear()} YnR — Young &amp; Reckless. Hand-painted in Abuja.</small>
+      <small>© ${new Date().getFullYear()} YnR — Young &amp; Reckless. Mpape, Abuja.</small>
     </div>
   </div>
 </footer>

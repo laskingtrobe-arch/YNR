@@ -1,6 +1,6 @@
 # YnR — Young & Reckless
 
-Hand-painted, one-of-one streetwear out of Mpape, Abuja.
+One-of-one streetwear out of Mpape, Abuja.
 
 This repository holds the online shop: the customer-facing storefront, the
 back end that runs it, and the admin panel the shop is managed from.

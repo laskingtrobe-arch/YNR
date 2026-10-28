@@ -155,7 +155,7 @@ function paymentPage({ kind, order: o, items, zoneLabel, siteUrl, imageBase = ''
 </div></main>
 
 <footer><div class="wrap"><div class="footer-bottom">
-  <small>© ${new Date().getFullYear()} YnR — Young &amp; Reckless. Hand-painted in Abuja.</small>
+  <small>© ${new Date().getFullYear()} YnR — Young &amp; Reckless. Mpape, Abuja.</small>
   <small><a href="${esc(siteUrl)}/privacy.html" style="color:inherit;">Privacy</a> ·
     <a href="${esc(siteUrl)}/terms.html" style="color:inherit;">Terms</a> ·
     <a href="${esc(siteUrl)}/shipping-returns.html" style="color:inherit;">Shipping &amp; Returns</a></small>

@@ -154,7 +154,7 @@ function layout({ subject, preheader, reference, eyebrow, title, lede, body, foo
   <tr><td bgcolor="${C.paper}" class="px" style="background:${C.paper};padding:38px 40px 40px;">${body}</td></tr>
 
   <tr><td class="px" align="center" style="padding:30px 40px 0;font-family:${BODY};font-size:12px;line-height:19px;color:${C.muted};">
-    <b style="color:${C.ink};">YnR — Young &amp; Reckless</b><br>Hand-painted, one-of-one streetwear · Mpape, Abuja<br>
+    <b style="color:${C.ink};">YnR — Young &amp; Reckless</b><br>One-of-one streetwear · Mpape, Abuja<br>
     <a href="${esc(siteUrl)}/" style="color:${C.muted};">Shop</a> &nbsp;·&nbsp;
     <a href="${esc(siteUrl)}/shipping-returns.html" style="color:${C.muted};">Shipping &amp; Returns</a> &nbsp;·&nbsp;
     <a href="${esc(siteUrl)}/privacy.html" style="color:${C.muted};">Privacy</a>
@@ -265,8 +265,8 @@ const STATUS = {
     preheader: (o) => `Order ${o.reference} is confirmed.`,
   },
   in_production: {
-    eyebrow: 'Being painted',
-    title: () => 'Your piece is being painted.',
+    eyebrow: 'In production',
+    title: () => 'Your piece is in production.',
     lede: (o) => `Work has started on your piece for order ${ref(o)}. Every piece is painted by hand, so this is the part that takes the care.`,
     subject: (o) => `Your piece is being painted — ${o.reference}`,
     preheader: (o) => `Work has started on your piece — order ${o.reference}.`,
