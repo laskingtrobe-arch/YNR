@@ -29,6 +29,7 @@ async function shape(p) {
     priceKobo: p.price_kobo,
     priceLabel: formatNaira(p.price_kobo),
     description: p.description,
+    measurements: p.measurements || '',
     sizes: JSON.parse(p.sizes_json || '[]'),
     // 'held' is deliberately reported as available: another shopper should be
     // able to enquire, they just cannot complete checkout while it is reserved.

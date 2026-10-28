@@ -192,7 +192,11 @@
         <div class="field"><label for="pCat">Category</label><select id="pCat"></select></div>
       </div>
       <div class="row two">
-        <div class="field"><label for="pSizes">Sizes (comma separated)</label><input id="pSizes" placeholder="S, M, L, XL"></div>
+        <div class="field">
+          <label for="pSizes">Size</label>
+          <input id="pSizes" placeholder="e.g. XL or 32">
+          <p class="muted" style="font-size:11px;margin:4px 0 0">For 1-of-1 pieces, enter the exact piece size (or comma-separated if multiple).</p>
+        </div>
         <div class="field"><label for="pStatus">Status</label>
           <select id="pStatus">
             <option value="available">Available</option>
@@ -200,6 +204,11 @@
             <option value="repaint_only">Repaint only</option>
           </select>
         </div>
+      </div>
+      <div class="field">
+        <label for="pMeasurements">Detailed Measurements (Inches &amp; CM)</label>
+        <input id="pMeasurements" placeholder="e.g. Chest: 46 in (117 cm) · Length: 30 in (76 cm) · Waist: 34 in (86 cm)">
+        <p class="muted" style="font-size:11px;margin:4px 0 0">Exact garment measurements so customers know the precise fit.</p>
       </div>
       <div class="field"><label for="pDesc">Description</label><textarea id="pDesc" rows="4"></textarea></div>
       <div class="field" id="pImagesWrap">
@@ -352,6 +361,7 @@ function openPiece(p){
   $('#pName').value = p ? p.name : '';
   $('#pPrice').value = p ? p.price : '';
   $('#pSizes').value = p ? p.sizes.join(', ') : '';
+  $('#pMeasurements').value = p && p.measurements ? p.measurements : '';
   $('#pDesc').value = p ? p.description : '';
   $('#pStatus').value = p ? (p.status === 'held' ? 'available' : p.status) : 'available';
   $('#pCat').innerHTML = '<option value="">No category</option>' +
@@ -389,6 +399,7 @@ $('#pieceForm').addEventListener('submit', async (e)=>{
     price: Number($('#pPrice').value),
     categoryId: $('#pCat').value || null,
     sizes: $('#pSizes').value,
+    measurements: $('#pMeasurements').value,
     description: $('#pDesc').value,
     status: $('#pStatus').value,
   };

@@ -109,6 +109,7 @@ router.get('/products', wrap(async (req, res) => {
     price: p.price_kobo / 100,
     priceLabel: formatNaira(p.price_kobo),
     description: p.description,
+    measurements: p.measurements || '',
     sizes: JSON.parse(p.sizes_json || '[]'),
     status: p.status,
     heldUntil: p.held_until,
@@ -126,6 +127,7 @@ function readProductBody(body, existing) {
   const price = Number(body.price);
   if (!Number.isFinite(price) || price < 0) throw bad('Price must be a number in naira.', 'price_invalid');
 
+  const measurements = clean(body.measurements || (existing ? existing.measurements : ''), 2000);
   const status = PRODUCT_STATUSES.includes(body.status) ? body.status : (existing ? existing.status : 'available');
   let sizes = body.sizes;
   if (typeof sizes === 'string') sizes = sizes.split(',').map((s) => s.trim()).filter(Boolean);
@@ -137,6 +139,7 @@ function readProductBody(body, existing) {
     categoryId: body.categoryId ? String(body.categoryId) : (existing ? existing.category_id : null),
     priceKobo: toKobo(price),
     description: clean(body.description, 4000),
+    measurements,
     sizes: JSON.stringify(sizes.slice(0, 20).map((s) => clean(s, 12))),
     status,
     published: body.published === false || body.published === 'false' ? 0 : 1,
@@ -151,10 +154,10 @@ router.post('/products', wrap(async (req, res) => {
   }
   const pid = id();
   await db.run(`
-    INSERT INTO products (id, slug, name, category_id, price_kobo, description, sizes_json,
+    INSERT INTO products (id, slug, name, category_id, price_kobo, description, measurements, sizes_json,
       status, sort, published, created_at, updated_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`,
-    [pid, d.slug, d.name, d.categoryId, d.priceKobo, d.description, d.sizes,
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+    [pid, d.slug, d.name, d.categoryId, d.priceKobo, d.description, d.measurements, d.sizes,
      d.status, d.sort, d.published, db.now(), db.now()]);
   await audit(req.admin.id, 'product.create', d.slug, d.name);
   res.status(201).json({ ok: true, id: pid, slug: d.slug });
@@ -170,8 +173,8 @@ router.patch('/products/:id', wrap(async (req, res) => {
 
   await db.run(`
     UPDATE products SET slug=?, name=?, category_id=?, price_kobo=?, description=?,
-      sizes_json=?, status=?, sort=?, published=?, updated_at=? WHERE id=?`,
-    [d.slug, d.name, d.categoryId, d.priceKobo, d.description, d.sizes,
+      measurements=?, sizes_json=?, status=?, sort=?, published=?, updated_at=? WHERE id=?`,
+    [d.slug, d.name, d.categoryId, d.priceKobo, d.description, d.measurements, d.sizes,
      d.status, d.sort, d.published, db.now(), existing.id]);
   await audit(req.admin.id, 'product.update', d.slug, d.name);
   res.json({ ok: true });

@@ -45,10 +45,11 @@
 
         <div class="option-block">
           <div class="option-label" style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-            <span>Size</span>
-            <button type="button" class="size-guide-link" onclick="toggleSizeGuide(true)">Size guide</button>
+            <span id="pdpSizeLabel">Size</span>
+            <button type="button" class="size-guide-link" onclick="toggleSizeGuide(true)">Size guide &amp; measurements</button>
           </div>
           <div class="size-row" id="sizeRow"></div>
+          <div id="pdpMeasurements" style="display:none;"></div>
         </div>
 
         <div class="pdp-actions"></div>
@@ -92,7 +93,8 @@
 
 <div class="modal-overlay" id="sizeModal">
   <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="sizeModalTitle">
-    <div class="modal-head"><h3 id="sizeModalTitle">Size Guide</h3><button class="modal-close" onclick="toggleSizeGuide(false)" aria-label="Close">✕</button></div>
+    <div class="modal-head"><h3 id="sizeModalTitle">Size Guide &amp; Measurements</h3><button class="modal-close" onclick="toggleSizeGuide(false)" aria-label="Close">✕</button></div>
+    <div id="modalPieceMeasurements" style="display:none;"></div>
     <table class="size-table">
       <thead><tr><th>Size</th><th>Chest (in)</th><th>Chest (cm)</th><th>Length (in)</th><th>Length (cm)</th></tr></thead>
       <tbody>

@@ -23,46 +23,55 @@ const CATEGORIES = [
 const PRODUCTS = [
   {
     slug: 'ynr-icon-hoodie', name: 'YnR Icon Hoodie', category: 'hoodies', price: 75000,
+    measurements: 'Chest: 48 in (122 cm) · Length: 30 in (76 cm) · Shoulders: 22 in (56 cm)',
     file: 'product-2-ynr-icon-hoodie.jpg', sizes: ['M', 'L', 'XL', 'XXL'],
     description: 'Heather grey oversized hoodie with the YnR circular emblem on the chest and contrast dark cuffs. Heavyweight fleece built for layering — the everyday piece with the YnR mark front and centre.',
   },
   {
     slug: 'out-of-this-world', name: 'Out Of This World Tee', category: 'tees', price: 49999,
+    measurements: 'Chest: 44 in (112 cm) · Length: 29 in (74 cm) · Shoulders: 20 in (51 cm)',
     file: 'product-1-out-of-this-world-tee.jpg', sizes: ['S', 'M', 'L', 'XL'],
     description: 'Navy oversized tee — a UFO beaming down over a lone figure, with "Out Of This World" lettering in ice-blue across the chest. This exact piece exists once.',
   },
   {
     slug: 'aliens-are-coming', name: 'Aliens Are Coming Long Sleeve', category: 'long-sleeves', price: 59999,
+    measurements: 'Chest: 44 in (112 cm) · Length: 29.5 in (75 cm) · Sleeves: 26 in (66 cm)',
     file: 'product-4-aliens-are-coming-longsleeve.jpg', sizes: ['M', 'L', 'XL'],
     description: 'Charcoal layered-sleeve long sleeve with a distressed finish and a "Young and Reckless" tag. Bold green "The Aliens Are Coming" graphic across the chest, finished with custom alien artwork.',
   },
   {
     slug: 'alien-invasion', name: 'Alien Invasion Tee', category: 'tees', price: 49999,
+    measurements: 'Chest: 44 in (112 cm) · Length: 29 in (74 cm) · Shoulders: 20 in (51 cm)',
     file: 'product-3-alien-invasion-tee.jpg', sizes: ['S', 'M', 'L', 'XL'],
     description: 'White oversized tee with a full-chest "Alien Invasion" graphic — chaos, awakening, and a new world order. Every piece gets its own custom finishing pass before it leaves the shop.',
   },
   {
     slug: 'reckless-yute', name: 'Reckless Yute Limited Edition Tee', category: 'tees', price: 49999,
+    measurements: 'Chest: 44 in (112 cm) · Length: 29 in (74 cm) · Shoulders: 20 in (51 cm)',
     file: 'product-5-reckless-yute-tee.jpg', sizes: ['S', 'M', 'L', 'XL'],
     description: 'Black oversized tee, custom "Reckless Yute" wordmark in red and white with an original character illustration across the chest. One of the more requested pieces — once it\'s gone, we craft the next.',
   },
   {
     slug: 'young-reckless-jeans', name: 'Young Reckless Custom Jeans', category: 'denim', price: 35000,
+    measurements: 'Waist: 32 in (81 cm) · Inseam: 32 in (81 cm) · Outseam: 42 in (107 cm)',
     file: 'product-6-young-reckless-jeans.jpg', sizes: ['30', '32', '34', '36'],
     description: 'Dark wash denim with a falling angel figure and "Young Reckless" lettering across the thigh. Every pair is crafted individually, so the exact placement is never identical twice.',
   },
   {
     slug: 'stay-reckless-vest', name: 'Stay Reckless Custom Puffer Vest', category: 'hoodies', price: 65000,
+    measurements: 'Chest: 44 in (112 cm) · Length: 27 in (69 cm)',
     file: 'product-7-stay-reckless-vest.webp', sizes: ['M', 'L', 'XL'],
     description: 'Oxblood zip puffer vest across both panels with "STAY RECKLESS // WORK HARD DREAM BIG" and a custom GTA-inspired 5-star HUD on the chest. One-of-one piece signed by YnR.',
   },
   {
     slug: 'money-already-printed-jeans', name: 'Money Already Printed Custom Jeans', category: 'denim', price: 45000,
+    measurements: 'Waist: 34 in (86 cm) · Inseam: 32 in (81 cm) · Outseam: 42 in (107 cm)',
     file: 'product-8-money-printed-jeans.webp', sizes: ['30', '32', '34', '36'],
     description: 'Light wash denim with flaming "RECKLESS YHUTE" lettering, cash bags, and "THE MONEY IS ALREADY PRINTED — YOU JUST HAVE TO GET IT" across both legs.',
   },
   {
     slug: 'let-me-out-skull-jeans', name: 'Let Me Out Skull Custom Jeans', category: 'denim', price: 45000,
+    measurements: 'Waist: 32 in (81 cm) · Inseam: 32 in (81 cm) · Outseam: 42 in (107 cm)',
     file: 'product-9-let-me-out-jeans.webp', sizes: ['30', '32', '34', '36'],
     description: 'Light wash denim featuring a skull tearing through red-rimmed slashes on the thigh with "Let me out" lettering underneath. Crafted piece by piece in Mpape, Abuja.',
   },
@@ -117,11 +126,11 @@ async function run() {
     if (await db.get('SELECT 1 FROM products WHERE slug=?', [p.slug])) { skipped++; continue; }
     const pid = id();
     await db.run(`
-      INSERT INTO products (id, slug, name, category_id, price_kobo, description, sizes_json,
+      INSERT INTO products (id, slug, name, category_id, price_kobo, description, measurements, sizes_json,
         status, sort, published, created_at, updated_at)
-      VALUES (?,?,?,?,?,?,?,'available',?,1,?,?)`,
-      [pid, p.slug, p.name, catIds[p.category], toKobo(p.price), p.description,
-       JSON.stringify(p.sizes), i, db.now(), db.now()]);
+      VALUES (?,?,?,?,?,?,?,?,'available',?,1,?,?)`,
+      [pid, p.slug, p.name, catIds[p.category], toKobo(p.price), p.description, p.measurements || '',
+        JSON.stringify(p.sizes), i, db.now(), db.now()]);
 
     const url = copyImage(p.file);
     if (url) {

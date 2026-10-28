@@ -135,10 +135,52 @@ async function openProduct(slug) {
     document.getElementById('pdpOneTag').textContent =
       p.isSold ? 'Sold — Repaint Available' : 'One Of One';
 
-    document.getElementById('sizeRow').innerHTML = (p.sizes || []).map((s) =>
-      `<button class="size-chip ${s === selectedSize ? 'active' : ''}"
-               onclick="selectSize('${escapeAttr(s)}',this)">${escapeHtml(s)}</button>`
-    ).join('');
+    const sizes = p.sizes || [];
+    selectedSize = sizes[0] || '';
+
+    const sizeRow = document.getElementById('sizeRow');
+    const sizeLbl = document.getElementById('pdpSizeLabel');
+    if (sizes.length === 1) {
+      if (sizeLbl) sizeLbl.innerHTML = 'Size: <strong style="color:var(--bone);font-size:15px;">' + escapeHtml(sizes[0]) + '</strong>';
+      sizeRow.innerHTML = '<div class="size-chip active" style="cursor:default; pointer-events:none;">' + escapeHtml(sizes[0]) + ' · 1-of-1 Piece Size</div>';
+    } else if (sizes.length > 1) {
+      if (sizeLbl) sizeLbl.textContent = 'Size';
+      sizeRow.innerHTML = sizes.map((s) =>
+        `<button class="size-chip ${s === selectedSize ? 'active' : ''}"
+                 onclick="selectSize('${escapeAttr(s)}',this)">${escapeHtml(s)}</button>`
+      ).join('');
+    } else {
+      if (sizeLbl) sizeLbl.textContent = 'Size';
+      sizeRow.innerHTML = '<div class="size-chip active" style="cursor:default; pointer-events:none;">One Size</div>';
+    }
+
+    const measEl = document.getElementById('pdpMeasurements');
+    if (measEl) {
+      if (p.measurements) {
+        measEl.innerHTML =
+          '<div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:6px; padding:10px 14px; margin-top:10px;">' +
+            '<div style="font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--ox-bright,#ff4d4d); margin-bottom:4px; font-weight:700;">Garment Measurements (Inches &amp; CM)</div>' +
+            '<div style="font-size:13px; color:var(--bone); line-height:1.5;">' + escapeHtml(p.measurements) + '</div>' +
+          '</div>';
+        measEl.style.display = 'block';
+      } else {
+        measEl.style.display = 'none';
+      }
+    }
+
+    const modalMeas = document.getElementById('modalPieceMeasurements');
+    if (modalMeas) {
+      if (p.measurements) {
+        modalMeas.innerHTML =
+          '<div style="background:rgba(224,32,32,0.08); border:1px solid rgba(224,32,32,0.3); border-radius:6px; padding:12px 14px; margin-bottom:18px;">' +
+            '<strong style="color:var(--bone); display:block; margin-bottom:4px; font-size:13px;">Exact Measurements For This Piece:</strong>' +
+            '<span style="color:var(--bone); font-size:14px; line-height:1.4;">' + escapeHtml(p.measurements) + '</span>' +
+          '</div>';
+        modalMeas.style.display = 'block';
+      } else {
+        modalMeas.style.display = 'none';
+      }
+    }
 
     renderPdpActions(p);
     renderGrid(document.getElementById('relatedGrid'), data.related);

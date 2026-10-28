@@ -162,6 +162,7 @@ CREATE TABLE IF NOT EXISTS products (
   category_id   TEXT REFERENCES categories(id),
   price_kobo    BIGINT NOT NULL CHECK (price_kobo >= 0),
   description   TEXT NOT NULL DEFAULT '',
+  measurements  TEXT NOT NULL DEFAULT '',
   sizes_json    TEXT NOT NULL DEFAULT '[]',
   status        TEXT NOT NULL DEFAULT 'available',
   held_until    BIGINT,
@@ -171,6 +172,7 @@ CREATE TABLE IF NOT EXISTS products (
   created_at    BIGINT NOT NULL,
   updated_at    BIGINT NOT NULL
 );
+ALTER TABLE products ADD COLUMN IF NOT EXISTS measurements TEXT NOT NULL DEFAULT '';
 CREATE INDEX IF NOT EXISTS idx_products_status ON products(status);
 CREATE INDEX IF NOT EXISTS idx_products_held   ON products(held_until);
 
