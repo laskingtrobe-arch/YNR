@@ -8,7 +8,14 @@ const { acquireHold, orderMessage, whatsappLink, notifyOwner, sendReceipt } = re
 const router = express.Router();
 
 function itemsFor(orderId) {
-  return db.all('SELECT * FROM order_items WHERE order_id = ? ORDER BY seq', [orderId]);
+  return db.all(
+    `SELECT oi.*, p.slug
+       FROM order_items oi
+       LEFT JOIN products p ON p.id = oi.product_id
+      WHERE oi.order_id = ?
+      ORDER BY oi.seq`,
+    [orderId]
+  );
 }
 
 async function publicOrder(order) {

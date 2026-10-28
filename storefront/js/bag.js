@@ -100,9 +100,11 @@ function orderThisNow() {
   const p = PRODUCTS[currentProduct];
   if (!p) return;
 
+  const url = `${window.location.origin}/product?id=${encodeURIComponent(p.slug)}`;
+  const sizeText = selectedSize ? ` (Size: ${selectedSize})` : '';
   const msg = p.isSold
-    ? `Hi YnR, the ${p.name} is sold — could you repaint one for me?`
-    : `Hi YnR, I'd like to order the ${p.name}${selectedSize ? ' — Size ' + selectedSize : ''} — ${p.priceLabel}.`;
+    ? `Hi YnR, I saw "${p.name}" is sold out (${url}) — could you create a custom 1-of-1 piece like this for me?`
+    : `Hi YnR, I'd like to order "${p.name}"${sizeText} — ${p.priceLabel}.\n\n🔗 Product link: ${url}`;
 
   window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
 }

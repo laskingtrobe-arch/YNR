@@ -127,6 +127,9 @@ async function placeOrder(channel) {
 
     bag = []; saveBag(); renderCart();
     showOrderPlaced(order, created.whatsappUrl);
+    if (created.whatsappUrl) {
+      window.open(created.whatsappUrl, '_blank') || (window.location.href = created.whatsappUrl);
+    }
   } catch (e) {
     /* Losing a one-of-one mid-checkout is the interesting failure here, so
        say so plainly instead of showing a generic error. */

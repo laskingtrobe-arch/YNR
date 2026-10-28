@@ -57,13 +57,21 @@ function notifyOwner(subject, body) {
 // What a receipt (email or payment page) shows for an order: its pieces, each
 // with the photo snapshotted when it was ordered, and the delivery area's name.
 async function receiptDetails(order) {
-  const rows = await db.all('SELECT * FROM order_items WHERE order_id = ? ORDER BY seq', [order.id]);
+  const rows = await db.all(
+    `SELECT oi.*, p.slug
+       FROM order_items oi
+       LEFT JOIN products p ON p.id = oi.product_id
+      WHERE oi.order_id = ?
+      ORDER BY oi.seq`,
+    [order.id]
+  );
   const zone = order.zone_code
     ? await db.get('SELECT label FROM delivery_zones WHERE code = ?', [order.zone_code])
     : null;
   return {
     items: rows.map((r) => ({
       name_snapshot: r.name_snapshot, size: r.size, price_kobo: r.price_kobo, image: r.image_snapshot || null,
+      slug: r.slug || null,
     })),
     zoneLabel: zone ? zone.label : null,
   };
@@ -102,19 +110,32 @@ async function sendStatusEmail(order, trackingRef) {
 // WhatsApp deep links
 // ---------------------------------------------------------------------------
 function orderMessage(order, items) {
-  const lines = items.map(
-    (i) => `• ${i.name_snapshot}${i.size ? ' — Size ' + i.size : ''} — ${formatNaira(i.price_kobo)}`
-  );
+  const lines = items.map((i) => {
+    const sizeStr = i.size ? ` (Size: ${i.size})` : '';
+    const linkStr = i.slug ? `\n   🔗 ${config.siteUrl}/product?id=${i.slug}` : '';
+    return `• *${i.name_snapshot}*${sizeStr} — ${formatNaira(i.price_kobo)}${linkStr}`;
+  });
+
+  const address = [order.address_line, order.city, order.state].filter(Boolean).join(', ');
+
+  const meta = [
+    order.customer_name ? `*Customer:* ${order.customer_name}` : null,
+    order.customer_phone ? `*Phone:* ${order.customer_phone}` : null,
+    address ? `*Delivery Address:* ${address}` : null,
+  ].filter(Boolean);
+
   return [
     `Hi YnR, I'd like to order (ref ${order.reference}):`,
+    ...(meta.length ? ['', ...meta] : []),
     '',
+    '*Items Ordered:*',
     ...lines,
     '',
-    `Subtotal: ${formatNaira(order.subtotal_kobo)}`,
+    `*Subtotal:* ${formatNaira(order.subtotal_kobo)}`,
     order.delivery_kobo
-      ? `Delivery: ${formatNaira(order.delivery_kobo)}`
-      : '(Delivery to be confirmed)',
-    `Total: ${formatNaira(order.total_kobo)}`,
+      ? `*Delivery:* ${formatNaira(order.delivery_kobo)}`
+      : '(Delivery to be confirmed on WhatsApp)',
+    `*Total:* ${formatNaira(order.total_kobo)}`,
   ].join('\n');
 }
 
