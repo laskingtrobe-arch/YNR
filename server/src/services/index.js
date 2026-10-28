@@ -112,7 +112,7 @@ async function sendStatusEmail(order, trackingRef) {
 function orderMessage(order, items) {
   const lines = items.map((i) => {
     const sizeStr = i.size ? ` (Size: ${i.size})` : '';
-    const linkStr = i.slug ? `\n   🔗 ${config.siteUrl}/product?id=${i.slug}` : '';
+    const linkStr = i.slug ? `\n   🔗 ${config.siteUrl}/product?p=${encodeURIComponent(i.slug)}` : '';
     return `• *${i.name_snapshot}*${sizeStr} — ${formatNaira(i.price_kobo)}${linkStr}`;
   });
 

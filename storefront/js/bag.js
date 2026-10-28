@@ -100,7 +100,7 @@ function orderThisNow() {
   const p = PRODUCTS[currentProduct];
   if (!p) return;
 
-  const url = `${window.location.origin}/product?id=${encodeURIComponent(p.slug)}`;
+  const url = `${window.location.origin}/product?p=${encodeURIComponent(p.slug)}`;
   const sizeText = selectedSize ? ` (Size: ${selectedSize})` : '';
   const msg = p.isSold
     ? `Hi YnR, I saw "${p.name}" is sold out (${url}) — could you create a custom 1-of-1 piece like this for me?`

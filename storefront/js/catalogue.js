@@ -107,7 +107,8 @@ async function loadZones() {
 
 /* ---------------- product page ---------------- */
 function loadProductPage() {
-  const slug = new URLSearchParams(location.search).get('p');
+  const params = new URLSearchParams(location.search);
+  const slug = params.get('p') || params.get('id') || params.get('slug');
   if (!slug) { location.replace('/shop'); return; }
   openProduct(slug);
 }
