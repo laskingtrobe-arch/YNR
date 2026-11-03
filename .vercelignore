@@ -1,0 +1,8 @@
+node_modules
+server/node_modules
+media-inbox
+docs
+server/data
+server/uploads
+.claude
+*.log

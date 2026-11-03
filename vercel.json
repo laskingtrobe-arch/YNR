@@ -3,8 +3,11 @@
   "outputDirectory": "storefront",
   "cleanUrls": true,
   "trailingSlash": false,
-  "redirects": [
-    { "source": "/:path*", "destination": "https://ynrfashion.com/:path*", "permanent": false }
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://ynr-shop.onrender.com/api/:path*" },
+    { "source": "/uploads/:path*", "destination": "https://ynr-shop.onrender.com/uploads/:path*" },
+    { "source": "/admin/:path*", "destination": "https://ynr-shop.onrender.com/admin/:path*" },
+    { "source": "/admin", "destination": "https://ynr-shop.onrender.com/admin" }
   ],
   "headers": [
     {
