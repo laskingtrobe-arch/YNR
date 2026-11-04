@@ -2,7 +2,11 @@
 const fs = require('fs');
 const config = require('./config');
 
-fs.mkdirSync(config.paths.uploads, { recursive: true });
+try {
+  fs.mkdirSync(config.paths.uploads, { recursive: true });
+} catch (e) {
+  // Read-only filesystem in serverless environments (e.g. Vercel)
+}
 
 /**
  * pg-mem is a pure-JS Postgres-compatible engine used ONLY by the test suite

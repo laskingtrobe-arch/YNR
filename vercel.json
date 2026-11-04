@@ -4,16 +4,19 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://ynr-shop.onrender.com/api/:path*" },
-    { "source": "/uploads/:path*", "destination": "https://ynr-shop.onrender.com/uploads/:path*" },
-    { "source": "/admin/:path*", "destination": "https://ynr-shop.onrender.com/admin/:path*" },
-    { "source": "/admin", "destination": "https://ynr-shop.onrender.com/admin" }
+    { "source": "/api/(.*)", "destination": "/api" }
   ],
   "headers": [
     {
       "source": "/assets/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    },
+    {
+      "source": "/uploads/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=2592000" }
       ]
     },
     {
