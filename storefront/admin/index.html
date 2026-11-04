@@ -121,6 +121,9 @@
       <div class="field"><label for="le">Email</label><input id="le" type="email" required autocomplete="username"></div>
       <div class="field"><label for="lp">Password</label><input id="lp" type="password" required autocomplete="current-password"></div>
       <button class="btn ox" style="width:100%" type="submit">Sign in</button>
+      <div style="display:flex;justify-content:flex-end;margin-top:10px">
+        <button type="button" class="btn ghost sm" id="btnForgotPwd" style="font-size:12px;padding:4px 8px">Forgot password?</button>
+      </div>
       <p id="loginErr" class="hide" style="color:#ff8a8f;font-size:13px;margin:12px 0 0"></p>
     </form>
   </div>
@@ -134,6 +137,7 @@
       <span class="tag">Admin</span>
       <div class="spacer"></div>
       <span id="who" class="muted" style="font-size:13px"></span>
+      <button class="btn ghost sm" id="btnChangePwd">Password</button>
       <button class="btn ghost sm" id="logout">Sign out</button>
     </div>
     <nav role="tablist">
@@ -214,14 +218,82 @@
       <div class="field" id="pImagesWrap">
         <label>Photographs</label>
         <div id="pImages" class="grid g2" style="margin-bottom:10px"></div>
-        <input type="file" id="pFiles" accept="image/*" multiple>
-        <p class="muted" style="font-size:12px;margin:6px 0 0">JPG, PNG, WebP or AVIF. Up to 6MB each.</p>
+        <div id="pUploadPreviews" class="grid g2" style="margin-bottom:10px"></div>
+        <input type="file" id="pFiles" accept="image/*" multiple style="display:block;width:100%;padding:10px;border:1px dashed var(--line);background:var(--panel-2);cursor:pointer">
+        <p class="muted" style="font-size:12px;margin:6px 0 0">Choose one or more photos. JPG, PNG, WebP or AVIF. Up to 6MB each.</p>
       </div>
       <div class="modal-foot">
         <button type="button" class="btn ghost" id="pCancel">Cancel</button>
         <button type="submit" class="btn ox">Save</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- ============ CHANGE PASSWORD MODAL ============ -->
+<div class="overlay" id="pwdOverlay">
+  <div class="modal" style="max-width:440px">
+    <h3>Change Password</h3>
+    <form id="pwdForm">
+      <div class="field">
+        <label for="currentPwd">Current Password</label>
+        <input type="password" id="currentPwd" required autocomplete="current-password">
+      </div>
+      <div class="field">
+        <label for="newPwd">New Password</label>
+        <input type="password" id="newPwd" required minlength="8" autocomplete="new-password">
+        <p class="muted" style="font-size:11px;margin:4px 0 0">Minimum 8 characters.</p>
+      </div>
+      <div class="field">
+        <label for="confirmPwd">Confirm New Password</label>
+        <input type="password" id="confirmPwd" required minlength="8" autocomplete="new-password">
+      </div>
+      <p id="pwdErr" class="hide" style="color:#ff8a8f;font-size:13px;margin:8px 0"></p>
+      <div class="modal-foot">
+        <button type="button" class="btn ghost" id="pwdCancel">Cancel</button>
+        <button type="submit" class="btn ox">Update Password</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ FORGOT PASSWORD MODAL ============ -->
+<div class="overlay" id="forgotOverlay">
+  <div class="modal" style="max-width:440px">
+    <h3>Reset Admin Password</h3>
+    <div id="forgotStep1">
+      <p class="muted" style="font-size:13px;margin-bottom:16px">Enter your admin email to receive a 6-digit verification code.</p>
+      <form id="forgotForm1">
+        <div class="field">
+          <label for="forgotEmail">Admin Email</label>
+          <input type="email" id="forgotEmail" required autocomplete="email">
+        </div>
+        <p id="forgotErr1" class="hide" style="color:#ff8a8f;font-size:13px;margin:8px 0"></p>
+        <div class="modal-foot">
+          <button type="button" class="btn ghost" id="forgotCancel1">Cancel</button>
+          <button type="submit" class="btn ox" id="forgotBtn1">Send Code</button>
+        </div>
+      </form>
+    </div>
+    <div id="forgotStep2" class="hide">
+      <p class="muted" style="font-size:13px;margin-bottom:16px">Enter the 6-digit code sent to your email and choose your new password.</p>
+      <form id="forgotForm2">
+        <div class="field">
+          <label for="forgotCode">6-Digit Code</label>
+          <input type="text" id="forgotCode" required maxlength="10" placeholder="123456" class="mono">
+        </div>
+        <div class="field">
+          <label for="forgotNewPwd">New Password</label>
+          <input type="password" id="forgotNewPwd" required minlength="8">
+          <p class="muted" style="font-size:11px;margin:4px 0 0">Minimum 8 characters.</p>
+        </div>
+        <p id="forgotErr2" class="hide" style="color:#ff8a8f;font-size:13px;margin:8px 0"></p>
+        <div class="modal-foot">
+          <button type="button" class="btn ghost" id="forgotCancel2">Cancel</button>
+          <button type="submit" class="btn ox" id="forgotBtn2">Reset Password</button>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
 
@@ -367,10 +439,10 @@ function openPiece(p){
   $('#pCat').innerHTML = '<option value="">No category</option>' +
     CATEGORIES.map(c => `<option value="${esc(c.id)}"${p && p.categoryId===c.id?' selected':''}>${esc(c.name)}</option>`).join('');
   $('#pFiles').value = '';
+  if ($('#pUploadPreviews')) $('#pUploadPreviews').innerHTML = '';
 
-  // Photos can only be attached once the piece exists and has an id.
-  $('#pImagesWrap').classList.toggle('hide', !p);
-  $('#pImages').innerHTML = p ? p.images.map(im => `
+  // Existing photos (if editing an existing piece)
+  $('#pImages').innerHTML = (p && p.images && p.images.length) ? p.images.map(im => `
     <div style="position:relative">
       <img class="thumb" src="${esc(im.url)}" alt="">
       <button type="button" class="btn sm" data-img="${im.id}"
@@ -386,6 +458,26 @@ function openPiece(p){
 
   $('#pieceOverlay').classList.add('open');
 }
+
+// Live thumbnail previews when selecting images
+$('#pFiles').addEventListener('change', () => {
+  const previews = $('#pUploadPreviews');
+  previews.innerHTML = '';
+  const files = $('#pFiles').files;
+  if (!files || !files.length) return;
+  for (const f of files) {
+    if (!f.type.startsWith('image/')) continue;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const div = document.createElement('div');
+      div.style.position = 'relative';
+      div.innerHTML = `<img class="thumb" src="${e.target.result}" style="border:1px solid var(--line)"><div class="muted mono" style="font-size:11px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(f.name)}</div>`;
+      previews.appendChild(div);
+    };
+    reader.readAsDataURL(f);
+  }
+});
+
 function closePiece(){ $('#pieceOverlay').classList.remove('open'); }
 $('#pCancel').addEventListener('click', closePiece);
 $('#newPiece').addEventListener('click', ()=>openPiece(null));
@@ -406,11 +498,12 @@ $('#pieceForm').addEventListener('submit', async (e)=>{
   try {
     const saved = id ? (await api('PATCH','/admin/products/'+id, payload), {id})
                      : await api('POST','/admin/products', payload);
+    const targetId = id || saved.id || (saved.product && saved.product.id);
     const files = $('#pFiles').files;
-    if (files && files.length){
+    if (files && files.length && targetId){
       const fd = new FormData();
       for (const f of files) fd.append('images', f);
-      await api('POST', `/admin/products/${id || saved.id}/images`, fd, true);
+      await api('POST', `/admin/products/${targetId}/images`, fd, true);
     }
     toast('Saved');
     closePiece(); loadPieces(); loadDash();
@@ -523,17 +616,117 @@ async function loadInbox(){
     : '<div class="empty">No subscribers yet.</div>';
 }
 
+/* ---------------- password management ---------------- */
+function openPwd(){
+  $('#pwdErr').classList.add('hide');
+  $('#currentPwd').value = '';
+  $('#newPwd').value = '';
+  $('#confirmPwd').value = '';
+  $('#pwdOverlay').classList.add('open');
+}
+function closePwd(){ $('#pwdOverlay').classList.remove('open'); }
+$('#btnChangePwd').addEventListener('click', openPwd);
+$('#pwdCancel').addEventListener('click', closePwd);
+$('#pwdOverlay').addEventListener('click', (e)=>{ if(e.target.id==='pwdOverlay') closePwd(); });
+
+$('#pwdForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const cur = $('#currentPwd').value;
+  const n1 = $('#newPwd').value;
+  const n2 = $('#confirmPwd').value;
+  const err = $('#pwdErr');
+  err.classList.add('hide');
+  if (n1.length < 8) {
+    err.textContent = 'New password must be at least 8 characters.';
+    err.classList.remove('hide');
+    return;
+  }
+  if (n1 !== n2) {
+    err.textContent = 'New passwords do not match.';
+    err.classList.remove('hide');
+    return;
+  }
+  try {
+    await api('POST', '/admin/password', { currentPassword: cur, newPassword: n1 });
+    toast('Password updated successfully');
+    closePwd();
+  } catch (ex) {
+    err.textContent = ex.message;
+    err.classList.remove('hide');
+  }
+});
+
+/* ---------------- forgot / reset password ---------------- */
+function openForgot(){
+  $('#forgotErr1').classList.add('hide');
+  $('#forgotErr2').classList.add('hide');
+  $('#forgotEmail').value = '';
+  $('#forgotCode').value = '';
+  $('#forgotNewPwd').value = '';
+  $('#forgotStep1').classList.remove('hide');
+  $('#forgotStep2').classList.add('hide');
+  $('#forgotOverlay').classList.add('open');
+}
+function closeForgot(){ $('#forgotOverlay').classList.remove('open'); }
+$('#btnForgotPwd').addEventListener('click', openForgot);
+$('#forgotCancel1').addEventListener('click', closeForgot);
+$('#forgotCancel2').addEventListener('click', closeForgot);
+$('#forgotOverlay').addEventListener('click', (e)=>{ if(e.target.id==='forgotOverlay') closeForgot(); });
+
+$('#forgotForm1').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const email = $('#forgotEmail').value.trim();
+  const err = $('#forgotErr1');
+  err.classList.add('hide');
+  try {
+    $('#forgotBtn1').disabled = true;
+    $('#forgotBtn1').textContent = 'Sending...';
+    const res = await api('POST', '/admin/forgot-password', { email });
+    toast(res.message || 'Reset code sent to your email');
+    $('#forgotStep1').classList.add('hide');
+    $('#forgotStep2').classList.remove('hide');
+  } catch (ex) {
+    err.textContent = ex.message;
+    err.classList.remove('hide');
+  } finally {
+    $('#forgotBtn1').disabled = false;
+    $('#forgotBtn1').textContent = 'Send Code';
+  }
+});
+
+$('#forgotForm2').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const email = $('#forgotEmail').value.trim();
+  const code = $('#forgotCode').value.trim();
+  const newPassword = $('#forgotNewPwd').value;
+  const err = $('#forgotErr2');
+  err.classList.add('hide');
+  if (newPassword.length < 8) {
+    err.textContent = 'Password must be at least 8 characters.';
+    err.classList.remove('hide');
+    return;
+  }
+  try {
+    $('#forgotBtn2').disabled = true;
+    $('#forgotBtn2').textContent = 'Resetting...';
+    const res = await api('POST', '/admin/reset-password', { email, code, newPassword });
+    toast(res.message || 'Password reset successfully');
+    closeForgot();
+  } catch (ex) {
+    err.textContent = ex.message;
+    err.classList.remove('hide');
+  } finally {
+    $('#forgotBtn2').disabled = false;
+    $('#forgotBtn2').textContent = 'Reset Password';
+  }
+});
+
 /* ---------------- boot ---------------- */
 async function loadAll(){
   try {
-    CATEGORIES = (await api('GET','/admin/products')) && [];
-    const cats = await fetch('/api/categories').then(r=>r.json());
-    // The admin editor needs category ids, which the public route does not expose.
-    const prods = await api('GET','/admin/products');
-    const seen = new Map();
-    prods.products.forEach(p => { if (p.categoryId && !seen.has(p.categoryId)) seen.set(p.categoryId, p.category); });
-    CATEGORIES = [...seen].map(([id,name]) => ({id,name}));
-    if (!CATEGORIES.length && cats.categories) CATEGORIES = cats.categories.map(c=>({id:'',name:c.name}));
+    // Categories are now loaded with their real IDs from the database
+    const catData = await api('GET', '/categories');
+    CATEGORIES = (catData && catData.categories) || [];
     await Promise.all([loadDash(), loadPieces(), loadOrders(), loadInbox()]);
   } catch (e) { toast(e.message, true); }
 }

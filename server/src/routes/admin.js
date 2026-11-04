@@ -66,8 +66,79 @@ router.post('/logout', wrap(async (req, res) => {
 
 router.get('/me', requireAdmin, (req, res) => res.json({ ok: true, admin: req.admin }));
 
+router.post('/forgot-password',
+  rateLimit({ key: 'admin-forgot-pwd', windowMs: 15 * 60_000, max: 5 }),
+  wrap(async (req, res) => {
+    const email = clean(req.body.email, 200).toLowerCase();
+    if (!email || !isEmail(email)) throw bad('Valid email address is required.', 'invalid_email');
+    const user = await db.get('SELECT * FROM admin_users WHERE email = ?', [email]);
+    let generatedCode;
+    if (user) {
+      generatedCode = String(Math.floor(100000 + Math.random() * 900000));
+      const resetId = id();
+      const expiresAt = db.now() + 15 * 60_000;
+      await db.run('DELETE FROM password_resets WHERE email = ?', [email]);
+      await db.run('INSERT INTO password_resets (id, email, code, expires_at, created_at) VALUES (?, ?, ?, ?, ?)',
+        [resetId, email, generatedCode, expiresAt, db.now()]);
+      const msg = `Hi,\n\nYour YnR Admin password reset code is: ${generatedCode}\n\nThis code will expire in 15 minutes.\nIf you did not request this, you can safely ignore this email.`;
+      sendMail(email, 'YnR Admin Password Reset Code', msg).catch(err => {
+        console.error('[forgot-password] sendMail failed:', err.message);
+      });
+    }
+    res.json({
+      ok: true,
+      message: 'If that email belongs to an admin account, a reset code was sent.',
+      code: (!config.isProd && generatedCode) ? generatedCode : undefined,
+    });
+  })
+);
+
+router.post('/reset-password',
+  rateLimit({ key: 'admin-reset-pwd', windowMs: 15 * 60_000, max: 10 }),
+  wrap(async (req, res) => {
+    const email = clean(req.body.email, 200).toLowerCase();
+    const code = clean(req.body.code, 10).trim();
+    const newPassword = String(req.body.newPassword || '');
+    if (!newPassword || newPassword.length < 8) {
+      throw bad('New password must be at least 8 characters long.', 'password_too_short');
+    }
+    const record = await db.get('SELECT * FROM password_resets WHERE email = ? AND code = ? AND expires_at > ?',
+      [email, code, db.now()]);
+    if (!record) {
+      throw bad('Invalid or expired reset code. Please request a new one.', 'invalid_code');
+    }
+    const user = await db.get('SELECT * FROM admin_users WHERE email = ?', [email]);
+    if (!user) throw bad('Account not found.', 'user_not_found');
+
+    const { hash, salt } = hashPassword(newPassword);
+    await db.run('UPDATE admin_users SET password_hash = ?, password_salt = ? WHERE id = ?',
+      [hash, salt, user.id]);
+    await db.run('DELETE FROM password_resets WHERE email = ?', [email]);
+    await db.run('DELETE FROM sessions WHERE admin_id = ?', [user.id]);
+    await audit(user.id, 'password_reset');
+    res.json({ ok: true, message: 'Password has been reset successfully. You can now log in.' });
+  })
+);
+
 // Everything past this point requires a session.
 router.use(requireAdmin);
+
+router.post('/password', wrap(async (req, res) => {
+  const currentPassword = String(req.body.currentPassword || '');
+  const newPassword = String(req.body.newPassword || '');
+  if (!newPassword || newPassword.length < 8) {
+    throw bad('New password must be at least 8 characters long.', 'password_too_short');
+  }
+  const user = await db.get('SELECT * FROM admin_users WHERE id = ?', [req.admin.id]);
+  if (!user || !verifyPassword(currentPassword, user.password_hash, user.password_salt)) {
+    throw bad('Current password is incorrect.', 'bad_current_password');
+  }
+  const { hash, salt } = hashPassword(newPassword);
+  await db.run('UPDATE admin_users SET password_hash = ?, password_salt = ? WHERE id = ?',
+    [hash, salt, user.id]);
+  await audit(user.id, 'password_change');
+  res.json({ ok: true, message: 'Password updated successfully.' });
+}));
 
 // ---------------------------------------------------------------------------
 // Dashboard
@@ -237,12 +308,26 @@ const upload = multer({
 async function resizeToFile(buffer) {
   const sharp = require('sharp');
   const filename = `${Date.now()}-${token(8)}.jpg`;
-  const out = path.join(config.paths.uploads, filename);
-  await sharp(buffer)
+  const jpegBuffer = await sharp(buffer)
     .rotate() // apply EXIF orientation before stripping metadata, or sideways phone photos would stay sideways
     .resize(MAX_DIMENSION, MAX_DIMENSION, { fit: 'inside', withoutEnlargement: true })
     .jpeg({ quality: JPEG_QUALITY, mozjpeg: true })
-    .toFile(out);
+    .toBuffer();
+
+  // Persist into database so images survive serverless/ephemeral environments
+  await db.run(
+    'INSERT INTO uploaded_files (filename, data, mime, created_at) VALUES (?, ?, ?, ?) ON CONFLICT (filename) DO UPDATE SET data = EXCLUDED.data, mime = EXCLUDED.mime',
+    [filename, jpegBuffer, 'image/jpeg', db.now()]
+  );
+
+  // Best-effort write to local filesystem if writable
+  try {
+    const out = path.join(config.paths.uploads, filename);
+    await fs.promises.writeFile(out, jpegBuffer);
+  } catch (e) {
+    // Read-only filesystem in serverless environments is expected
+  }
+
   return filename;
 }
 
@@ -278,8 +363,10 @@ router.delete('/images/:id', wrap(async (req, res) => {
   // Only remove the file if nothing else references it.
   const stillUsed = (await db.get('SELECT COUNT(*) AS v FROM product_images WHERE url=?', [img.url])).v;
   if (!stillUsed && img.url.startsWith('/uploads/')) {
-    const f = path.join(config.paths.uploads, path.basename(img.url));
+    const filename = path.basename(img.url);
+    const f = path.join(config.paths.uploads, filename);
     fs.promises.unlink(f).catch(() => {});
+    await db.run('DELETE FROM uploaded_files WHERE filename = ?', [filename]).catch(() => {});
   }
   await audit(req.admin.id, 'image.delete', img.product_id);
   res.json({ ok: true });

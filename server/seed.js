@@ -17,6 +17,12 @@ const CATEGORIES = [
   { slug: 'tees', name: 'Tees', sort: 2 },
   { slug: 'long-sleeves', name: 'Long Sleeves', sort: 3 },
   { slug: 'denim', name: 'Denim', sort: 4 },
+  { slug: 'pants', name: 'Pants & Trousers', sort: 5 },
+  { slug: 'caps', name: 'Caps & Hats', sort: 6 },
+  { slug: 'ski-masks', name: 'Ski Masks & Balaclavas', sort: 7 },
+  { slug: 'bags', name: 'Bags', sort: 8 },
+  { slug: 'shoes', name: 'Shoes & Footwear', sort: 9 },
+  { slug: 'accessories', name: 'Accessories', sort: 10 },
 ];
 
 // Order here matches SHOP_ORDER in the storefront.

@@ -23,7 +23,8 @@ function productCard(p) {
   <a class="product-card ${sold ? 'is-sold' : ''}" href="${productUrl(p.slug)}">
     <div class="product-media">
       <div class="one-tag ${sold ? 'sold-badge' : ''}">${tag}</div>
-      <img src="${imgUrl(p.image)}" alt="${escapeAttr(p.name)}, one-of-one by YnR" loading="lazy">
+      <img src="${imgUrl(p.image)}" alt="${escapeAttr(p.name)}, one-of-one by YnR" loading="lazy"
+           onerror="if(!this.dataset.retried){this.dataset.retried='1';this.src=this.src+(this.src.indexOf('?')>-1?'&':'?')+'t='+Date.now();}">
       <div class="quick-add">${sold ? 'Order Custom' : 'View &amp; Order'}</div>
     </div>
     <div class="product-info">
@@ -48,13 +49,16 @@ async function loadCatalogue({ grid: gridId, limit = 0, filters = null } = {}) {
   grid.innerHTML = Array.from({ length: limit || 6 }, () => '<div class="skeleton"></div>').join('');
 
   try {
-    const data = await api('GET', '/products');
+    const [data, catRes] = await Promise.all([
+      api('GET', '/products'),
+      filters ? api('GET', '/categories').catch(() => ({ categories: [] })) : Promise.resolve({ categories: [] }),
+    ]);
     PRODUCTS = {};
     SHOP_ORDER = [];
     data.products.forEach((p) => { PRODUCTS[p.slug] = p; SHOP_ORDER.push(p.slug); });
 
     if (filters) {
-      renderFilters(document.getElementById(filters), grid, data.products);
+      renderFilters(document.getElementById(filters), grid, data.products, (catRes && catRes.categories) || []);
     } else if (limit) {
       const forSale = data.products.filter((p) => !p.isSold);
       renderGrid(grid, (forSale.length ? forSale : data.products).slice(0, limit));
@@ -69,14 +73,33 @@ async function loadCatalogue({ grid: gridId, limit = 0, filters = null } = {}) {
 
 /* Category buttons for the shop page. The choice is kept in the URL
    (/shop?category=tees) so a filtered view can be shared or bookmarked. */
-function renderFilters(host, grid, products) {
+function renderFilters(host, grid, products, dbCategories = []) {
   if (!host) { renderGrid(grid, products); return; }
-  const categories = [...new Set(products.map((p) => p.category).filter(Boolean))];
-  const wanted = new URLSearchParams(location.search).get('category') || '';
-  let active = categories.find((c) => categorySlug(c) === wanted) || '';
+
+  // Build sorted category list from database + any product categories
+  const list = [];
+  const slugMap = new Map();
+  (dbCategories || []).forEach(c => {
+    if (c.name && !slugMap.has(c.name)) {
+      slugMap.set(c.name, c.slug);
+      list.push(c.name);
+    }
+  });
+  products.forEach(p => {
+    if (p.category && !slugMap.has(p.category)) {
+      slugMap.set(p.category, categorySlug(p.category));
+      list.push(p.category);
+    }
+  });
+
+  const wanted = (new URLSearchParams(location.search).get('category') || '').toLowerCase();
+  let active = list.find((c) => {
+    const s = slugMap.get(c) || categorySlug(c);
+    return s === wanted || categorySlug(c) === wanted;
+  }) || '';
 
   const draw = () => {
-    host.innerHTML = ['', ...categories].map((c) =>
+    host.innerHTML = ['', ...list].map((c) =>
       `<button type="button" class="filter-chip${c === active ? ' active' : ''}" data-cat="${escapeAttr(c)}"
                aria-pressed="${c === active}">${c ? escapeHtml(c) : 'All'}</button>`).join('');
     renderGrid(grid, active ? products.filter((p) => p.category === active) : products);
@@ -87,13 +110,17 @@ function renderFilters(host, grid, products) {
     if (!btn) return;
     active = btn.dataset.cat;
     const url = new URL(location.href);
-    if (active) url.searchParams.set('category', categorySlug(active));
-    else url.searchParams.delete('category');
+    if (active) {
+      const sl = slugMap.get(active) || categorySlug(active);
+      url.searchParams.set('category', sl);
+    } else {
+      url.searchParams.delete('category');
+    }
     history.replaceState(null, '', url);
     draw();
   });
 
-  host.hidden = categories.length < 2;   // nothing to filter between
+  host.hidden = list.length === 0;
   draw();
 }
 

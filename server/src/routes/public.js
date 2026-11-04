@@ -76,7 +76,7 @@ router.get('/products/:slug', wrap(async (req, res) => {
 }));
 
 router.get('/categories', wrap(async (req, res) => {
-  const rows = await db.all('SELECT slug, name FROM categories ORDER BY sort, name');
+  const rows = await db.all('SELECT id, slug, name FROM categories ORDER BY sort, name');
   res.json({ ok: true, categories: rows });
 }));
 

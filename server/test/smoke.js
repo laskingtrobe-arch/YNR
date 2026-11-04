@@ -239,7 +239,7 @@ async function req(method, url, body, headers = {}) {
 
     const login = await req('POST', '/api/admin/login', { email: ADMIN_EMAIL, password: ADMIN_PASSWORD });
     ok(login.status === 200, 'admin login succeeds (bootstrap-created account)');
-    const cookie = (login.headers.get('set-cookie') || '').split(';')[0];
+    let cookie = (login.headers.get('set-cookie') || '').split(';')[0];
     ok(cookie.startsWith('ynr_admin='), 'session cookie issued');
     ok(/HttpOnly/i.test(login.headers.get('set-cookie') || ''), 'session cookie is HttpOnly');
 
@@ -279,6 +279,35 @@ async function req(method, url, body, headers = {}) {
 
     const del = await req('DELETE', `/api/admin/products/${created.json.id}`, undefined, { Cookie: cookie });
     ok(del.status === 200 && del.json.deleted, 'admin can delete an unused product');
+
+    // Categories endpoint exposes id, slug, and name
+    const publicCats = await req('GET', '/api/categories');
+    ok(publicCats.status === 200 && publicCats.json.categories.length >= 4 && publicCats.json.categories[0].id,
+      'categories route exposes id, slug, and name');
+
+    // Admin password change endpoint
+    const badPwd = await req('POST', '/api/admin/password', { currentPassword: 'wrong', newPassword: 'newPassword123' }, { Cookie: cookie });
+    ok(badPwd.status === 400 && badPwd.json.code === 'bad_current_password', 'admin password change rejects incorrect current password');
+
+    const goodPwd = await req('POST', '/api/admin/password', { currentPassword: ADMIN_PASSWORD, newPassword: 'newPassword123' }, { Cookie: cookie });
+    ok(goodPwd.status === 200 && goodPwd.json.ok, 'admin password change succeeds with valid current password');
+
+    // Switch back to ADMIN_PASSWORD so remaining tests stay consistent
+    await req('POST', '/api/admin/password', { currentPassword: 'newPassword123', newPassword: ADMIN_PASSWORD }, { Cookie: cookie });
+
+    // Forgot password and reset password flow
+    const forgot = await req('POST', '/api/admin/forgot-password', { email: ADMIN_EMAIL });
+    ok(forgot.status === 200 && forgot.json.ok && forgot.json.code, 'admin forgot-password requests code');
+
+    const badReset = await req('POST', '/api/admin/reset-password', { email: ADMIN_EMAIL, code: '000000', newPassword: 'anotherPassword123' });
+    ok(badReset.status === 400 && badReset.json.code === 'invalid_code', 'password reset rejects invalid code');
+
+    const goodReset = await req('POST', '/api/admin/reset-password', { email: ADMIN_EMAIL, code: forgot.json.code, newPassword: ADMIN_PASSWORD });
+    ok(goodReset.status === 200 && goodReset.json.ok, 'password reset succeeds with valid code');
+
+    // Re-login after reset-password invalidated existing sessions
+    const relogin = await req('POST', '/api/admin/login', { email: ADMIN_EMAIL, password: ADMIN_PASSWORD });
+    cookie = (relogin.headers.get('set-cookie') || '').split(';')[0];
 
     // A product with order history must be hidden, not deleted.
     const hoodieRow = adminProducts.json.products.find((p) => p.slug === 'ynr-icon-hoodie');

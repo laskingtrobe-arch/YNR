@@ -316,6 +316,21 @@ CREATE TABLE IF NOT EXISTS audit_log (
   created_at BIGINT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS password_resets (
+  id         TEXT PRIMARY KEY,
+  email      TEXT NOT NULL,
+  code       TEXT NOT NULL,
+  expires_at BIGINT NOT NULL,
+  created_at BIGINT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS uploaded_files (
+  filename   TEXT PRIMARY KEY,
+  data       BYTEA,
+  mime       TEXT,
+  created_at BIGINT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS mail_outbox (
   id         TEXT PRIMARY KEY,
   to_addr    TEXT NOT NULL,

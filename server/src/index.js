@@ -45,6 +45,23 @@ app.use('/uploads', express.static(config.paths.uploads, {
   setHeaders: (res) => res.set('X-Content-Type-Options', 'nosniff'),
 }));
 
+// Fallback to Supabase database table uploaded_files if file is not on disk (serverless resilience)
+app.get('/uploads/:filename', async (req, res, next) => {
+  const filename = path.basename(req.params.filename);
+  try {
+    const row = await db.get('SELECT data, mime FROM uploaded_files WHERE filename = ?', [filename]);
+    if (row && row.data) {
+      res.set('Content-Type', row.mime || 'image/jpeg');
+      res.set('Cache-Control', 'public, max-age=2592000');
+      res.set('X-Content-Type-Options', 'nosniff');
+      return res.send(row.data);
+    }
+  } catch (e) {
+    console.error('[uploads] database fallback error:', e.message);
+  }
+  next();
+});
+
 // Admin UI.
 app.use('/admin', express.static(path.join(config.paths.root, 'public', 'admin')));
 
