@@ -146,6 +146,58 @@ router.post('/password', wrap(async (req, res) => {
 router.get('/stats', wrap(async (req, res) => {
   const one = async (sql, ...a) => (await db.get(sql, a)).v;
   const paid = await one("SELECT COALESCE(SUM(total_kobo),0) AS v FROM orders WHERE payment_status='paid'");
+
+  // Orders and sales over the last 14 days
+  const allOrders = await db.all('SELECT total_kobo, payment_status, status, created_at FROM orders ORDER BY created_at ASC');
+  const now = db.now();
+  const dayMs = 24 * 3600_000;
+  const chartDays = [];
+  for (let i = 13; i >= 0; i--) {
+    const start = new Date(now - i * dayMs);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start.getTime() + dayMs);
+    const dateStr = start.toISOString().split('T')[0];
+    const label = start.toLocaleDateString('en-NG', { month: 'short', day: 'numeric' });
+    let revKobo = 0;
+    let count = 0;
+    for (const o of allOrders) {
+      if (o.created_at >= start.getTime() && o.created_at < end.getTime()) {
+        count++;
+        if (o.payment_status === 'paid') revKobo += (o.total_kobo || 0);
+      }
+    }
+    chartDays.push({ date: dateStr, label, orders: count, revenueKobo: revKobo, revenueLabel: formatNaira(revKobo) });
+  }
+
+  // Order statuses
+  const statusCounts = {};
+  for (const o of allOrders) {
+    statusCounts[o.status] = (statusCounts[o.status] || 0) + 1;
+  }
+  const orderStatuses = Object.entries(statusCounts).map(([status, count]) => ({ status, count }));
+
+  // Categories distribution
+  const allCats = await db.all('SELECT id, name FROM categories ORDER BY sort');
+  const allProds = await db.all('SELECT category_id, status FROM products');
+  const categoryStats = allCats.map(c => {
+    const prods = allProds.filter(p => p.category_id === c.id);
+    return {
+      name: c.name,
+      total: prods.length,
+      available: prods.filter(p => p.status === 'available').length,
+      sold: prods.filter(p => p.status === 'sold' || p.status === 'repaint_only').length,
+    };
+  });
+
+  // Traffic / Activity counts
+  let traffic = { page_view: 0, product_view: 0, whatsapp_click: 0 };
+  try {
+    const events = await db.all('SELECT type, COUNT(*) as count FROM analytics_events GROUP BY type');
+    for (const ev of events) {
+      if (traffic[ev.type] !== undefined) traffic[ev.type] = Number(ev.count);
+    }
+  } catch (e) {}
+
   res.json({
     ok: true,
     stats: {
@@ -161,6 +213,10 @@ router.get('/stats', wrap(async (req, res) => {
       unreadMessages: await one('SELECT COUNT(*) AS v FROM contact_messages WHERE handled=0'),
       subscribers: await one("SELECT COUNT(*) AS v FROM subscribers WHERE status='confirmed'"),
       repaints: await one('SELECT COUNT(*) AS v FROM repaint_requests WHERE handled=0'),
+      chartDays,
+      orderStatuses,
+      categoryStats,
+      traffic,
     },
   });
 }));
@@ -470,6 +526,99 @@ router.patch('/orders/:id', wrap(async (req, res) => {
   }
 
   res.json({ ok: true });
+}));
+
+// ---------------------------------------------------------------------------
+// CRM / Customers
+// ---------------------------------------------------------------------------
+router.get('/customers', wrap(async (req, res) => {
+  const allOrders = await db.all("SELECT * FROM orders WHERE customer_email IS NOT NULL AND customer_email != '' ORDER BY created_at DESC");
+  const subs = await db.all('SELECT * FROM subscribers');
+  const map = new Map();
+
+  for (const o of allOrders) {
+    const email = (o.customer_email || '').toLowerCase().trim();
+    if (!email) continue;
+    if (!map.has(email)) {
+      map.set(email, {
+        email,
+        name: o.customer_name || 'Customer',
+        phone: o.customer_phone || '',
+        address: [o.address_line, o.city, o.state, o.country].filter(Boolean).join(', '),
+        orderCount: 0,
+        paidOrderCount: 0,
+        totalSpentKobo: 0,
+        lastOrderAt: o.created_at,
+        firstOrderAt: o.created_at,
+        orders: [],
+      });
+    }
+    const c = map.get(email);
+    c.orderCount += 1;
+    if (o.payment_status === 'paid') {
+      c.paidOrderCount += 1;
+      c.totalSpentKobo += (o.total_kobo || 0);
+    }
+    if (o.created_at > c.lastOrderAt) c.lastOrderAt = o.created_at;
+    if (o.created_at < c.firstOrderAt) c.firstOrderAt = o.created_at;
+    if ((!c.phone || c.phone === '') && o.customer_phone) c.phone = o.customer_phone;
+    if ((!c.name || c.name === 'Customer') && o.customer_name) c.name = o.customer_name;
+    c.orders.push({
+      id: o.id,
+      reference: o.reference,
+      status: o.status,
+      paymentStatus: o.payment_status,
+      totalKobo: o.total_kobo,
+      totalLabel: formatNaira(o.total_kobo),
+      createdAt: o.created_at,
+    });
+  }
+
+  // Include subscribers who haven't ordered yet
+  for (const s of subs) {
+    const email = (s.email || '').toLowerCase().trim();
+    if (!email) continue;
+    if (!map.has(email)) {
+      map.set(email, {
+        email,
+        name: email.split('@')[0],
+        phone: '',
+        address: '',
+        orderCount: 0,
+        paidOrderCount: 0,
+        totalSpentKobo: 0,
+        lastOrderAt: null,
+        firstOrderAt: s.created_at,
+        isSubscriber: true,
+        orders: [],
+      });
+    } else {
+      map.get(email).isSubscriber = true;
+    }
+  }
+
+  const customers = [...map.values()].map(c => {
+    let cleanPhone = (c.phone || '').replace(/[^0-9]/g, '');
+    if (cleanPhone.startsWith('0') && cleanPhone.length === 11) {
+      cleanPhone = '234' + cleanPhone.slice(1);
+    }
+    const whatsappUrl = cleanPhone ? `https://wa.me/${cleanPhone}` : null;
+
+    let tier = 'Prospect';
+    if (c.paidOrderCount >= 2) tier = 'VIP';
+    else if (c.paidOrderCount === 1) tier = 'Customer';
+    else if (c.orderCount > 0) tier = 'Pending';
+
+    return {
+      ...c,
+      cleanPhone,
+      whatsappUrl,
+      tier,
+      totalSpentLabel: formatNaira(c.totalSpentKobo),
+    };
+  }).sort((a, b) => b.totalSpentKobo - a.totalSpentKobo || (b.lastOrderAt || 0) - (a.lastOrderAt || 0));
+
+  res.json({ ok: true, customers });
 }));
 
 // ---------------------------------------------------------------------------

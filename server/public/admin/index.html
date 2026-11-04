@@ -108,6 +108,25 @@
      text-transform:uppercase;color:var(--smoke);padding:8px;border-bottom:1px solid var(--line)}
   td{padding:10px 8px;border-bottom:1px solid var(--line)}
   .scroll{overflow-x:auto}
+
+  /* ---------- charts & CRM ---------- */
+  .chart-box{background:var(--panel);border:1px solid var(--line);padding:20px;margin-bottom:20px}
+  .chart-header{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:12px;margin-bottom:16px}
+  .chart-header h3{margin:0;font-size:16px}
+  .chart-svg{width:100%;height:auto;max-height:220px;display:block}
+  .bar-chart-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:13px}
+  .bar-label{width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bar-track{flex:1;height:12px;background:var(--panel-2);border-radius:2px;overflow:hidden;display:flex}
+  .bar-fill-avail{background:#7fd1a3;height:100%}
+  .bar-fill-sold{background:var(--ox-bright);height:100%}
+  .bar-val{min-width:80px;text-align:right;font-family:var(--mono);font-size:11px;color:var(--smoke)}
+
+  .crm-avatar{width:36px;height:36px;border-radius:50%;background:var(--ox);color:var(--bone);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+  .crm-wa{display:inline-flex;align-items:center;gap:4px;color:#25d366;font-size:12px;text-decoration:none;border:1px solid rgba(37,211,102,.3);padding:2px 7px;border-radius:3px}
+  .crm-wa:hover{background:rgba(37,211,102,.12)}
+  .pill.vip{color:#e0c070;border-color:rgba(224,192,112,.4);background:rgba(224,192,112,.08)}
+  .pill.customer{color:#7fd1a3;border-color:rgba(127,209,163,.4)}
+  .pill.prospect{color:var(--smoke);border-color:var(--line)}
 </style>
 </head>
 <body>
@@ -144,6 +163,7 @@
       <button role="tab" data-tab="dash" aria-selected="true">Dashboard</button>
       <button role="tab" data-tab="pieces" aria-selected="false">Pieces</button>
       <button role="tab" data-tab="orders" aria-selected="false">Orders</button>
+      <button role="tab" data-tab="crm" aria-selected="false">CRM</button>
       <button role="tab" data-tab="inbox" aria-selected="false">Inbox</button>
     </nav>
   </header>
@@ -174,6 +194,31 @@
         </select>
       </div>
       <div id="ordersList" class="grid"></div>
+    </section>
+
+    <section id="tab-crm" class="hide">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+        <div>
+          <h2 style="margin:0 0 4px">Customer Relationship Management (CRM)</h2>
+          <p class="muted" style="margin:0;font-size:13px">Profiles, order histories, WhatsApp messaging, and lifetime spend.</p>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button type="button" class="btn ghost sm" id="crmExport">Export CSV (Zoho / Excel)</button>
+        </div>
+      </div>
+      <div id="crmSummary" class="grid g4" style="margin-bottom:18px"></div>
+      <div class="card" style="margin-bottom:16px;padding:12px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <input id="crmSearch" placeholder="Search by customer name, email, or phone..." style="flex:1;min-width:220px">
+          <div style="display:flex;gap:6px">
+            <button type="button" class="btn sm crm-filter active" data-filter="all">All</button>
+            <button type="button" class="btn sm crm-filter ghost" data-filter="vip">VIPs</button>
+            <button type="button" class="btn sm crm-filter ghost" data-filter="customer">Buyers</button>
+            <button type="button" class="btn sm crm-filter ghost" data-filter="subscriber">Leads</button>
+          </div>
+        </div>
+      </div>
+      <div id="crmList"></div>
     </section>
 
     <section id="tab-inbox" class="hide">
@@ -297,6 +342,22 @@
   </div>
 </div>
 
+<!-- ============ CRM CUSTOMER DETAIL MODAL ============ -->
+<div class="overlay" id="crmOverlay">
+  <div class="modal" style="max-width:640px">
+    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px">
+      <div>
+        <h3 id="crmDetailName" style="margin:0 0 4px">Customer</h3>
+        <div id="crmDetailMeta" class="muted" style="font-size:13px"></div>
+      </div>
+      <button type="button" class="btn ghost sm" id="crmDetailClose">Close</button>
+    </div>
+    <div id="crmDetailActions" style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap"></div>
+    <h4 style="font-size:13px;margin:0 0 10px;text-transform:uppercase;letter-spacing:.12em;color:var(--smoke)">Order History</h4>
+    <div id="crmDetailOrders" class="grid" style="gap:8px"></div>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -304,8 +365,13 @@ const $ = (s, r=document) => r.querySelector(s);
 const $$ = (s, r=document) => [...r.querySelectorAll(s)];
 const esc = (s) => String(s==null?'':s).replace(/[&<>"']/g, c => (
   {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const naira = (kobo) => '₦' + (kobo/100).toLocaleString('en-NG');
+const naira = (kobo) => '₦' + Math.round((kobo||0)/100).toLocaleString('en-NG');
 const when = (ms) => new Date(ms).toLocaleString('en-NG',{dateStyle:'medium',timeStyle:'short'});
+const imgUrl = (u) => {
+  if (!u) return '';
+  if (/^https?:\/\//.test(u)) return u;
+  return u + (u.indexOf('?') > -1 ? '&' : '?') + 'v=2';
+};
 
 let toastTimer;
 function toast(msg, bad){
@@ -359,7 +425,7 @@ $('#logout').addEventListener('click', async ()=>{
 /* ---------------- tabs ---------------- */
 $$('nav button').forEach(b => b.addEventListener('click', ()=>{
   $$('nav button').forEach(x => x.setAttribute('aria-selected', String(x===b)));
-  ['dash','pieces','orders','inbox'].forEach(t =>
+  ['dash','pieces','orders','crm','inbox'].forEach(t =>
     $('#tab-'+t).classList.toggle('hide', t !== b.dataset.tab));
 }));
 
@@ -367,25 +433,140 @@ $$('nav button').forEach(b => b.addEventListener('click', ()=>{
 async function loadDash(){
   const { stats: s } = await api('GET','/admin/stats');
   const tile = (v,l) => `<div class="card stat"><b>${v}</b><span>${l}</span></div>`;
+
+  // 14-day sales trend (SVG chart)
+  const days = s.chartDays || [];
+  const maxRev = Math.max(...days.map(d => d.revenueKobo || 0), 10000000); // ₦100,000 scale min
+  const maxOrders = Math.max(...days.map(d => d.orders || 0), 3);
+
+  const W = 660, H = 180, PAD_L = 30, PAD_R = 20, PAD_T = 20, PAD_B = 30;
+  const plotW = W - PAD_L - PAD_R;
+  const plotH = H - PAD_T - PAD_B;
+  const barW = Math.max(8, Math.floor(plotW / (days.length || 1) - 10));
+
+  let barsSvg = '';
+  let linePts = [];
+  let dotsSvg = '';
+  let xLabels = '';
+
+  days.forEach((d, i) => {
+    const x = PAD_L + (i * (plotW / days.length)) + (plotW / days.length - barW) / 2;
+    const barHeight = Math.round(((d.revenueKobo || 0) / maxRev) * plotH);
+    const yBar = PAD_T + plotH - barHeight;
+
+    barsSvg += `
+      <rect x="${x}" y="${yBar}" width="${barW}" height="${barHeight}" fill="${(d.revenueKobo > 0) ? 'var(--ox-bright)' : 'var(--panel-2)'}" rx="2">
+        <title>${esc(d.label)}: ${esc(d.revenueLabel)} (${d.orders} orders)</title>
+      </rect>`;
+
+    const lineX = x + barW / 2;
+    const lineY = PAD_T + plotH - Math.round(((d.orders || 0) / maxOrders) * plotH);
+    linePts.push(`${lineX},${lineY}`);
+    if (d.orders > 0) {
+      dotsSvg += `<circle cx="${lineX}" cy="${lineY}" r="4" fill="#7fd1a3"><title>${d.orders} orders</title></circle>`;
+    }
+
+    if (i % 2 === 0 || i === days.length - 1) {
+      const lbl = d.label.split(' ')[1] || d.label;
+      xLabels += `<text x="${x + barW / 2}" y="${H - 6}" font-size="9" fill="var(--smoke)" text-anchor="middle" font-family="var(--mono)">${lbl}</text>`;
+    }
+  });
+
+  const lineSvg = linePts.length > 1 ? `<polyline points="${linePts.join(' ')}" fill="none" stroke="#7fd1a3" stroke-width="2" stroke-linecap="round"/>` : '';
+
+  const total14Rev = days.reduce((sum, d) => sum + (d.revenueKobo || 0), 0);
+  const total14Orders = days.reduce((sum, d) => sum + (d.orders || 0), 0);
+
+  // Category breakdown rows
+  const catRows = (s.categoryStats || []).map(c => {
+    const total = c.total || 0;
+    const avail = c.available || 0;
+    const sold = c.sold || 0;
+    const availPct = total ? (avail / total) * 100 : 0;
+    const soldPct = total ? (sold / total) * 100 : 0;
+    return `
+      <div class="bar-chart-row">
+        <div class="bar-label" title="${esc(c.name)}">${esc(c.name)}</div>
+        <div class="bar-track">
+          <div class="bar-fill-avail" style="width:${availPct}%" title="${avail} available"></div>
+          <div class="bar-fill-sold" style="width:${soldPct}%" title="${sold} sold"></div>
+        </div>
+        <div class="bar-val">${avail} avail · ${sold} sold</div>
+      </div>`;
+  }).join('');
+
   $('#tab-dash').innerHTML = `
-    <h2>Today</h2>
-    <div class="grid g4">
+    <h2>Overview</h2>
+    <div class="grid g4" style="margin-bottom:20px">
       ${tile(s.awaiting,'Awaiting confirmation')}
       ${tile(s.paidOrders,'Paid orders')}
-      ${tile(s.revenueLabel,'Revenue taken')}
+      ${tile(s.revenueLabel,'Total revenue')}
       ${tile(s.unreadMessages,'Unread messages')}
     </div>
-    <h2>Stock</h2>
-    <div class="grid g4">
-      ${tile(s.available,'Available')}
-      ${tile(s.held,'Reserved right now')}
-      ${tile(s.sold,'Sold')}
-      ${tile(s.repaints,'Repaint requests')}
+
+    <!-- SALES & ORDERS 14-DAY PERFORMANCE GRAPH -->
+    <div class="chart-box">
+      <div class="chart-header">
+        <div>
+          <h3>Sales &amp; Orders Trend (Last 14 Days)</h3>
+          <p class="muted" style="margin:4px 0 0;font-size:12px">Red bars indicate revenue taken · Green line tracks daily orders placed</p>
+        </div>
+        <div style="display:flex;gap:16px;font-size:13px">
+          <div><span class="muted mono">14-Day Sales: </span><strong>${naira(total14Rev)}</strong></div>
+          <div><span class="muted mono">Orders: </span><strong>${total14Orders}</strong></div>
+        </div>
+      </div>
+      <svg class="chart-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+        <line x1="${PAD_L}" y1="${PAD_T}" x2="${W - PAD_R}" y2="${PAD_T}" stroke="var(--line)" stroke-dasharray="3"/>
+        <line x1="${PAD_L}" y1="${PAD_T + plotH / 2}" x2="${W - PAD_R}" y2="${PAD_T + plotH / 2}" stroke="var(--line)" stroke-dasharray="3"/>
+        <line x1="${PAD_L}" y1="${PAD_T + plotH}" x2="${W - PAD_R}" y2="${PAD_T + plotH}" stroke="var(--line)"/>
+        ${barsSvg}
+        ${lineSvg}
+        ${dotsSvg}
+        ${xLabels}
+      </svg>
     </div>
-    <h2>List</h2>
-    <div class="grid g2">
-      ${tile(s.subscribers,'Confirmed subscribers')}
-      ${tile(s.orders,'Orders all time')}
+
+    <!-- INVENTORY & CATEGORY DISTRIBUTION -->
+    <div class="grid g2" style="margin-bottom:20px">
+      <div class="chart-box" style="margin-bottom:0">
+        <div class="chart-header">
+          <h3>Category Distribution &amp; Stock</h3>
+          <span class="muted mono" style="font-size:11px">${s.products} Total Pieces</span>
+        </div>
+        <div>
+          ${catRows || '<div class="empty">No categories yet</div>'}
+        </div>
+        <div style="display:flex;gap:14px;font-size:11px;margin-top:14px;justify-content:flex-end">
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;background:#7fd1a3;display:inline-block"></span> Available</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;background:var(--ox-bright);display:inline-block"></span> Sold / Custom</span>
+        </div>
+      </div>
+
+      <div class="chart-box" style="margin-bottom:0">
+        <div class="chart-header">
+          <h3>Store Engagement &amp; Funnel</h3>
+          <span class="muted mono" style="font-size:11px">Traffic &amp; Conversion</span>
+        </div>
+        <div class="grid g2" style="margin-bottom:14px">
+          ${tile(s.traffic ? s.traffic.page_view : 0, 'Page Views')}
+          ${tile(s.traffic ? s.traffic.product_view : 0, 'Piece Views')}
+          ${tile(s.traffic ? s.traffic.whatsapp_click : 0, 'WhatsApp Inquiries')}
+          ${tile(s.subscribers, 'Subscribers')}
+        </div>
+        <div style="padding-top:10px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center">
+          <span class="muted" style="font-size:13px">Want to contact customers directly?</span>
+          <button type="button" class="btn ghost sm" onclick="document.querySelector('nav button[data-tab=\\'crm\\']').click()">Open CRM &rarr;</button>
+        </div>
+      </div>
+    </div>
+
+    <h2>Stock Overview</h2>
+    <div class="grid g4">
+      ${tile(s.available,'Available now')}
+      ${tile(s.held,'Reserved / On hold')}
+      ${tile(s.sold,'Sold pieces')}
+      ${tile(s.repaints,'Repaint requests')}
     </div>`;
 }
 
@@ -396,8 +577,9 @@ async function loadPieces(){
   if (!products.length){ el.innerHTML = '<div class="empty">No pieces yet.</div>'; return; }
   el.innerHTML = products.map(p => `
     <div class="card" style="padding:0;overflow:hidden">
-      <img class="thumb" src="${p.images[0] ? esc(p.images[0].url) : ''}" alt="${esc(p.name)}"
-           onerror="this.style.opacity=.15">
+      <img class="thumb" src="${imgUrl(p.images && p.images[0] ? p.images[0].url : '')}" alt="${esc(p.name)}"
+           loading="lazy"
+           onerror="if(!this.dataset.retried){this.dataset.retried='1';this.src=this.src+(this.src.indexOf('?')>-1?'&':'?')+'t='+Date.now();}else{this.style.opacity=.3;}">
       <div style="padding:13px">
         <div style="display:flex;justify-content:space-between;gap:8px;align-items:start">
           <strong style="font-size:14px;line-height:1.3">${esc(p.name)}</strong>
@@ -444,7 +626,8 @@ function openPiece(p){
   // Existing photos (if editing an existing piece)
   $('#pImages').innerHTML = (p && p.images && p.images.length) ? p.images.map(im => `
     <div style="position:relative">
-      <img class="thumb" src="${esc(im.url)}" alt="">
+      <img class="thumb" src="${imgUrl(im.url)}" alt=""
+           onerror="if(!this.dataset.retried){this.dataset.retried='1';this.src=this.src+(this.src.indexOf('?')>-1?'&':'?')+'t='+Date.now();}">
       <button type="button" class="btn sm" data-img="${im.id}"
         style="position:absolute;top:6px;right:6px;background:var(--ox);color:var(--bone)">Remove</button>
     </div>`).join('') : '';
@@ -721,13 +904,212 @@ $('#forgotForm2').addEventListener('submit', async (e)=>{
   }
 });
 
+/* ---------------- CRM / Customers ---------------- */
+let ALL_CUSTOMERS = [];
+let ACTIVE_CRM_FILTER = 'all';
+
+async function loadCRM(){
+  try {
+    const { customers } = await api('GET', '/admin/customers');
+    ALL_CUSTOMERS = customers || [];
+    renderCRM();
+  } catch (e) {
+    const el = $('#crmList');
+    if (el) el.innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+  }
+}
+
+function renderCRM(){
+  const search = ($('#crmSearch') ? $('#crmSearch').value : '').toLowerCase().trim();
+  let list = ALL_CUSTOMERS;
+
+  // Search filter
+  if (search) {
+    list = list.filter(c =>
+      (c.name && c.name.toLowerCase().includes(search)) ||
+      (c.email && c.email.toLowerCase().includes(search)) ||
+      (c.phone && c.phone.includes(search))
+    );
+  }
+
+  // Tier filter
+  if (ACTIVE_CRM_FILTER === 'vip') {
+    list = list.filter(c => c.tier === 'VIP');
+  } else if (ACTIVE_CRM_FILTER === 'customer') {
+    list = list.filter(c => c.paidOrderCount > 0);
+  } else if (ACTIVE_CRM_FILTER === 'subscriber') {
+    list = list.filter(c => c.isSubscriber && c.orderCount === 0);
+  }
+
+  // Summary stats
+  const totalSpend = ALL_CUSTOMERS.reduce((sum, c) => sum + (c.totalSpentKobo || 0), 0);
+  const vips = ALL_CUSTOMERS.filter(c => c.tier === 'VIP').length;
+  const paying = ALL_CUSTOMERS.filter(c => c.paidOrderCount > 0).length;
+  const avgOrder = paying ? Math.round(totalSpend / paying) : 0;
+
+  const tile = (v,l) => `<div class="card stat"><b>${v}</b><span>${l}</span></div>`;
+  if ($('#crmSummary')) {
+    $('#crmSummary').innerHTML = `
+      ${tile(ALL_CUSTOMERS.length, 'Total Contacts')}
+      ${tile(vips, 'VIP Repeat Buyers')}
+      ${tile(naira(totalSpend), 'Customer Lifetime Value')}
+      ${tile(naira(avgOrder), 'Avg Spend / Buyer')}
+    `;
+  }
+
+  const el = $('#crmList');
+  if (!el) return;
+  if (!list.length) {
+    el.innerHTML = '<div class="empty">No customers found matching that filter.</div>';
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="card scroll" style="padding:0">
+      <table>
+        <thead>
+          <tr>
+            <th>Customer</th>
+            <th>Contact</th>
+            <th>Tier</th>
+            <th>Orders</th>
+            <th>Total Spend</th>
+            <th>Last Active</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${list.map((c, idx) => {
+            const initials = (c.name || 'C').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+            return `
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div class="crm-avatar">${esc(initials)}</div>
+                    <div>
+                      <strong>${esc(c.name || 'Anonymous')}</strong>
+                      ${c.address ? `<div class="muted" style="font-size:12px">${esc(c.address)}</div>` : ''}
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div><a href="mailto:${esc(c.email)}" style="color:inherit;text-decoration:none">${esc(c.email)}</a></div>
+                  ${c.phone ? `
+                    <div style="display:flex;gap:6px;align-items:center;margin-top:4px">
+                      <span class="muted mono" style="font-size:12px">${esc(c.phone)}</span>
+                      ${c.whatsappUrl ? `<a href="${esc(c.whatsappUrl)}" target="_blank" rel="noopener" class="crm-wa">WhatsApp</a>` : ''}
+                    </div>` : ''}
+                </td>
+                <td>
+                  <span class="pill ${c.tier.toLowerCase()}">${esc(c.tier)}</span>
+                </td>
+                <td><strong class="mono">${c.orderCount}</strong></td>
+                <td><strong class="mono">${esc(c.totalSpentLabel)}</strong></td>
+                <td class="muted mono" style="font-size:12px">${c.lastOrderAt ? when(c.lastOrderAt) : 'Subscriber'}</td>
+                <td>
+                  <button type="button" class="btn ghost sm" data-crm-idx="${idx}">Details</button>
+                </td>
+              </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+  $$('[data-crm-idx]', el).forEach(btn => {
+    btn.addEventListener('click', () => {
+      const c = list[Number(btn.dataset.crmIdx)];
+      openCRMDetail(c);
+    });
+  });
+}
+
+function openCRMDetail(c){
+  if (!c) return;
+  $('#crmDetailName').textContent = c.name || c.email;
+  $('#crmDetailMeta').textContent = `${c.email} ${c.phone ? '· ' + c.phone : ''} ${c.address ? '· ' + c.address : ''}`;
+
+  let actionsHtml = `<a class="btn ghost sm" href="mailto:${esc(c.email)}">Send Email</a>`;
+  if (c.whatsappUrl) {
+    actionsHtml += `<a class="btn sm" href="${esc(c.whatsappUrl)}" target="_blank" rel="noopener" style="background:#25d366;color:#000">Chat on WhatsApp</a>`;
+  }
+  $('#crmDetailActions').innerHTML = actionsHtml;
+
+  const ordersEl = $('#crmDetailOrders');
+  if (!c.orders || !c.orders.length) {
+    ordersEl.innerHTML = '<div class="muted" style="font-size:13px;padding:12px">No purchase history yet (joined newsletter).</div>';
+  } else {
+    ordersEl.innerHTML = c.orders.map(o => `
+      <div class="card" style="padding:10px 14px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <strong class="mono">${esc(o.reference)}</strong>
+            <span class="pill ${esc(o.status)}" style="margin-left:8px">${esc(o.status)}</span>
+            <span class="pill ${esc(o.paymentStatus)}" style="margin-left:4px">${esc(o.paymentStatus)}</span>
+          </div>
+          <div style="text-align:right">
+            <strong>${esc(o.totalLabel)}</strong>
+            <div class="muted mono" style="font-size:11px">${when(o.createdAt)}</div>
+          </div>
+        </div>
+      </div>`).join('');
+  }
+
+  $('#crmOverlay').classList.add('open');
+}
+
+function closeCRMDetail(){ $('#crmOverlay').classList.remove('open'); }
+$('#crmDetailClose').addEventListener('click', closeCRMDetail);
+$('#crmOverlay').addEventListener('click', (e)=>{ if(e.target.id==='crmOverlay') closeCRMDetail(); });
+
+// CRM search & filters wiring
+if ($('#crmSearch')) {
+  $('#crmSearch').addEventListener('input', () => renderCRM());
+}
+$$('.crm-filter').forEach(btn => {
+  btn.addEventListener('click', () => {
+    $$('.crm-filter').forEach(b => { b.classList.remove('active'); b.classList.add('ghost'); });
+    btn.classList.add('active'); btn.classList.remove('ghost');
+    ACTIVE_CRM_FILTER = btn.dataset.filter;
+    renderCRM();
+  });
+});
+
+if ($('#crmExport')) {
+  $('#crmExport').addEventListener('click', exportCRM);
+}
+
+function exportCRM(){
+  if (!ALL_CUSTOMERS.length) { toast('No customers to export'); return; }
+  const headers = ['Name', 'Email', 'Phone', 'Address', 'Tier', 'Orders Count', 'Paid Orders', 'Total Spent Naira', 'Last Order Date'];
+  const rows = ALL_CUSTOMERS.map(c => [
+    `"${(c.name || '').replace(/"/g, '""')}"`,
+    `"${(c.email || '').replace(/"/g, '""')}"`,
+    `"${(c.phone || '').replace(/"/g, '""')}"`,
+    `"${(c.address || '').replace(/"/g, '""')}"`,
+    c.tier,
+    c.orderCount,
+    c.paidOrderCount,
+    Math.round((c.totalSpentKobo || 0) / 100),
+    c.lastOrderAt ? new Date(c.lastOrderAt).toISOString() : '',
+  ]);
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `ynr-customers-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Exported customer CSV');
+}
+
 /* ---------------- boot ---------------- */
 async function loadAll(){
   try {
     // Categories are now loaded with their real IDs from the database
     const catData = await api('GET', '/categories');
     CATEGORIES = (catData && catData.categories) || [];
-    await Promise.all([loadDash(), loadPieces(), loadOrders(), loadInbox()]);
+    await Promise.all([loadDash(), loadPieces(), loadOrders(), loadCRM(), loadInbox()]);
   } catch (e) { toast(e.message, true); }
 }
 

@@ -323,6 +323,13 @@ async function req(method, url, body, headers = {}) {
     const unpaidOrderRow = orderList.json.orders.find((o) => o.reference === other.json.order.reference);
     ok(Boolean(unpaidOrderRow), 'the unpaid order is visible to admin');
 
+    // ---- CRM customers ------------------------------------------------
+    const crmRes = await req('GET', '/api/admin/customers', undefined, { Cookie: cookie });
+    ok(crmRes.status === 200 && crmRes.json.customers && crmRes.json.customers.length >= 2,
+      'admin CRM endpoint returns customer profiles with order histories');
+    const firstCustomer = crmRes.json.customers[0];
+    ok(firstCustomer && firstCustomer.email && firstCustomer.tier, 'CRM customer has email and tier');
+
     const refundOnUnpaid = await req('POST', `/api/admin/orders/${unpaidOrderRow.id}/refund`, {}, { Cookie: cookie });
     ok(refundOnUnpaid.status === 409 && refundOnUnpaid.json.code === 'not_paid',
       'refund refused on an order that was never paid', refundOnUnpaid.json && refundOnUnpaid.json.code);

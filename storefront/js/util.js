@@ -19,5 +19,6 @@ const NGN = (n) => '₦' + Number(n).toLocaleString('en-NG');
 function imgUrl(u) {
   if (!u) return '';
   if (/^https?:\/\//.test(u)) return u;
-  return API_BASE.replace(/\/api$/, '') + u;
+  const base = API_BASE.replace(/\/api$/, '') + u;
+  return base + (base.indexOf('?') > -1 ? '&' : '?') + 'v=2';
 }
